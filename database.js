@@ -1,20 +1,25 @@
-const mysql = require("mysql2/promise");
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
-const pool = mysql.createPool({
-  host: "35.198.25.52",
-  user: "homolog-user",
-  database: "dsecombr_controle",
-  password: "password",
-  port: 3306,
-  waitForConnections: true,
-  timezone: "Z",
-  connectionLimit: 10,
-  maxIdle: 10,
-  idleTimeout: 60000,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 0,
-  multipleStatements: true
-}); 
+async function testConnection() {
+  try {
+    await prisma.$connect();
+    console.log("Conexão com o banco de dados estabelecida com sucesso!");
+  } catch (error) {
+    console.error("Erro ao conectar ao banco de dados:", error.message);
+    process.exit(1); // Encerra a aplicação se a conexão falhar
+  }
+}
 
-module.exports = pool;
+async function disconnect() {
+  try {
+    await prisma.$disconnect();
+    console.log("Desconectado do banco de dados com sucesso!");
+  } catch (error) {
+    console.error("Erro ao desconectar do banco de dados:", error.message);
+  }
+}
+
+testConnection();
+
+module.exports = { prisma, disconnect };

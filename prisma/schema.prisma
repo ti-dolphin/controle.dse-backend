@@ -1,0 +1,902 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model acessorio_patrimonio {
+  id_acessorio_patrimonio    Int                          @id @default(autoincrement())
+  nome                       String                       @db.Text
+  id_patrimonio              Int?
+  descricao                  String?                      @db.Text
+  web_patrimonio             web_patrimonio?              @relation(fields: [id_patrimonio], references: [id_patrimonio], onDelete: NoAction, onUpdate: NoAction, map: "acessorio_patrimonio_ibfk_1")
+  anexo_acessorio_patrimonio anexo_acessorio_patrimonio[]
+
+  @@index([id_patrimonio], map: "id_patrimonio")
+}
+
+model adicionais {
+  ID           Int            @id @default(autoincrement())
+  NUMERO       Int
+  ID_PROJETO   Int
+  projetos     projetos       @relation(fields: [ID_PROJETO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "FK_ADICIONAIS_PROJETOS")
+  ordemservico ordemservico[]
+
+  @@index([ID_PROJETO], map: "ID_PROJETO")
+}
+
+model alteracoesos {
+  CODALTERACOESOS Int          @id @default(autoincrement())
+  CODOS           Int
+  DESCRICAO       String       @db.Text
+  DATA            DateTime     @db.DateTime(0)
+  USUARIO         String       @db.VarChar(55)
+  ordemservico    ordemservico @relation(fields: [CODOS], references: [CODOS], onDelete: Cascade, map: "FK_ALTERACOESOS_ORDEMSERVICO")
+
+  @@index([CODOS], map: "FK_ALTERACOESOS_ORDEMSERVICO")
+}
+
+model anexo_acessorio_patrimonio {
+  id_anexo_acessorio_patrimonio Int                   @id @default(autoincrement())
+  id_acessorio_patrimonio       Int?
+  nome                          String                @db.VarChar(255)
+  arquivo                       String                @db.VarChar(255)
+  acessorio_patrimonio          acessorio_patrimonio? @relation(fields: [id_acessorio_patrimonio], references: [id_acessorio_patrimonio], onDelete: Cascade, onUpdate: NoAction, map: "anexo_acessorio_patrimonio_ibfk_1")
+
+  @@index([id_acessorio_patrimonio], map: "anexo_acessorio_patrimonio_ibfk_1")
+}
+
+model anexo_movimentacao {
+  id_anexo_movimentacao   Int                      @id @default(autoincrement())
+  arquivo                 String                   @db.Text
+  nome_arquivo            String?                  @db.VarChar(255)
+  id_movimentacao         Int?
+  movimentacao_patrimonio movimentacao_patrimonio? @relation(fields: [id_movimentacao], references: [id_movimentacao], onDelete: Cascade, onUpdate: NoAction, map: "anexo_movimentacao_ibfk_1")
+
+  @@index([id_movimentacao], map: "anexo_movimentacao_ibfk_1")
+}
+
+model anexo_patrimonio {
+  id_anexo_patrimonio Int             @id @default(autoincrement())
+  arquivo             String          @db.Text
+  nome_arquivo        String?         @db.VarChar(255)
+  id_patrimonio       Int?
+  web_patrimonio      web_patrimonio? @relation(fields: [id_patrimonio], references: [id_patrimonio], onDelete: Cascade, onUpdate: NoAction, map: "anexo_patrimonio_ibfk_1")
+
+  @@index([id_patrimonio], map: "anexo_patrimonio_ibfk_1")
+}
+
+model anexos_item {
+  id                   Int                  @id @default(autoincrement())
+  arquivo              String?              @db.LongText
+  id_item              Int
+  nome_arquivo         String?              @db.LongText
+  web_requisicao_items web_requisicao_items @relation(fields: [id_item], references: [ID], onDelete: Cascade, onUpdate: NoAction, map: "id_item")
+
+  @@index([id_item], map: "id_item_idx")
+}
+
+model anexos_requisicao {
+  id_requisicao Int
+  arquivo       String? @db.Text
+  nome_arquivo  String? @db.VarChar(100)
+  id            Int     @id @default(autoincrement())
+}
+
+model apontamentos {
+  CODAPONT                Int       @id @default(autoincrement())
+  CHAPA                   String    @db.VarChar(10)
+  DATA                    DateTime  @db.Date
+  CODSTATUSAPONT          String?   @default("-") @db.VarChar(2)
+  CODCCUSTO               String?   @default("-") @db.VarChar(25)
+  CODOS                   Int?
+  CODLIDER                Int?      @default(1)
+  ATIVIDADE               String?   @db.VarChar(255)
+  CODSITUACAO             String    @db.Char(1)
+  COMENTADO               Boolean   @default(false)
+  INTEGRA                 Boolean   @default(false)
+  MODIFICADOPOR           String?   @db.VarChar(255)
+  CUSTOMO                 Decimal?  @db.Decimal(18, 2)
+  VERIFICADO              Boolean   @default(false)
+  PROBLEMA                Boolean   @default(false)
+  MOTIVO_PROBLEMA         String?   @db.VarChar(255)
+  STATUS_PONTO            Boolean   @default(false)
+  JUSTIFICATIVA           String?   @db.VarChar(255)
+  COMPETENCIA             Int
+  ASSIDUIDADE             Boolean   @default(true)
+  BANCO_HORAS_DECIMAL     Decimal?  @default(0.0000) @db.Decimal(15, 4)
+  BANCO_HORAS_TEXTO       String?   @db.VarChar(10)
+  PONTO                   Boolean?  @default(true)
+  DATA_HORA_MOTIVO        DateTime? @db.DateTime(0)
+  DATA_HORA_JUSTIFICATIVA DateTime? @db.DateTime(0)
+  AJUSTADO                Boolean?  @default(false)
+  JUSTIFICADO_POR         String?   @db.VarChar(50)
+  TRANSPORTE_EXTRA        String    @default("Sem Transporte") @db.VarChar(50)
+  TRANSPORTE_EXTRA_ID     Int       @default(1)
+
+  @@index([CODCCUSTO], map: "FK_CODCCUSTO_APONT")
+  @@index([CODOS], map: "FK_CODOS_APONT")
+  @@index([CODLIDER], map: "FK_LIDER_APONT")
+  @@index([CHAPA], map: "FK_PFUNC_APONT")
+  @@index([CODSITUACAO], map: "FK_SITUACAO_APONT")
+  @@index([CODSTATUSAPONT], map: "FK_STATUSAPONT_APONT")
+}
+
+model cidade {
+  ID           Int            @id
+  NOME         String?        @db.VarChar(120)
+  ESTADO       Int?
+  estado       estado?        @relation(fields: [ESTADO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "FK_CIDADE_ESTADO")
+  ordemservico ordemservico[]
+
+  @@index([ESTADO], map: "FK_CIDADE_ESTADO")
+}
+
+model classificacao {
+  ID         Int       @id @default(autoincrement())
+  ABREVIACAO String    @db.Char(1)
+  cliente    cliente[]
+}
+
+model cliente {
+  CODCOLIGADA       Int
+  CODCLIENTE        String         @db.VarChar(25)
+  NOMEFANTASIA      String?        @db.VarChar(100)
+  NOME              String?        @db.VarChar(100)
+  RECCREATEDBY      String?        @db.VarChar(50)
+  RECCREATEDON      DateTime?      @db.DateTime(0)
+  RECMODIFIEDBY     String?        @db.VarChar(50)
+  RECMODIFIEDON     DateTime?      @db.DateTime(0)
+  DATA_INTERACAO    DateTime       @default(dbgenerated("'1111-11-11'")) @db.Date
+  PROSPECTAR        Boolean        @default(false)
+  CLASSIFICACAO_ID  Int            @default(3)
+  INTERACAO_MSG     Boolean        @default(false)
+  INTERACAO_FONE    Boolean        @default(false)
+  INTERACAO_REUNIAO Boolean        @default(false)
+  PESSOA_CODPESSOA  Int            @default(1)
+  PAGREC            Int?
+  CNPJ              String?        @db.VarChar(20)
+  PESSOAFISOUJUR    String?        @db.VarChar(1)
+  classificacao     classificacao  @relation(fields: [CLASSIFICACAO_ID], references: [ID], onDelete: NoAction, map: "CLIENTE_ibfk_1")
+  pessoa            pessoa         @relation(fields: [PESSOA_CODPESSOA], references: [CODPESSOA], onDelete: NoAction, map: "FK_PESSOA")
+  ordemservico      ordemservico[]
+
+  @@id([CODCOLIGADA, CODCLIENTE])
+  @@index([CLASSIFICACAO_ID], map: "CLASSIFICACAO_ID")
+  @@index([PESSOA_CODPESSOA], map: "FK_PESSOA")
+}
+
+model cliente_comentarios {
+  ID           Int      @id @default(autoincrement())
+  CODCOLIGADA  Int
+  CODCLIENTE   String   @db.VarChar(25)
+  DESCRICAO    String   @db.Text
+  RECCREATEDON DateTime @default(now()) @db.DateTime(0)
+  RECCREATEDBY String   @db.VarChar(255)
+
+  @@index([CODCOLIGADA, CODCLIENTE], map: "FK_CLIENTE_COMENTARIOS")
+}
+
+model comentarios {
+  CODCOMENTARIO Int      @id @default(autoincrement())
+  CODAPONT      Int
+  CODOS         Int
+  DESCRICAO     String   @db.Text
+  RECCREATEDON  DateTime @default(now()) @db.DateTime(0)
+  RECCREATEDBY  String   @db.VarChar(255)
+  EMAIL         Boolean  @default(false)
+
+  @@index([CODAPONT], map: "FK_COMENTARIOS")
+  @@index([CODOS], map: "FK_ORDEMSERVICO")
+}
+
+model contatos {
+  ID       Int    @id @default(autoincrement())
+  NOME     String @db.VarChar(150)
+  EMAIL    String @unique(map: "EMAIL") @db.VarChar(100)
+  TELEFONE String @db.VarChar(15)
+}
+
+model criterios {
+  ID         Int      @id @default(autoincrement())
+  ORDEM      Int
+  DESCRICAO  String   @db.VarChar(255)
+  PESO       Int
+  CREATED_AT DateTime @default(now()) @db.DateTime(0)
+  UPDATED_AT DateTime @default(now()) @db.DateTime(0)
+}
+
+model disciplina {
+  CODDISCIPLINA Int    @id @default(autoincrement())
+  DESCRICAO     String @db.VarChar(150)
+}
+
+model dolphin_rep {
+  CODREP     Int       @id @default(autoincrement())
+  NOME       String    @db.VarChar(255)
+  IP         String    @db.VarChar(10)
+  PATRIMONIO String    @db.VarChar(6)
+  NUMSERIE   String    @db.VarChar(17)
+  ATIVO      Boolean
+  DATASINC   DateTime? @db.Date
+}
+
+model dolphin_rep_ponto_coletado {
+  CODPONTO Int       @id
+  NSR      String    @db.VarChar(9)
+  TIPO     Int
+  DATA     DateTime  @db.Date
+  HORA     DateTime  @db.Time(0)
+  PIS      String    @db.VarChar(12)
+  CRC      String    @db.VarChar(4)
+  COMPLETO String    @db.VarChar(38)
+  CODREP   Int
+  DATAREC  DateTime? @db.DateTime(0)
+
+  @@index([CODREP], map: "FK_DOLPHIN_REP_PONTO_COLETADO_DOLPHIN_REP")
+}
+
+model estado {
+  ID     Int      @id
+  NOME   String?  @db.VarChar(75)
+  UF     String?  @db.VarChar(5)
+  cidade cidade[]
+}
+
+model feriados {
+  ID    BigInt   @id @default(autoincrement())
+  DATA  DateTime @db.Date
+  NOME  String   @db.VarChar(150)
+  TIPO  String?  @db.VarChar(150)
+  NIVEL String?  @db.VarChar(150)
+  LEI   String?  @db.VarChar(150)
+}
+
+model fichaepi {
+  CODFICHAEPI Int    @id @default(autoincrement())
+  ARQUIVO     Bytes? @db.Blob
+}
+
+model gccusto {
+  CODCUSTO    String   @id @db.VarChar(25)
+  NOME        String?  @db.VarChar(60)
+  CAMPOLIVRE  String?  @db.VarChar(100)
+  ATIVO       Boolean?
+  RESPONSAVEL Int?
+  CODREDUZIDO String?  @db.VarChar(25)
+}
+
+model grupos {
+  ID            Int             @id @default(autoincrement())
+  NOME          String          @unique(map: "NOME_UNIQUE") @db.VarChar(255)
+  notificacoes  notificacoes[]
+  pessoa_grupos pessoa_grupos[]
+}
+
+model historico_ferias_pj {
+  CODHISTORICO  Int      @id @default(autoincrement())
+  DATAINICIO    DateTime @db.Date
+  DATATERMINO   DateTime @db.Date
+  QUANTIDADE    Int
+  CHAPA         String   @db.VarChar(10)
+  CODCOLIGADA   Int      @db.SmallInt
+  RECCREATEDON  DateTime @default(now()) @db.DateTime(0)
+  RECMODIFIEDON DateTime @default(now()) @db.DateTime(0)
+  RECCREATEDBY  String   @db.VarChar(255)
+  RECMODIFIEDBY String?  @db.VarChar(255)
+
+  @@index([CHAPA, CODCOLIGADA], map: "CHAPA")
+}
+
+model historicostatus {
+  CODHISTORICO                                Int          @id @default(autoincrement())
+  CODOS                                       Int
+  CODSTATUSOLD                                Int
+  CODSTATUSNEW                                Int
+  DATA                                        DateTime     @db.DateTime(0)
+  CODPESSOA                                   Int
+  ordemservico                                ordemservico @relation(fields: [CODOS], references: [CODOS], onDelete: Cascade, map: "FK_ORDEMSERVICO_HISTORICOSTATUS")
+  pessoa                                      pessoa       @relation(fields: [CODPESSOA], references: [CODPESSOA], onDelete: Cascade, map: "FK_PESSOA_CODPESSOA")
+  status_historicostatus_CODSTATUSNEWTostatus status       @relation("historicostatus_CODSTATUSNEWTostatus", fields: [CODSTATUSNEW], references: [CODSTATUS], onDelete: Cascade, map: "FK_STATUS_HISTORICOSTATUS_NEW")
+  status_historicostatus_CODSTATUSOLDTostatus status       @relation("historicostatus_CODSTATUSOLDTostatus", fields: [CODSTATUSOLD], references: [CODSTATUS], onDelete: Cascade, map: "FK_STATUS_HISTORICOSTATUS_OLD")
+
+  @@index([CODOS], map: "FK_ORDEMSERVICO_HISTORICOSTATUS")
+  @@index([CODPESSOA], map: "FK_PESSOA_CODPESSOA")
+  @@index([CODSTATUSNEW], map: "FK_STATUS_HISTORICOSTATUS_NEW")
+  @@index([CODSTATUSOLD], map: "FK_STATUS_HISTORICOSTATUS_OLD")
+}
+
+model local {
+  ID           Int      @id @default(autoincrement())
+  NOME_MAQUINA String   @db.VarChar(255)
+  DATA         DateTime @db.DateTime(0)
+  LAT          Decimal  @db.Decimal(10, 8)
+  LNG          Decimal  @db.Decimal(11, 8)
+}
+
+model localdeestoque {
+  CODFILIAL   Int     @db.SmallInt
+  CODLOC      String  @db.VarChar(15)
+  NOME        String? @db.VarChar(40)
+  CODCOLIGADA Int     @db.SmallInt
+  INATIVO     Int?    @db.SmallInt
+  INTEGRA     Int     @default(1) @db.SmallInt
+
+  @@id([CODFILIAL, CODLOC, CODCOLIGADA])
+}
+
+model motivo_perdido {
+  id           Int            @id @default(autoincrement())
+  nome         String         @db.VarChar(150)
+  ordemservico ordemservico[]
+}
+
+model movimentacao_patrimonio {
+  id_movimentacao            Int                          @id @default(autoincrement())
+  data                       DateTime                     @db.DateTime(0)
+  id_patrimonio              Int?
+  id_projeto                 Int?
+  id_responsavel             Int?
+  id_ultima_movimentacao     Int?
+  observacao                 String?                      @db.Text
+  aceito                     Int?                         @default(0)
+  anexo_movimentacao         anexo_movimentacao[]
+  projetos                   projetos?                    @relation(fields: [id_projeto], references: [ID], onDelete: Cascade, onUpdate: NoAction, map: "fk_projeto")
+  pessoa                     pessoa?                      @relation(fields: [id_responsavel], references: [CODPESSOA], onDelete: Cascade, onUpdate: NoAction, map: "fk_responsavel")
+  web_patrimonio             web_patrimonio?              @relation(fields: [id_patrimonio], references: [id_patrimonio], onDelete: Cascade, onUpdate: NoAction, map: "movimentacao_patrimonio_ibfk_1")
+  web_checklist_movimentacao web_checklist_movimentacao[]
+
+  @@index([id_projeto], map: "fk_projeto")
+  @@index([id_responsavel], map: "fk_responsavel")
+  @@index([id_patrimonio], map: "movimentacao_patrimonio_ibfk_1")
+}
+
+model notificacoes {
+  ID        Int       @id @default(autoincrement())
+  DESCRICAO String    @db.VarChar(255)
+  LIDO      Boolean?  @default(false)
+  DATAHORA  DateTime? @default(now()) @db.DateTime(0)
+  GRUPO_ID  Int
+  grupos    grupos    @relation(fields: [GRUPO_ID], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "NOTIFICACOES_ibfk_1")
+
+  @@index([GRUPO_ID], map: "GRUPO_ID")
+}
+
+model ordemservico {
+  CODOS                   Int               @id @default(autoincrement())
+  CODTIPOOS               Int?              @default(21)
+  CODCCUSTO               String?           @default("2.02.0002") @db.VarChar(255)
+  OBRA                    String?           @db.VarChar(255)
+  DATASOLICITACAO         DateTime?         @db.DateTime(0)
+  DATANECESSIDADE         DateTime?         @db.DateTime(0)
+  DOCREFERENCIA           String?           @db.VarChar(255)
+  LISTAMATERIAIS          String?           @db.Text
+  DATAINICIO              DateTime?         @db.DateTime(0)
+  DATAPREVENTREGA         DateTime?         @db.DateTime(0)
+  DATAENTREGA             DateTime?         @db.DateTime(0)
+  CODSTATUS               Int?              @default(1)
+  NOME                    String            @db.VarChar(255)
+  DESCRICAO               String?           @db.Text
+  ATIVIDADES              String?           @db.Text
+  PRIORIDADE              Int               @default(0)
+  SOLICITANTE             Int?              @default(1)
+  RESPONSAVEL             Int?              @default(1)
+  CODDISCIPLINA           Int               @default(1)
+  GUT                     Int               @default(1)
+  GRAVIDADE               Int               @default(1)
+  URGENCIA                Int               @default(1)
+  TENDENCIA               Int               @default(1)
+  DATALIBERACAO           DateTime?         @db.DateTime(0)
+  RELACIONAMENTO          Int               @default(1)
+  FK_CODCLIENTE           String?           @default("-") @db.VarChar(25)
+  FK_CODCOLIGADA          Int               @default(0)
+  VALORFATDIRETO          Decimal?          @db.Decimal(16, 2)
+  VALORSERVICOMO          Decimal?          @db.Decimal(16, 2)
+  VALORSERVICOMATAPLICADO Decimal?          @db.Decimal(16, 2)
+  VALORMATERIAL           Decimal?          @db.Decimal(16, 2)
+  VALORTOTAL              Decimal?          @db.Decimal(16, 2)
+  CODSEGMENTO             Int               @default(1)
+  CODCIDADE               Int?              @default(0)
+  VALORLOCACAO            Decimal?          @db.Decimal(16, 2)
+  ID_ADICIONAL            Int               @default(0)
+  ID_PROJETO              Int               @default(0)
+  DATAINTERACAO           DateTime?         @default(dbgenerated("'1111-11-11'")) @db.Date
+  VALORFATDOLPHIN         Decimal           @default(0.00) @db.Decimal(16, 2)
+  PRINCIPAL               Boolean           @default(true)
+  VALOR_COMISSAO          Decimal           @db.Decimal(16, 2)
+  id_motivo_perdido       Int
+  observacoes             String?           @db.Text
+  DESCRICAO_VENDA         String?           @db.Text
+  EMAIL_VENDA_ENVIADO     Boolean?          @default(false)
+  alteracoesos            alteracoesos[]
+  historicostatus         historicostatus[]
+  cidade                  cidade?           @relation(fields: [CODCIDADE], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "FK_CIDADE_ORDEMSERVICO")
+  cliente                 cliente?          @relation(fields: [FK_CODCOLIGADA, FK_CODCLIENTE], references: [CODCOLIGADA, CODCLIENTE], onDelete: NoAction, onUpdate: NoAction, map: "FK_ORDEMSERVICO_CLIENTE")
+  segmento                segmento          @relation(fields: [CODSEGMENTO], references: [CODSEGMENTO], onDelete: NoAction, onUpdate: NoAction, map: "FK_SEGMENTO_ORDEMSERVICO")
+  adicionais              adicionais        @relation(fields: [ID_ADICIONAL], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ORDEMSERVICO_ibfk_1")
+  projetos                projetos          @relation(fields: [ID_PROJETO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ORDEMSERVICO_ibfk_2")
+  pessoa                  pessoa?           @relation(fields: [RESPONSAVEL], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "RESPONSAVEL")
+  motivo_perdido          motivo_perdido    @relation(fields: [id_motivo_perdido], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ordemservico_motivo_perdido")
+  web_anexos_os           web_anexos_os[]
+
+  @@index([CODCIDADE], map: "FK_CIDADE_ORDEMSERVICO")
+  @@index([CODDISCIPLINA], map: "FK_DISCIPLINA_OS")
+  @@index([CODCCUSTO], map: "FK_GCCUSTO_OS")
+  @@index([FK_CODCOLIGADA, FK_CODCLIENTE], map: "FK_ORDEMSERVICO_CLIENTE")
+  @@index([id_motivo_perdido], map: "FK_ORDEMSERVICO_MOTIVO_PERDIDO_idx")
+  @@index([RESPONSAVEL], map: "FK_PESSOA_OS_RESPONSAVEL")
+  @@index([SOLICITANTE], map: "FK_PESSOA_OS_SOLICITANTE")
+  @@index([CODSEGMENTO], map: "FK_SEGMENTO_ORDEMSERVICO")
+  @@index([CODSTATUS], map: "FK_STATUS_OS")
+  @@index([CODTIPOOS], map: "FK_TIPO_OS")
+  @@index([ID_ADICIONAL], map: "ID_ADICIONAL")
+  @@index([ID_PROJETO], map: "ID_PROJETO")
+}
+
+model ordemservico_contatos {
+  ORDEMSERVICO_ID Int
+  CONTATO_ID      Int
+
+  @@id([ORDEMSERVICO_ID, CONTATO_ID])
+  @@index([CONTATO_ID], map: "CONTATO_ID")
+}
+
+model ordemservico_criterios {
+  ID_ORDEMSERVICO Int
+  ID_CRITERIOS    Int
+
+  @@id([ID_ORDEMSERVICO, ID_CRITERIOS])
+  @@index([ID_CRITERIOS], map: "FK_CRITERIOS")
+}
+
+model pessoa {
+  CODPESSOA                                              Int                       @id @default(autoincrement())
+  NOME                                                   String                    @db.VarChar(60)
+  LOGIN                                                  String?                   @db.VarChar(255)
+  SENHA                                                  String?                   @db.VarChar(255)
+  SOLICITANTE                                            Boolean
+  RESPONSAVEL                                            Boolean
+  LIDER                                                  Boolean
+  PERM_LOGIN                                             Boolean
+  PERM_EPI                                               Boolean
+  PERM_AUTENTICACAO                                      Boolean
+  PERM_OS                                                Boolean
+  PERM_TIPO                                              Boolean
+  PERM_STATUS                                            Boolean
+  PERM_APONT                                             Boolean
+  PERM_STATUS_APONT                                      Boolean
+  PERM_PESSOAS                                           Boolean
+  PERM_COMENT_OS                                         Boolean
+  PERM_COMENT_APONT                                      Boolean
+  CODGERENTE                                             Int?                      @unique(map: "CODGERENTE_UNIQUE")
+  ATIVO                                                  Boolean                   @default(true)
+  EMAIL                                                  String?                   @db.VarChar(255)
+  PERM_PONTO                                             Boolean                   @default(false)
+  PERM_VENDA                                             Boolean                   @default(false)
+  PERM_CADEPI                                            Boolean?                  @default(false)
+  PERM_DESCONTADO                                        Boolean?                  @default(false)
+  PERM_GESTAO_PESSOAS                                    Boolean?
+  PERM_CONTROLE_RECESSO                                  Boolean?
+  PERM_CUSTO                                             Boolean?                  @default(false)
+  PERM_FERRAMENTAS                                       Boolean                   @default(false)
+  PERM_CHECKLIST                                         Boolean                   @default(false)
+  PERM_PROSPECCAO                                        Boolean                   @default(false)
+  PERM_APONTAMENTO_PONTO                                 Boolean
+  PERM_APONTAMENTO_PONTO_JUSTIFICATIVA                   Boolean
+  PERM_BANCO_HORAS                                       Boolean                   @default(false)
+  PERM_FOLGA                                             Boolean                   @default(false)
+  ULTIMO_LOGIN                                           DateTime?                 @db.Date
+  PERM_REQUISITAR                                        Int?                      @db.TinyInt
+  PERM_COMPRADOR                                         Int?                      @default(0) @db.TinyInt
+  PERM_CADASTRAR_PAT                                     Int?                      @db.TinyInt
+  PERM_ADMINISTRADOR                                     Int?                      @db.TinyInt
+  PERM_COMERCIAL                                         Int?                      @default(0) @db.TinyInt
+  cliente                                                cliente[]
+  historicostatus                                        historicostatus[]
+  movimentacao_patrimonio                                movimentacao_patrimonio[]
+  ordemservico                                           ordemservico[]
+  pessoa_grupos                                          pessoa_grupos[]
+  pessoa_responsavel                                     pessoa_responsavel[]
+  pessoa_tipo                                            pessoa_tipo[]
+  projetos                                               projetos[]
+  web_cotacao                                            web_cotacao[]
+  web_requisicao_web_requisicao_ID_RESPONSAVELTopessoa   web_requisicao[]          @relation("web_requisicao_ID_RESPONSAVELTopessoa")
+  web_requisicao_web_requisicao_LAST_MODIFIED_BYTopessoa web_requisicao[]          @relation("web_requisicao_LAST_MODIFIED_BYTopessoa")
+  web_seguidores_projeto                                 web_seguidores_projeto[]
+}
+
+model pessoa_grupos {
+  PESSOA_ID Int
+  GRUPO_ID  Int
+  pessoa    pessoa @relation(fields: [PESSOA_ID], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "PESSOA_GRUPOS_ibfk_1")
+  grupos    grupos @relation(fields: [GRUPO_ID], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "PESSOA_GRUPOS_ibfk_2")
+
+  @@id([PESSOA_ID, GRUPO_ID])
+  @@index([GRUPO_ID], map: "GRUPO_ID")
+}
+
+model pessoa_responsavel {
+  CODPESSOA      Int
+  CODRESPONSAVEL Int
+  pessoa         pessoa @relation(fields: [CODPESSOA], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "FK_PESSOA_PESSOA_RESPONSAVEL_1")
+
+  @@id([CODPESSOA, CODRESPONSAVEL])
+}
+
+model pessoa_tipo {
+  CODPESSOA Int
+  CODTIPOOS Int
+  pessoa    pessoa @relation(fields: [CODPESSOA], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "FK_PESSOA_PESSOA_TIPO")
+  tipoos    tipoos @relation(fields: [CODTIPOOS], references: [CODTIPOOS], onDelete: NoAction, onUpdate: NoAction, map: "FK_TIPO_PESSOA_TIPO")
+
+  @@id([CODPESSOA, CODTIPOOS])
+  @@index([CODTIPOOS], map: "FK_TIPO_PESSOA_TIPO")
+}
+
+model pfunc {
+  CODCOLIGADA  Int       @db.SmallInt
+  CHAPA        String    @db.VarChar(10)
+  NOME         String    @db.VarChar(225)
+  CODSITUACAO  String    @db.Char(1)
+  CODFUNCAO    String    @db.VarChar(10)
+  DATAADMISSAO DateTime  @db.Date
+  DATADEMISSAO DateTime? @db.DateTime(0)
+  CODFILIAL    Int       @db.SmallInt
+  CPF          String?   @db.VarChar(11)
+  FINGER1      Bytes?    @db.Blob
+  FINGER2      Bytes?    @db.Blob
+  FINGER3      Bytes?    @db.Blob
+  FINGER4      Bytes?    @db.Blob
+  FINGER5      Bytes?    @db.Blob
+  FINGER6      Bytes?    @db.Blob
+  SENHA        Int?      @default(0)
+  EMAIL        String?   @db.VarChar(60)
+  PIS          String?   @db.VarChar(11)
+  BANCO_HORAS  Decimal?  @default(0.00) @db.Decimal(5, 2)
+
+  @@id([CODCOLIGADA, CHAPA])
+  @@index([CODCOLIGADA, CODFUNCAO], map: "FK_PFUNCAO")
+  @@index([CODSITUACAO], map: "FK_PSITUACAO")
+}
+
+model pfuncao {
+  CODCOLIGADA Int    @db.SmallInt
+  CODFUNCAO   String @db.VarChar(10)
+  NOME        String @db.VarChar(100)
+
+  @@id([CODCOLIGADA, CODFUNCAO])
+}
+
+model produtos {
+  ID                   Int                    @id
+  cod_coligada         Int                    @db.SmallInt
+  codigo               String?                @db.VarChar(30)
+  nome_fantasia        String?                @db.VarChar(120)
+  descricao            String?                @db.VarChar(240)
+  inativo              Int?                   @db.SmallInt
+  criado_por           String?                @db.VarChar(50)
+  data_criacao         DateTime?              @db.DateTime(0)
+  modificado_por       String?                @db.VarChar(50)
+  data_modificacao     DateTime?              @db.DateTime(0)
+  ultimo_nivel         Int                    @default(0) @db.SmallInt
+  unidade              String?                @db.VarChar(10)
+  familia              String?                @db.VarChar(9)
+  web_requisicao_items web_requisicao_items[]
+}
+
+model projetos {
+  ID                      Int                       @id @default(autoincrement())
+  DESCRICAO               String?                   @db.VarChar(250)
+  CODGERENTE              Int?
+  ATIVO                   Int?                      @default(1)
+  adicionais              adicionais[]
+  movimentacao_patrimonio movimentacao_patrimonio[]
+  ordemservico            ordemservico[]
+  pessoa                  pessoa?                   @relation(fields: [CODGERENTE], references: [CODGERENTE], onDelete: Cascade, map: "fk_codgerente")
+  web_requisicao          web_requisicao[]
+  web_seguidores_projeto  web_seguidores_projeto[]
+
+  @@index([CODGERENTE], map: "CODGERENTE_idx")
+}
+
+model psituacao {
+  CODSITUACAO String  @id @db.Char(1)
+  DESCRICAO   String? @db.Text
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model relcomentariosapont {
+  CODAPONT Int
+  USUARIO  String @db.VarChar(50)
+
+  @@ignore
+}
+
+model segmento {
+  CODSEGMENTO  Int            @id @default(autoincrement())
+  DESCRICAO    String         @db.VarChar(255)
+  ordemservico ordemservico[]
+}
+
+model sistema {
+  CODSISTEMA        Int       @id @default(autoincrement())
+  VERSAO            String    @db.VarChar(10)
+  DATASINCRONIZACAO DateTime? @db.DateTime(0)
+}
+
+model status {
+  CODSTATUS                                            Int               @id @default(autoincrement())
+  NOME                                                 String            @db.VarChar(255)
+  ACAO                                                 Int               @default(0)
+  ATIVO                                                Boolean           @default(true)
+  historicostatus_historicostatus_CODSTATUSNEWTostatus historicostatus[] @relation("historicostatus_CODSTATUSNEWTostatus")
+  historicostatus_historicostatus_CODSTATUSOLDTostatus historicostatus[] @relation("historicostatus_CODSTATUSOLDTostatus")
+}
+
+model statusapont {
+  CODSTATUSAPONT String @id @default("-") @db.VarChar(2)
+  DESCRICAO      String @default("-") @db.VarChar(25)
+}
+
+model tipoos {
+  CODTIPOOS   Int           @id @default(autoincrement())
+  DESCRICAO   String        @db.Text
+  CODPESSOA   Int           @default(1)
+  pessoa_tipo pessoa_tipo[]
+
+  @@index([CODPESSOA], map: "FK_TIPOOS_PESSOA")
+}
+
+model tkt {
+  CODTKT    Int       @id @default(autoincrement())
+  DATAENVIO DateTime? @db.DateTime(0)
+}
+
+model transporte_extra {
+  ID   Int    @id @default(autoincrement())
+  NOME String @db.VarChar(50)
+}
+
+model vcatalogepi {
+  CODEPI        String   @id @db.VarChar(255)
+  NOME          String   @db.VarChar(225)
+  DESCRICAO     String?  @db.Text
+  INATIVA       Boolean
+  PERIODICIDADE Int?
+  PRECO         Decimal? @db.Decimal(5, 2)
+}
+
+model vcatalogepi_pfunc {
+  CODREGISTRO     Int       @id @default(autoincrement())
+  CODCOLIGADA     Int       @db.SmallInt
+  CHAPA           String    @db.VarChar(16)
+  CODEPI          String    @db.VarChar(10)
+  DATARETIRADA    DateTime? @db.DateTime(0)
+  DATADEVOLUCAO   DateTime? @db.DateTime(0)
+  CA              String    @db.VarChar(255)
+  EMAILENVIADO    Boolean?
+  CODTKT          Int?
+  LATITUDE        Decimal?  @db.Decimal(10, 8)
+  LONGITUDE       Decimal?  @db.Decimal(11, 8)
+  TKTENTREGA      Int?
+  TKTDEVOLUCAO    Int?
+  RECCREATEDBY    String    @db.VarChar(255)
+  RECMODIFIEDBY   String?   @db.VarChar(255)
+  CODFICHAEPI     Int?
+  MOTIVO          String?   @db.Text
+  DESCONTAR       Boolean?  @default(false)
+  DESCONTADO      Boolean?  @default(false)
+  DATADESCONTADO  DateTime? @db.DateTime(0)
+  PRECOADESCONTAR Decimal?  @db.Decimal(5, 2)
+
+  @@index([CODCOLIGADA, CHAPA], map: "FK_PFUNC")
+  @@index([CODEPI], map: "FK_VCATALOGEPI")
+  @@index([CODFICHAEPI], map: "FK_VCATALOGEPI_PFUNC_FICHAEPI")
+}
+
+model web_anexos_os {
+  id_anexo_os  Int          @id @default(autoincrement())
+  codos        Int
+  nome_arquivo String       @db.Text
+  arquivo      String       @db.Text
+  ordemservico ordemservico @relation(fields: [codos], references: [CODOS], onDelete: Cascade, map: "web_anexos_os_ibfk_1")
+
+  @@index([codos], map: "web_anexos_os_ibfk_1")
+}
+
+model web_checklist_movimentacao {
+  id_checklist_movimentacao        Int                                @id @default(autoincrement())
+  id_movimentacao                  Int
+  data_criacao                     DateTime                           @default(now()) @db.Timestamp(0)
+  realizado                        Boolean?                           @default(false)
+  data_realizado                   DateTime?                          @db.Timestamp(0)
+  aprovado                         Boolean?                           @default(false)
+  data_aprovado                    DateTime?                          @db.Timestamp(0)
+  observacao                       String?                            @db.Text
+  reprovado                        Int?                               @db.TinyInt
+  movimentacao_patrimonio          movimentacao_patrimonio            @relation(fields: [id_movimentacao], references: [id_movimentacao], onDelete: Cascade, map: "web_checklist_movimentacao_ibfk_1")
+  web_items_checklist_movimentacao web_items_checklist_movimentacao[]
+
+  @@index([id_movimentacao], map: "id_movimentacao")
+}
+
+model web_classificacao_fiscal {
+  id_classificao_fiscal Int           @id
+  nome                  String        @db.VarChar(50)
+  web_cotacao           web_cotacao[]
+}
+
+model web_cotacao {
+  id_cotacao               Int                       @id @default(autoincrement())
+  id_requisicao            Int
+  fornecedor               String                    @db.VarChar(255)
+  data_cotacao             DateTime?                 @default(now()) @db.DateTime(0)
+  observacao               String?                   @db.Text
+  descricao                String?                   @db.Text
+  cnpj_faturamento         String?                   @default("04016153000188") @db.VarChar(14)
+  valor_frete              Decimal?                  @db.Decimal(10, 2)
+  id_tipo_frete            Int?
+  id_classificacao_fiscal  Int?
+  cnpj_fornecedor          String?                   @db.VarChar(14)
+  criado_por               Int?
+  web_classificacao_fiscal web_classificacao_fiscal? @relation(fields: [id_classificacao_fiscal], references: [id_classificao_fiscal], onDelete: NoAction, onUpdate: NoAction, map: "classificacao_fiscal")
+  pessoa                   pessoa?                   @relation(fields: [criado_por], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "criado_por")
+  web_tipo_frete           web_tipo_frete?           @relation(fields: [id_tipo_frete], references: [id_tipo_frete], onDelete: NoAction, onUpdate: NoAction, map: "tipo_frete")
+  web_requisicao           web_requisicao            @relation(fields: [id_requisicao], references: [ID_REQUISICAO], onDelete: Cascade, map: "web_cotacao_ibfk_1")
+  web_items_cotacao        web_items_cotacao[]
+
+  @@index([id_classificacao_fiscal], map: "classificacao_fiscal_idx")
+  @@index([criado_por], map: "criado_por_idx")
+  @@index([id_requisicao], map: "id_requisicao")
+  @@index([id_tipo_frete], map: "tipo_frete_idx")
+}
+
+model web_familia_tipo {
+  familia             String              @db.Char(9)
+  id_tipo_requisicao  Int
+  web_tipo_requisicao web_tipo_requisicao @relation(fields: [id_tipo_requisicao], references: [id_tipo_requisicao], onDelete: Cascade, map: "fk_tipo_requisicao")
+
+  @@id([familia, id_tipo_requisicao])
+  @@index([id_tipo_requisicao], map: "fk_tipo_requisicao")
+}
+
+model web_items_checklist_movimentacao {
+  id_item_checklist_movimentacao Int                        @id @default(autoincrement())
+  id_checklist_movimentacao      Int
+  nome_item_checklist            String                     @db.VarChar(255)
+  arquivo                        String?                    @db.VarChar(255)
+  problema                       Boolean?                   @default(false)
+  valido                         Boolean?                   @default(true)
+  observacao                     String?                    @db.Text
+  web_checklist_movimentacao     web_checklist_movimentacao @relation(fields: [id_checklist_movimentacao], references: [id_checklist_movimentacao], onDelete: Cascade, map: "web_items_checklist_movimentacao_ibfk_1")
+
+  @@index([id_checklist_movimentacao], map: "web_items_checklist_movimentacao_ibfk_1")
+}
+
+model web_items_checklist_tipo {
+  id_items_checklist_tipo Int                 @id @default(autoincrement())
+  id_tipo_patrimonio      Int
+  nome_item_checklist     String              @db.VarChar(255)
+  created_at              DateTime            @default(now()) @db.Timestamp(0)
+  updated_at              DateTime            @default(now()) @db.Timestamp(0)
+  web_tipo_patrimonio     web_tipo_patrimonio @relation(fields: [id_tipo_patrimonio], references: [id_tipo_patrimonio], onDelete: Cascade, map: "web_items_checklist_tipo_ibfk_1")
+
+  @@index([id_tipo_patrimonio], map: "id_tipo_patrimonio")
+}
+
+model web_items_cotacao {
+  id_item_cotacao       Int         @id @default(autoincrement())
+  id_cotacao            Int
+  descricao_item        String      @db.VarChar(255)
+  preco_unitario        Decimal     @default(0.00) @db.Decimal(10, 2)
+  quantidade_solicitada Int         @default(0)
+  subtotal              Decimal?    @default(0.00) @db.Decimal(10, 2)
+  id_item_requisicao    Int?
+  observacao            String?     @db.Text
+  ICMS                  Decimal?    @db.Decimal(10, 3)
+  IPI                   Decimal?    @db.Decimal(10, 3)
+  ST                    Decimal?    @db.Decimal(10, 3)
+  quantidade_cotada     Int?
+  id_produto            Int?
+  web_cotacao           web_cotacao @relation(fields: [id_cotacao], references: [id_cotacao], onDelete: Cascade, map: "web_items_cotacao_ibfk_1")
+
+  @@index([id_cotacao], map: "id_cotacao")
+}
+
+model web_patrimonio {
+  id_patrimonio           Int                       @id @default(autoincrement())
+  nome                    String                    @db.Text
+  data_compra             DateTime?                 @db.Date
+  nserie                  String?                   @db.VarChar(255)
+  descricao               String?                   @db.Text
+  pat_legado              String?                   @db.VarChar(100)
+  tipo                    Int?                      @db.TinyInt
+  ativo                   Int?                      @default(1) @db.TinyInt
+  fabricante              String?                   @db.Text
+  valor_compra            Decimal?                  @db.Decimal(10, 2)
+  acessorio_patrimonio    acessorio_patrimonio[]
+  anexo_patrimonio        anexo_patrimonio[]
+  movimentacao_patrimonio movimentacao_patrimonio[]
+}
+
+model web_requisicao {
+  ID_REQUISICAO                                  Int                    @id @default(autoincrement())
+  STATUS                                         String?                @db.VarChar(30)
+  DESCRIPTION                                    String?                @db.VarChar(100)
+  ID_PROJETO                                     Int?
+  ID_RESPONSAVEL                                 Int?
+  LAST_UPDATE_ON                                 DateTime?              @db.DateTime(0)
+  CREATED_ON                                     DateTime?              @db.DateTime(0)
+  OBSERVACAO                                     String?                @db.Text
+  LAST_MODIFIED_BY                               Int?
+  TIPO                                           Int?
+  web_cotacao                                    web_cotacao[]
+  projetos                                       projetos?              @relation(fields: [ID_PROJETO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ID_PROJETO")
+  pessoa_web_requisicao_ID_RESPONSAVELTopessoa   pessoa?                @relation("web_requisicao_ID_RESPONSAVELTopessoa", fields: [ID_RESPONSAVEL], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "ID_RESPONSAVEL")
+  pessoa_web_requisicao_LAST_MODIFIED_BYTopessoa pessoa?                @relation("web_requisicao_LAST_MODIFIED_BYTopessoa", fields: [LAST_MODIFIED_BY], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "LAST_MODIFIED_BY")
+  web_requisicao_items                           web_requisicao_items[]
+
+  @@index([ID_PROJETO], map: "ID_PROJETO_idx")
+  @@index([ID_RESPONSAVEL], map: "ID_RESPONSAVEL_idx")
+  @@index([LAST_MODIFIED_BY], map: "LAST_MODIFIED_BY_idx")
+}
+
+model web_requisicao_items {
+  ID             Int            @id @unique(map: "ID_UNIQUE") @default(autoincrement())
+  QUANTIDADE     Int?
+  ID_REQUISICAO  Int
+  ID_PRODUTO     Int?
+  OBSERVACAO     String?        @db.Text
+  ATIVO          Int            @default(1) @db.TinyInt
+  OC             Int?
+  anexos_item    anexos_item[]
+  produtos       produtos?      @relation(fields: [ID_PRODUTO], references: [ID], onDelete: Cascade, onUpdate: NoAction, map: "ID_PRODUTO")
+  web_requisicao web_requisicao @relation(fields: [ID_REQUISICAO], references: [ID_REQUISICAO], onDelete: Cascade, onUpdate: NoAction, map: "ID_REQUISICAO")
+
+  @@index([ID_PRODUTO], map: "ID_PRODUTO_idx")
+  @@index([ID_REQUISICAO], map: "ID_REQUISICAO_idx")
+}
+
+model web_seguidores {
+  CODOS     Int
+  CODPESSOA Int
+
+  @@id([CODOS, CODPESSOA])
+  @@index([CODPESSOA], map: "CODPESSOA")
+}
+
+model web_seguidores_projeto {
+  id_seguidor_projeto Int      @id @default(autoincrement())
+  id_projeto          Int
+  codpessoa           Int
+  ativo               Boolean  @default(true)
+  pessoa              pessoa   @relation(fields: [codpessoa], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "fk_seguidor_projeto_pessoa")
+  projetos            projetos @relation(fields: [id_projeto], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "fk_seguidor_projeto_projeto")
+
+  @@index([codpessoa], map: "fk_seguidor_projeto_pessoa")
+  @@index([id_projeto], map: "fk_seguidor_projeto_projeto")
+}
+
+model web_tipo_frete {
+  id_tipo_frete Int           @id @default(autoincrement())
+  nome          String        @db.VarChar(50)
+  web_cotacao   web_cotacao[]
+}
+
+model web_tipo_patrimonio {
+  id_tipo_patrimonio       Int                        @id @default(autoincrement())
+  nome_tipo                String                     @db.VarChar(255)
+  descricao_tipo           String?                    @db.Text
+  periodicidade            Int?
+  responsavel_tipo         Int?
+  web_items_checklist_tipo web_items_checklist_tipo[]
+}
+
+model web_tipo_requisicao {
+  id_tipo_requisicao Int                @id @default(autoincrement())
+  nome_tipo          String             @db.VarChar(255)
+  web_familia_tipo   web_familia_tipo[]
+}

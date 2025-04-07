@@ -5,6 +5,7 @@ const fireBaseService = require("./fireBaseService");
 const utils = require("../utils");
 const EmailService = require("./EmailService");
 const OpportunityView = require("../views/OpportunityViews");
+const {prisma} = require("../database");
 
 class OpportunityService {
   static getOpportunityById = async (oppId) => {
@@ -539,13 +540,47 @@ class OpportunityService {
     }
   };
 
-  static getOpportunities = async (params) => {
-    const { finished, dateFilters, codpessoa } = params;
+  static getOpportunities = async (req) => {
+    const { finished, dateFilters, codpessoa } = req.params;
     const action = finished === "true" ? 1 : 0;
-    const [opps] = await this.executeQuery(
-      OpportunityRepository.getOpportunitiesQuery(dateFilters, action),
-      [codpessoa, codpessoa, codpessoa, codpessoa]
-    );
+    console.log("action", action);
+    console.log("codpessoa", codpessoa);
+    console.log("dateFilters", dateFilters); 
+    const data = await prisma.ordemservico
+      .findMany({
+        include: {
+          projetos: {
+            include: {
+              pessoa: {
+                select: {
+                  NOME: true,
+                },
+              },
+            },
+          },
+          adicionais: true,
+          cliente: {
+            select: {
+              NOMEFANTASIA: true,
+            },
+          },
+          pessoa: {
+            select: {
+              NOME: true,
+            },
+          },
+        },
+        
+      })
+      .then((results) =>
+        results.map((opp) => ({
+          ...opp,
+          projeto: { ...opp.projetos },
+          responsavel: { ...opp.pessoa },
+        }))
+      );
+
+    console.log('data: ', data[0])
     return opps;
   };
 

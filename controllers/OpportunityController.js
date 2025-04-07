@@ -124,7 +124,6 @@ class OpportunityController {
     }
   }
 
-
   static createOpportuntiyFile = async (req, res) => {
     const file = req.file;
     if (!file) {
@@ -176,7 +175,7 @@ class OpportunityController {
 
   static getOpportunities = async (req, res) => {
     try {
-      const opps = await OpportunityService.getOpportunities(req.query);
+      const opps = await OpportunityService.getOpportunities(req);
       return res.status(200).send(opps);
     } catch (e) {
       console.log("error getting opportunities: ", e.message);
