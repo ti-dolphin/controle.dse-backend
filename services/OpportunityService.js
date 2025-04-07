@@ -553,6 +553,7 @@ class OpportunityService {
             include: {
               pessoa: {
                 select: {
+                  CODGERENTE: true,
                   NOME: true,
                 },
               },
@@ -561,27 +562,36 @@ class OpportunityService {
           adicionais: true,
           cliente: {
             select: {
+              CODCOLIGADA: true,
+              CODCLIENTE : true,
               NOMEFANTASIA: true,
             },
           },
           pessoa: {
             select: {
+              CODPESSOA: true,
               NOME: true,
             },
           },
+          status: true,
         },
-        
+        where: {
+          projetos: {
+            ATIVO: 1,
+          }
+        }
       })
       .then((results) =>
         results.map((opp) => ({
           ...opp,
-          projeto: { ...opp.projetos },
+          projeto: { ...opp.projetos, gerente: { ...opp.projetos.pessoa } },
           responsavel: { ...opp.pessoa },
+          
         }))
       );
 
-    console.log('data: ', data[0])
-    return opps;
+    console.log('data: ', data[5])
+    return data;
   };
 
   static async executeQuery(query, params) {

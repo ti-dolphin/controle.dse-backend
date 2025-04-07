@@ -413,6 +413,7 @@ model ordemservico {
   EMAIL_VENDA_ENVIADO     Boolean?          @default(false)
   alteracoesos            alteracoesos[]
   historicostatus         historicostatus[]
+  status                  status?           @relation(fields: [CODSTATUS], references: [CODSTATUS], onDelete: NoAction, onUpdate: NoAction, map: "CODSTATUS")
   cidade                  cidade?           @relation(fields: [CODCIDADE], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "FK_CIDADE_ORDEMSERVICO")
   cliente                 cliente?          @relation(fields: [FK_CODCOLIGADA, FK_CODCLIENTE], references: [CODCOLIGADA, CODCLIENTE], onDelete: NoAction, onUpdate: NoAction, map: "FK_ORDEMSERVICO_CLIENTE")
   segmento                segmento          @relation(fields: [CODSEGMENTO], references: [CODSEGMENTO], onDelete: NoAction, onUpdate: NoAction, map: "FK_SEGMENTO_ORDEMSERVICO")
@@ -634,6 +635,7 @@ model status {
   ATIVO                                                Boolean           @default(true)
   historicostatus_historicostatus_CODSTATUSNEWTostatus historicostatus[] @relation("historicostatus_CODSTATUSNEWTostatus")
   historicostatus_historicostatus_CODSTATUSOLDTostatus historicostatus[] @relation("historicostatus_CODSTATUSOLDTostatus")
+  ordemservico                                         ordemservico[]
 }
 
 model statusapont {
