@@ -572,6 +572,7 @@ class OpportunityService {
               CODPESSOA: true,
               NOME: true,
             },
+            
           },
           status: true,
         },
@@ -590,7 +591,6 @@ class OpportunityService {
         }))
       );
 
-    console.log('data: ', data[5])
     return data;
   };
 

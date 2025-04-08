@@ -1,86 +1,140 @@
-const pool = require("../database");
+const {prisma} = require("../database");
 
 class PersonService {
+  static async getAllManagers() {
+    console.log("getAllManagers");
+    try {
+      const activeManagerCodes = await prisma.ordemservico.findMany({
+        where: { 
+          projetos: {
+            ATIVO: 1,
+            CODGERENTE: {
+              not: null,
+            }
+          },
+        },
+        select: { 
+          projetos: {
+            select: {
+              CODGERENTE: true,
+            },
+          }
+        }
+      }).then((results) => results.map((result) => result.projetos.CODGERENTE));
+      const managers = await prisma.pessoa.findMany({
+        where: {
+          CODGERENTE: {
+            in: activeManagerCodes,
+          },
+        },
+        select: { 
+          NOME: true,
+          CODPESSOA: true,
+          CODGERENTE: true
+        }
+      });
+       return managers;
+    } catch (e) {
+      console.log('ERRO AO PEGAR GERENTES: ', e.message)
+      throw new Error(e);
+    }
+  }
 
-  static getAllManagers = async () => { 
-      try{ 
-        const query = `
-        SELECT * FROM PESSOA 
-          WHERE CODGERENTE IN (SELECT CODGERENTE FROM ORDEMSERVICO OS INNER JOIN PROJETOS P ON OS.ID_PROJETO = P.ID WHERE P.ATIVO = 1)
-        `;
-        const [managers] = await this.executeQuery(query);
-        return managers
-      }catch(e){ 
-        throw new Error(e);
+  static async getClients(projectId) {
+    try {
+      if (Number(projectId) !== 0) {
+        const clients = await prisma.cliente.findMany({
+          where: {
+            ordemservico: {
+              some: {
+                ID_PROJETO: Number(projectId),
+                adicionais: {
+                  NUMERO: 0,
+                },
+              },
+            },
+          },
+          select: {
+            CODCLIENTE: true,
+            NOMEFANTASIA: true,
+            CODCOLIGADA: true,
+          },
+        });
+        return clients;
+      } else {
+        const clients = await prisma.cliente.findMany({
+          where: {
+            ordemservico: {
+              some: {
+                projetos: {
+                  ATIVO: 1,
+                },
+              },
+            },
+          },
+          select: {
+            CODCLIENTE: true,
+            NOMEFANTASIA: true,
+          },
+        });
+        return clients;
       }
-  }
-
-  static async getClients(projectId ){ 
-    let query;
-
-    if (Number(projectId) !== 0){ 
-      query = `
-        SELECT CODCLIENTE, NOMEFANTASIA, CODCOLIGADA FROM ORDEMSERVICO OS
-        INNER JOIN PROJETOS P ON P.ID = OS.ID_PROJETO
-        INNER JOIN ADICIONAIS A ON OS.ID_ADICIONAL = A.ID
-        INNER JOIN CLIENTE C ON C.CODCLIENTE = OS.FK_CODCLIENTE
-        where OS.ID_PROJETO = ${projectId} AND A.NUMERO = 0
-      `
-
-    }else  { 
-      query = `
-      SELECT CODCLIENTE, NOMEFANTASIA FROM CLIENTE WHERE CODCLIENTE IN (
-        SELECT FK_CODCLIENTE FROM dsecombr_controle.ORDEMSERVICO OS INNER JOIN
-          PROJETOS P ON P.ID = OS.ID_PROJETO WHERE
-          P.ATIVO = 1
-      );
-    `;
-    }
-    try {
-      const [rows, fields] = await PersonService.executeQuery(query);
-      return rows;
     } catch (e) {
       console.log(e);
       return null;
     }
   }
 
-  static async getSallers ( projectId){ 
-    const personTable = "pessoa".toUpperCase();
-    let query;
-    if (Number(projectId)){ 
-      query = `
-      SELECT  P.NOME, P.CODPESSOA FROM ORDEMSERVICO OS INNER JOIN ADICIONAIS A ON A.ID = OS.ID_ADICIONAL
-      INNER JOIN PESSOA P ON P.CODPESSOA = OS.RESPONSAVEL
-      where OS.ID_PROJETO = ${projectId} and A.NUMERO = 0
-     `
-    }else{ 
-      query = `
-      SELECT NOME, CODPESSOA 
-      FROM ${personTable}
-      WHERE PERM_COMERCIAL = 1
-    `;
-    }
-    
+  static async getSallers(projectId) {
     try {
-      const [rows, fields] = await PersonService.executeQuery(query);
-      return rows;
+      if (Number(projectId)) {
+        const sellers = await prisma.pessoa.findMany({
+          where: {
+            ordemservico: {
+              some: {
+                ID_PROJETO: Number(projectId),
+                adicionais: {
+                  NUMERO: 0,
+                },
+              },
+            },
+          },
+          select: {
+            NOME: true,
+            CODPESSOA: true,
+          },
+        });
+        return sellers;
+      } else {
+        const sellers = await prisma.pessoa.findMany({
+          where: {
+            PERM_COMERCIAL: 1,
+          },
+          select: {
+            NOME: true,
+            CODPESSOA: true,
+          },
+        });
+        return sellers;
+      }
     } catch (e) {
       console.log(e);
       return null;
     }
   }
-    
+
   static async getAllPersons() {
-    const personTable = "pessoa".toUpperCase();
-    const query = `
-      SELECT NOME, CODPESSOA 
-      FROM ${personTable} 
-      WHERE ATIVO = 1
-    `;
     try {
-      const [rows, fields] = await PersonService.executeQuery(query);
-      return rows;
+      const persons = await prisma.pessoa.findMany({
+        where: {
+          ATIVO: true,
+        },
+        select: {
+          NOME: true,
+          CODPESSOA: true,
+        },
+      });
+      return persons;
     } catch (e) {
       console.log(e);
       return null;
@@ -88,26 +142,21 @@ class PersonService {
   }
 
   static async getPersonByID(id) {
-    const personTable = "pessoa".toUpperCase();
-    const query = `
-      SELECT NOME, CODPESSOA 
-      FROM ${personTable} 
-      WHERE CODPESSOA = ?
-    `;
     try {
-      const [rows, fields] = await PersonService.executeQuery(query, [id]);
-      return rows;
+      const person = await prisma.pessoa.findMany({
+        where: {
+          CODPESSOA: Number(id),
+        },
+        select: {
+          NOME: true,
+          CODPESSOA: true,
+        },
+      });
+      return person;
     } catch (e) {
       console.log(e);
       return null;
     }
-  }
-  
-  static async executeQuery(query, params = []) {
-    const connection = await pool.getConnection();
-      const result = await connection.query(query, params);
-      connection.release();
-      return result;
   }
 }
 
