@@ -254,6 +254,7 @@ FROM
   static getOppStatusList = async () => {
     return await prisma.status.findMany();
   };
+  
   static getOpportunityById = async (id) => {
     return await prisma.ordemservico
       .findFirst({
@@ -290,6 +291,7 @@ FROM
         adicional : { ...opp.adicionais },
       }));
   };
+
   static async getOppornities(params) {
     return await prisma.ordemservico
       .findMany({
@@ -344,7 +346,7 @@ FROM
         },
       })
       .then((results) =>
-        results.map((opp) => ({
+        results.map((opp) => ({  
           ...opp,
           projeto: { ...opp.projetos, gerente: { ...opp.projetos.pessoa } },
           responsavel: { ...opp.pessoa },
