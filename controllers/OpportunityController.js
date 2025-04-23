@@ -21,12 +21,12 @@ class OpportunityController {
         req.params.oppId
       );
       if (!opportunity) {
-        return res.status(404).send("Opportunity not found");
+        return res.status(404).send("Oportunidade não encontrada");
       }
       return res.status(200).send(opportunity);
     } catch (e) {
-      console.error("Error getting opportunity: ", e.message);
-      return res.status(500).send("Server Error");
+      console.error("Erro ao buscar dados da oportunidade: ", e.message);
+      return res.status(500).send(`Erro ao buscar dados da oportunidade: ${e.message}`);
     }
   };
 
@@ -157,7 +157,7 @@ class OpportunityController {
       const statusList = await OpportunityService.getOppStatusList();
       return res.status(200).send(statusList);
     } catch (e) {
-      console.log("error getting status list: ", e.message);
+      console.log("Erro ao obter a lista de status: ", e.message);
       res.status(500).json({ error: e.message });
     }
   };
@@ -178,7 +178,7 @@ class OpportunityController {
       const opps = await OpportunityService.getOpportunities(req);
       return res.status(200).send(opps);
     } catch (e) {
-      console.log("error getting opportunities: ", e.message);
+      console.log("Erro ao buscar oportunidades: ", e.message);
       res.status(500).json({ error: e.message });
     }
   };

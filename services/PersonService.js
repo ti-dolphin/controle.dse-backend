@@ -41,6 +41,7 @@ class PersonService {
   }
 
   static async getClients(projectId) {
+
     try {
       if (Number(projectId) !== 0) {
         const clients = await prisma.cliente.findMany({

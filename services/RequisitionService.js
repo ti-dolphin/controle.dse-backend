@@ -26,54 +26,6 @@ class RequisitionService {
     }
   }
 
-  static async setKanbanQuery(userID, currentKanbanFilter) {
-    const purchaser = await userController.isPurchaser(userID);
-    if (purchaser) {
-      return await this.definePurchaser(userID, currentKanbanFilter);
-    }
-    return await this.defineNonPurchaserQuery(userID, currentKanbanFilter);
-  }
-
-  static async definePurchaser(userID, currentKanbanFilter) {
-    let query, params;
-    if (currentKanbanFilter.toUpperCase() === "A FAZER") {
-      query = RequisitionRepository.getPurchaser_toDo();
-      params = ["Requisitado"];
-    } else if (currentKanbanFilter.toUpperCase() === "FAZENDO") {
-      query = RequisitionRepository.getPurchaser_doing();
-      params = ["Em cotação", "Cotado"];
-    } else if (currentKanbanFilter.toUpperCase() === "CONCLUÍDO") {
-      query = RequisitionRepository.getPurchaser_done();
-      params = ["Concluído"];
-    } else if (currentKanbanFilter.toUpperCase() === "TUDO") {
-      query = RequisitionRepository.getPurchaser_all();
-      params = [];
-    }
-    return { query, params };
-  }
-
-  static async defineNonPurchaserQuery(userID, currentKanbanFilter) {
-    let query, params;
-    if (currentKanbanFilter.toUpperCase() === "BACKLOG") {
-      query = RequisitionRepository.getNonPurchaser_backlog();
-      params = ["Em edição", userID];
-    } else if (currentKanbanFilter.toUpperCase() === "ACOMPANHAMENTO") {
-      const gerente = await userController.isManager(userID);
-      if (gerente) {
-        query = RequisitionRepository.getManagerRequisitions_monitoring();
-        const codgerente = await userController.getManagerCode(userID);
-        params = ["Em edição", "Concluído", codgerente, userID];
-      } else {
-        query = RequisitionRepository.getNonPurchaser_monitoring();
-        params = ["Em edição", "Concluído", userID];
-      }
-    } else if (currentKanbanFilter.toUpperCase() === "TUDO") {
-      query = RequisitionRepository.getNonPurchaser_all();
-      params = [];
-    }
-    return { query, params };
-  }
-
   static async getRequisitionByID(id) {
     const query = RequisitionRepository.getById();
     try {

@@ -1,7 +1,6 @@
-
+const { prisma } = require("../database");
 
 class OpportunityRepository {
-
   static getOppsByManagerQuery = () => {
     return `SELECT
     P.CODPESSOA,
@@ -58,8 +57,8 @@ class OpportunityRepository {
 FROM
     PESSOA P
 WHERE
-    P.CODGERENTE IS NOT NULL;`
-  }
+    P.CODGERENTE IS NOT NULL;`;
+  };
 
   static getOppsByComercialResponsableQuery = () => {
     return `
@@ -119,8 +118,8 @@ WHERE
     ) AS toExpireOpportunities
 FROM
     PESSOA P WHERE P.PERM_COMERCIAL = 1;
-                `
-  }
+                `;
+  };
 
   static deleteOppFilesQuery = (idsToDeleteString) => {
     return `
@@ -168,110 +167,7 @@ FROM
         (?, ?, ?, ?, ? ,?)
     `;
   };
-  static getOppByIdQuery = () => {
-    return `
-                      SELECT 
-              CODOS as codOs, 
-              CODTIPOOS as codTipoOs, 
-              CODCCUSTO as codCCusto, 
-              OBRA as obra, 
-              DATASOLICITACAO as dataSolicitacao, 
-              DATANECESSIDADE as dataNecessidade, 
-              DOCREFERENCIA as docReferencia, 
-              LISTAMATERIAIS as listaMateriais, 
-              DATAINICIO as dataInicio, 
-              DATAPREVENTREGA as dataPrevEntrega, 
-              DATAENTREGA as dataEntrega, 
-              CODSTATUS as codStatus, 
-              ORDEMSERVICO.NOME as nome,
-              DESCRICAO as descricao, 
-              ATIVIDADES as atividades, 
-              PRIORIDADE as prioridade, 
-              SOLICITANTE as solicitante, 
-              RESPONSAVEL as responsavel, 
-              CODDISCIPLINA as codDisciplina, 
-              GUT as gut, 
-              GRAVIDADE as gravidade, 
-              URGENCIA as urgencia, 
-              TENDENCIA as tendencia, 
-              DATALIBERACAO as dataLiberacao, 
-              RELACIONAMENTO as relacionamento, 
-              FK_CODCLIENTE as fkCodCliente, 
-              NOMEFANTASIA as nomeCliente,
-              FK_CODCOLIGADA as fkCodColigada, 
-              VALORFATDIRETO as valorFatDireto, 
-              VALORSERVICOMO as valorServicoMO, 
-              VALORSERVICOMATAPLICADO as valorServicoMatAplicado, 
-              VALORMATERIAL as valorMaterial, 
-              VALORTOTAL as valorTotal, 
-              CODSEGMENTO as codSegmento, 
-              CODCIDADE as codCidade, 
-              VALORLOCACAO as valorLocacao, 
-              ID_ADICIONAL as idAdicional, 
-              ORDEMSERVICO.ID_PROJETO as idProjeto, 
-              DATAINTERACAO as dataInteracao, 
-              VALORFATDOLPHIN as valorFatDolphin, 
-              PRINCIPAL as principal, 
-              VALOR_COMISSAO as valorComissao, 
-              ID_MOTIVO_PERDIDO as idMotivoPerdido, 
-              OBSERVACOES as observacoes, 
-              DESCRICAO_VENDA as descricaoVenda, 
-              EMAIL_VENDA_ENVIADO as emailVendaEnviado,
-              NUMERO as numeroAdicional,
-              COALESCE(
-                  (
-                      SELECT JSON_ARRAYAGG(
-                          JSON_OBJECT(
-                              'codigoComentario', c.CODCOMENTARIO,
-                              'descricao', c.DESCRICAO,
-                              'criadoEm', c.RECCREATEDON,
-                              'criadoPor', c.RECCREATEDBY,
-                              'email', c.EMAIL
-                          )
-                      )
-                      FROM COMENTARIOS c
-                      WHERE c.CODOS = ORDEMSERVICO.CODOS
-                  ), JSON_ARRAY()
-              ) AS comentarios, -- Lista de comentários em formato JSON
-              COALESCE(
-                  (
-                      SELECT JSON_ARRAYAGG(
-                          JSON_OBJECT(
-                              'id_anexo_os', a.id_anexo_os,
-                              'codos', a.codos,
-                              'nome_arquivo', a.nome_arquivo,
-                              'arquivo', a.arquivo
-                          )
-                      )
-                      FROM web_anexos_os a
-                      WHERE a.codos = ORDEMSERVICO.CODOS
-                  ), JSON_ARRAY()
-              ) AS files, -- Lista de anexos em formato JSON
-              COALESCE(
-                  (
-                      SELECT JSON_ARRAYAGG(
-                          JSON_OBJECT(
-                              'id_seguidor_projeto', s.id_seguidor_projeto,
-                              'id_projeto', s.id_projeto,
-                              'codpessoa', s.codpessoa,
-                              'ativo', s.ativo,
-                              'nome', PESSOA.NOME
-                          )
-                      )
-                      FROM web_seguidores_projeto s
-                      INNER JOIN PESSOA ON PESSOA.CODPESSOA = s.codpessoa
-                      WHERE s.id_projeto = ORDEMSERVICO.ID_PROJETO
-                  ), JSON_ARRAY()
-              ) AS seguidores -- Lista de seguidores em formato JSON
-          FROM 
-              ORDEMSERVICO 
-          INNER JOIN 
-              ADICIONAIS ON ID = ID_ADICIONAL
-          INNER JOIN CLIENTE ON CLIENTE.CODCLIENTE = ORDEMSERVICO.FK_CODCLIENTE
-          WHERE 
-              CODOS = ?;
-    `;
-  };
+
   static getOppFilesQuery = () => {
     return `
           SELECT id_anexo_os,codos,nome_arquivo,arquivo FROM web_anexos_os where codos = ? ;
@@ -355,66 +251,106 @@ FROM
           );
     `;
   };
-  static getOppStatusListQuery = () => {
-    return `
-      SELECT * FROM STATUS as s where ATIVO = 1
-    `;
+  static getOppStatusList = async () => {
+    return await prisma.status.findMany();
   };
-  static getOpportunitiesQuery = (dateFilters, action) => {
-  let baseQuery = `
-    SELECT 
-        os.ID_PROJETO AS numeroProjeto,
-        ad.NUMERO AS numeroAdicional,
-        s.NOME AS nomeStatus,
-        c.NOMEFANTASIA AS nomeCliente,
-        os.NOME AS nomeDescricaoProposta,
-        os.DATASOLICITACAO AS dataSolicitacao,
-        os.DATAENTREGA AS dataFechamento,
-        os.DATAINTERACAO AS dataInteracao,
-        os.DATAINICIO AS dataInicio,
-        vendedor.NOME AS nomeVendedor,
-        gerente.NOME AS nomeGerente,
-        CONCAT('R$ ', FORMAT(os.VALORFATDOLPHIN, 2, 'de_DE')) AS valorFaturamentoDolphin,
-        CONCAT('R$ ', FORMAT(os.VALORFATDIRETO, 2, 'de_DE')) AS valorFaturamentoDireto,
-        CONCAT('R$ ', FORMAT((os.VALORFATDOLPHIN + os.VALORFATDIRETO), 2, 'de_DE')) AS valorTotal,
-        os.CODOS AS numeroOs,
-        /* Date status indicators */
-        CASE WHEN os.DATAINTERACAO < CURDATE() THEN 1 ELSE 0 END AS dataInteracao_vencida,
-        CASE WHEN os.DATAINTERACAO >= CURDATE() 
-                  AND os.DATAINTERACAO < DATE_ADD(CURDATE(), INTERVAL 5 DAY) 
-             THEN 1 ELSE 0 END AS dataInteracao_a_vencer,
-        CASE WHEN os.DATAINTERACAO >= DATE_ADD(CURDATE(), INTERVAL 5 DAY) 
-             THEN 1 ELSE 0 END AS dataInteracao_em_dia
-    FROM 
-        ORDEMSERVICO os
-    LEFT JOIN PROJETOS p ON os.ID_PROJETO = p.ID
-    LEFT JOIN CLIENTE c ON os.FK_CODCLIENTE = c.CODCLIENTE AND os.FK_CODCOLIGADA = c.CODCOLIGADA
-    LEFT JOIN PESSOA vendedor ON os.RESPONSAVEL = vendedor.CODPESSOA
-    LEFT JOIN PESSOA gerente ON p.CODGERENTE = gerente.CODGERENTE
-    LEFT JOIN STATUS s ON os.CODSTATUS = s.CODSTATUS
-    LEFT JOIN ADICIONAIS ad ON ad.ID = os.ID_ADICIONAL
-    WHERE 
-        p.ATIVO = 1 AND s.ATIVO = 1  
-        ${action ? "AND s.ACAO IN (1, 0) AND" : "AND s.ACAO = 0 AND"}
-        (
-            os.ID_PROJETO IN (SELECT id_projeto FROM web_seguidores_projeto WHERE codpessoa = ?)
-            OR os.ID_PROJETO IN (SELECT ID FROM PROJETOS WHERE PROJETOS.CODGERENTE IN (SELECT CODGERENTE FROM PESSOA WHERE CODPESSOA = ?))
-            OR os.RESPONSAVEL = ?
-            OR ? IN (SELECT CODPESSOA FROM PESSOA WHERE PERM_ADMINISTRADOR = 1)
-        )
-`;
-    for (let dateFilter of dateFilters) {
-      if (dateFilter.from !== "") {
-        baseQuery += ` AND ${dateFilter.dbField} >= '${dateFilter.from}'`;
-      }
-      if (dateFilter.to !== "") {
-        baseQuery += ` AND ${dateFilter.dbField} <= '${dateFilter.to}'`;
-      }
-    }
-    baseQuery += ` ORDER BY 
-                os.CODOS DESC; -- Ordenação pelo número da ordem de serviço, do maior para o menor.`
-    return baseQuery;
+  static getOpportunityById = async (id) => {
+    return await prisma.ordemservico
+      .findFirst({
+        where: {
+          CODOS: Number(id),
+        },
+        include: {
+          web_anexos_os: true,
+          projetos: {
+            include: {
+              pessoa: {
+                select: {
+                  NOME: true,
+                  CODPESSOA: true,
+                },
+              },
+            },
+          },
+          cliente: true,
+          pessoa: {
+            select: {
+              NOME: true,
+              CODPESSOA: true,
+            },
+          },
+          status: true,
+          adicionais: true,
+        },
+      })
+      .then((opp) => ({
+        ...opp,
+        responsavel: { ...opp.pessoa },
+        projeto: { ...opp.projetos, gerente: opp.projetos.pessoa },
+        adicional : { ...opp.adicionais },
+      }));
   };
+  static async getOppornities(params) {
+    return await prisma.ordemservico
+      .findMany({
+        include: {
+          projetos: {
+            include: {
+              pessoa: {
+                select: {
+                  CODGERENTE: true,
+                  NOME: true,
+                },
+              },
+            },
+          },
+          adicionais: true,
+          cliente: {
+            select: {
+              CODCOLIGADA: true,
+              CODCLIENTE: true,
+              NOMEFANTASIA: true,
+            },
+          },
+          pessoa: {
+            select: {
+              CODPESSOA: true,
+              NOME: true,
+            },
+          },
+          status: true,
+        },
+        where: {
+          projetos: {
+            ATIVO: 1,
+            OR: [
+              {
+                web_seguidores_projeto: {
+                  some: {
+                    codpessoa: Number(params.codpessoa),
+                  },
+                },
+              },
+              {
+                pessoa: {
+                  PERM_ADMINISTRADOR: 1,
+                },
+              },
+            ],
+          },
+          status: {
+            ACAO: Number(params.acao),
+          },
+        },
+      })
+      .then((results) =>
+        results.map((opp) => ({
+          ...opp,
+          projeto: { ...opp.projetos, gerente: { ...opp.projetos.pessoa } },
+          responsavel: { ...opp.pessoa },
+        }))
+      );
+  }
 }
 
 module.exports = OpportunityRepository;

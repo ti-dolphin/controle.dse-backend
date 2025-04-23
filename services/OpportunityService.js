@@ -9,11 +9,7 @@ const {prisma} = require("../database");
 
 class OpportunityService {
   static getOpportunityById = async (oppId) => {
-    const [opp] = await this.executeQuery(
-      OpportunityRepository.getOppByIdQuery(),
-      [oppId]
-    );
-    return opp;
+    return await OpportunityRepository.getOpportunityById(oppId);
   };
 
   static getOpportunityFiles = async (oppId) => {
@@ -492,10 +488,7 @@ class OpportunityService {
   };
 
   static getOppStatusList = async () => {
-    const statusList = await this.executeQuery(
-      OpportunityRepository.getOppStatusListQuery()
-    );
-    return statusList;
+    return await OpportunityRepository.getOppStatusList();
   };
 
   static handleComments = async (comentarios, opportunityId) => {
@@ -541,57 +534,7 @@ class OpportunityService {
   };
 
   static getOpportunities = async (req) => {
-    const { finished, dateFilters, codpessoa } = req.params;
-    const action = finished === "true" ? 1 : 0;
-    console.log("action", action);
-    console.log("codpessoa", codpessoa);
-    console.log("dateFilters", dateFilters); 
-    const data = await prisma.ordemservico
-      .findMany({
-        include: {
-          projetos: {
-            include: {
-              pessoa: {
-                select: {
-                  CODGERENTE: true,
-                  NOME: true,
-                },
-              },
-            },
-          },
-          adicionais: true,
-          cliente: {
-            select: {
-              CODCOLIGADA: true,
-              CODCLIENTE : true,
-              NOMEFANTASIA: true,
-            },
-          },
-          pessoa: {
-            select: {
-              CODPESSOA: true,
-              NOME: true,
-            },
-            
-          },
-          status: true,
-        },
-        where: {
-          projetos: {
-            ATIVO: 1,
-          }
-        }
-      })
-      .then((results) =>
-        results.map((opp) => ({
-          ...opp,
-          projeto: { ...opp.projetos, gerente: { ...opp.projetos.pessoa } },
-          responsavel: { ...opp.pessoa },
-          
-        }))
-      );
-
-    return data;
+     return await OpportunityRepository.getOppornities(req.query);
   };
 
   static async executeQuery(query, params) {
