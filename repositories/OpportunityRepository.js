@@ -125,20 +125,24 @@ FROM
     return `
     DELETE FROM web_anexos_os WHERE id_anexo_os in ${idsToDeleteString}`;
   };
+
   static getAllFollowers = () => {
     return `
       SELECT * FROM web_seguidores_projeto WHERE ativo = 1
     `;
   };
+
   static deleteAllfollowersByProjectId = () => {
     return `
      DELETE FROM web_seguidores_projeto WHERE id_projeto = ?
     `;
   };
+
   static deleteFollowersByProjectIdQuery = (currentFollowerCodpessoaList) => {
     return `
     DELETE FROM web_seguidores_projeto WHERE id_projeto = ? AND codpessoa NOT IN  (${currentFollowerCodpessoaList})`;
   };
+
   static createFollowerQuery = () => {
     return `
           insert into 
@@ -152,6 +156,7 @@ FROM
         (?,?,?,?);
     `;
   };
+
   static updateCommentQuery = () => {
     return `
       UPDATE COMENTARIOS SET
@@ -173,6 +178,7 @@ FROM
           SELECT id_anexo_os,codos,nome_arquivo,arquivo FROM web_anexos_os where codos = ? ;
     `;
   };
+
   static createOppFileQuery = () => {
     return `insert into web_anexos_os (
         codos, nome_arquivo, 
@@ -182,6 +188,7 @@ FROM
         (?, ?, ?);
       `;
   };
+
   static updateOpportunityQuery = () => {
     return `
       UPDATE ORDEMSERVICO SET 
@@ -238,6 +245,7 @@ FROM
       FROM ADICIONAIS
       WHERE ID_PROJETO = ?`;
   };
+
   static createOpportunityQuery = () => {
     return `
             INSERT INTO ORDEMSERVICO (
@@ -251,12 +259,13 @@ FROM
           );
     `;
   };
+
   static getOppStatusList = async () => {
     return await prisma.status.findMany();
   };
   
   static getOpportunityById = async (id) => {
-    return await prisma.ordemservico
+    const opp = await prisma.ordemservico
       .findFirst({
         where: {
           CODOS: Number(id),
@@ -290,6 +299,13 @@ FROM
         projeto: { ...opp.projetos, gerente: opp.projetos.pessoa },
         adicional : { ...opp.adicionais },
       }));
+    const comments = await prisma.comentarios.findMany({
+      where: {
+        CODOS: Number(id),
+      },
+    });
+    console.log('comments', comments);
+    return { ...opp, comentarios : comments };
   };
 
   static async getOppornities(params) {
