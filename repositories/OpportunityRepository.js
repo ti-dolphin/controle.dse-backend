@@ -189,55 +189,15 @@ FROM
       `;
   };
 
-  static updateOpportunityQuery = () => {
-    return `
-      UPDATE ORDEMSERVICO SET 
-      CODTIPOOS = ?, 
-      CODCCUSTO = ?, 
-      OBRA = ?, 
-      DATASOLICITACAO = ?, 
-      DATANECESSIDADE = ?, 
-      DOCREFERENCIA = ?, 
-      LISTAMATERIAIS = ?, 
-      DATAINICIO = ?, 
-      DATAPREVENTREGA = ?, 
-      DATAENTREGA = ?, 
-      CODSTATUS = ?, 
-      NOME = ?, 
-      DESCRICAO = ?, 
-      ATIVIDADES = ?, 
-      PRIORIDADE = ?, 
-      SOLICITANTE = ?, 
-      RESPONSAVEL = ?, 
-      CODDISCIPLINA = ?, 
-      GUT = ?, 
-      GRAVIDADE = ?, 
-      URGENCIA = ?, 
-      TENDENCIA = ?, 
-      DATALIBERACAO = ?, 
-      RELACIONAMENTO = ?, 
-      FK_CODCLIENTE = ?, 
-      FK_CODCOLIGADA = ?, 
-      VALORFATDIRETO = ?, 
-      VALORSERVICOMO = ?, 
-      VALORSERVICOMATAPLICADO = ?, 
-      VALORMATERIAL = ?, 
-      VALORTOTAL = ?, 
-      CODSEGMENTO = ?, 
-      CODCIDADE = ?, 
-      VALORLOCACAO = ?, 
-      ID_ADICIONAL = ?, 
-      ID_PROJETO = ?, 
-      DATAINTERACAO = ?, 
-      VALORFATDOLPHIN = ?, 
-      PRINCIPAL = ?, 
-      VALOR_COMISSAO = ?, 
-      id_motivo_perdido = ?, 
-      observacoes = ?, 
-      DESCRICAO_VENDA = ?, 
-      EMAIL_VENDA_ENVIADO = ?
-      WHERE CODOS = ?
-    `;
+  static updateOpportunity = async (oppId, opp, user) => {
+    delete opp.CODOS;
+    delete opp.web_anexos_os;
+    return await prisma.ordemservico.update({
+      where: {
+      CODOS: Number(oppId),
+      },
+      data: opp
+    })
   };
   static createAdicional = () => {
     return `INSERT INTO ADICIONAIS (ID_PROJETO, NUMERO)

@@ -287,125 +287,15 @@ class OpportunityService {
       );
   };
 
-  static updateOpportunity = async (opp, user) => {
-    const {
-      codOs,
-      codTipoOs,
-      codCCusto,
-      obra,
-      dataSolicitacao,
-      dataNecessidade,
-      docReferencia,
-      listaMateriais,
-      dataInicio,
-      dataPrevEntrega,
-      dataEntrega,
-      codStatus,
-      nome,
-      descricao,
-      atividades,
-      prioridade,
-      solicitante,
-      responsavel,
-      codDisciplina,
-      gut,
-      gravidade,
-      urgencia,
-      tendencia,
-      dataLiberacao,
-      relacionamento,
-      fkCodCliente,
-      fkCodColigada,
-      valorFatDireto,
-      valorServicoMO,
-      valorServicoMatAplicado,
-      valorMaterial,
-      valorTotal,
-      codSegmento,
-      codCidade,
-      valorLocacao,
-      idAdicional,
-      idProjeto,
-      dataInteracao,
-      valorFatDolphin,
-      principal,
-      valorComissao,
-      idMotivoPerdido,
-      observacoes,
-      descricaoVenda,
-      emailVendaEnviado,
-      comentarios,
-      seguidores,
-      files,
-    } = opp;
-
-    const oldOpportunity = await this.getOpportunityById(codOs);
-    const affectedRows = await this.executeQuery(
-      OpportunityRepository.updateOpportunityQuery(),
-      [
-        codTipoOs,
-        codCCusto,
-        obra,
-        dataSolicitacao ? dataSolicitacao.slice(0, 19).replace("T", " ") : null, // Formata dataSolicitacao
-        dataNecessidade ? dataNecessidade.slice(0, 19).replace("T", " ") : null, // Formata dataNecessidade
-        docReferencia,
-        listaMateriais,
-        dataInicio ? dataInicio.slice(0, 19).replace("T", " ") : null, // Formata dataInicio
-        dataPrevEntrega ? dataPrevEntrega.slice(0, 19).replace("T", " ") : null, // Formata dataPrevEntrega
-        dataEntrega ? dataEntrega.slice(0, 19).replace("T", " ") : null, // Formata dataEntrega
-        codStatus,
-        nome,
-        descricao,
-        atividades,
-        prioridade,
-        solicitante,
-        responsavel,
-        codDisciplina,
-        gut,
-        gravidade,
-        urgencia,
-        tendencia,
-        dataLiberacao ? dataLiberacao.slice(0, 19).replace("T", " ") : null, // Formata dataLiberacao
-        relacionamento,
-        fkCodCliente,
-        fkCodColigada,
-        valorFatDireto,
-        valorServicoMO,
-        valorServicoMatAplicado,
-        valorMaterial,
-        valorTotal,
-        codSegmento,
-        codCidade,
-        valorLocacao,
-        idAdicional,
-        idProjeto,
-        dataInteracao, // Presumindo que dataInteracao já está em formato correto ou não precisa de alteração
-        valorFatDolphin,
-        principal,
-        valorComissao,
-        idMotivoPerdido,
-        observacoes,
-        descricaoVenda,
-        emailVendaEnviado,
-        codOs,
-      ]
+  static updateOpportunity = async (oppId, opp, user) => {
+    console.log("BEFORE UPDATE", opp);
+    const updatedOpportunity = await OpportunityRepository.updateOpportunity(
+      oppId,
+      opp,
+      user
     );
-    await this.handleFiles(files, codOs);
-    await this.handleComments(comentarios, codOs);
-    await this.handleFollowers(seguidores, idProjeto);
-    try {
-      await this.sendSoldOpportunityEmail(
-        codOs,
-        codStatus,
-        oldOpportunity,
-        opp,
-        user,
-        false
-      );
-    } catch (e) {
-      console.log(e);
-    }
-    return { codOs: opp.codOs };
+    console.log('AFTER UPDATE', updatedOpportunity);
+    return updatedOpportunity;
   };
 
   static sendSoldOpportunityEmail = async (

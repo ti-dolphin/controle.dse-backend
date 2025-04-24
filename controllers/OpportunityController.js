@@ -86,19 +86,16 @@ class OpportunityController {
   };
 
   static updateOpportunity = async (req, res) => {
-    console.log('REQ.BODY UPDATE: ', req.body)
-    const updatedOpportunity = req.body;
-    const { user } = req.query;
-
     try {
-      const affectedRows = await OpportunityService.updateOpportunity(
-        updatedOpportunity,
-        user
+      const updatedOpportunity = await OpportunityService.updateOpportunity(
+        req.params.oppId,
+        req.body,
+        req.query.user
       );
-      return res.status(200).send({ message: "Opportunity updated successfully!" });
+      return res.status(200).send(updatedOpportunity);
     } catch (e) {
-      console.error("Error updating opportunity: ", e.message);
-      return res.status(500).send("Server Error");
+      console.error("Erro ao atualizar a oportunidade: ", e.message);
+      return res.status(500).send("Erro no servidor");
     }
   };
 
