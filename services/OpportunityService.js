@@ -157,7 +157,7 @@ class OpportunityService {
         `SELECT * FROM ADICIONAIS WHERE ID = ?`,
         [adicionalInsertResult.insertId]
       );
-   
+
       return {
         adicional,
         codOs: result.insertId,
@@ -288,6 +288,8 @@ class OpportunityService {
   };
 
   static updateOpportunity = async (oppId, opp, user) => {
+    const { comentarios } = opp;
+    await this.processComments(comentarios, oppId);
 
     const updatedOpportunity = await OpportunityRepository.updateOpportunity(
       oppId,
@@ -296,6 +298,91 @@ class OpportunityService {
     );
 
     return updatedOpportunity;
+  };
+
+  static processComments = async (comentarios, oppId) => {
+    const oldComments = await this.getCommentsByOpportunityId(oppId);
+    const newComments = this.filterNewComments(oldComments, comentarios);
+    const toUpdateComments = this.filterUpdatedComments(
+      oldComments,
+      comentarios
+    );
+    const toDeleteComments = this.filterDeletedComments(
+      oldComments,
+      comentarios
+    );
+    console.log("toUpdateComments", toUpdateComments);  
+    console.log("toDeleteComments", toDeleteComments);
+    console.log("newComments", newComments);
+
+    if (toUpdateComments && toUpdateComments.length > 0) {
+        for(const c of toUpdateComments) {
+            await prisma.comentarios.update({
+              where: {
+                CODCOMENTARIO: c.CODCOMENTARIO,
+              },
+              data: c,
+            });
+        }
+    }
+
+    if (newComments && newComments.length > 0) {
+      await prisma.comentarios.createMany({
+      data: newComments.map((c) => {
+        delete c.CODCOMENTARIO;
+        return c;
+      }),
+      });
+    }
+
+    if (toDeleteComments && toDeleteComments.length > 0) {
+      await prisma.comentarios.deleteMany({
+      where: {
+        CODCOMENTARIO: {
+        in: toDeleteComments.map((c) => c.CODCOMENTARIO),
+        },
+      },
+      });
+    }
+  };
+
+  static filterUpdatedComments = (oldComments, commentsReceived) => {
+    return commentsReceived.filter((newComment) => {
+      const oldComment = oldComments.find(
+        (oldComment) => oldComment.CODCOMENTARIO === newComment.CODCOMENTARIO
+      );
+      return (
+        oldComment &&
+        (oldComment.DESCRICAO !== newComment.DESCRICAO)
+      );
+    });
+  };
+
+  static filterNewComments = (oldComments, commnetsReceived) => {
+    const newComments = commnetsReceived.filter(
+      (comment) =>
+        !oldComments.some(
+          (oldComment) => oldComment.CODCOMENTARIO === comment.CODCOMENTARIO
+        )
+    );
+    return newComments;
+  };
+
+  static filterDeletedComments = (oldComments, commentsReceived) => {
+    return oldComments.filter(
+      (oldComment) =>
+        !commentsReceived.some(
+          (newComment) => newComment.CODCOMENTARIO === oldComment.CODCOMENTARIO
+        )
+    );
+  };
+
+  static getCommentsByOpportunityId = async (oppId) => {
+    return await prisma.comentarios.findMany({
+      where: {
+        CODOS: Number(oppId),
+      },
+    });
   };
 
   static sendSoldOpportunityEmail = async (
@@ -310,7 +397,7 @@ class OpportunityService {
       (newCodStatus !== oldOpportunity.codStatus &&
         newOpportunity.codStatus === 11) ||
       manualSending;
-      
+
     if (shouldSendEmail) {
       const [adicional] = await this.executeQuery(
         `SELECT ID, NUMERO FROM ADICIONAIS WHERE ID = ? LIMIT 1`,
@@ -381,50 +468,8 @@ class OpportunityService {
     return await OpportunityRepository.getOppStatusList();
   };
 
-  static handleComments = async (comentarios, opportunityId) => {
-    if (comentarios && comentarios.length) {
-      const commentsToInsert = comentarios
-        .filter((comment) => comment.codigoComentario < 1) // Filtra os comentários sem `codigoComentario`
-        .map((comment) => ({
-          ...comment,
-          codOs: opportunityId,
-        }));
-      const commentsToUpdate = comentarios.filter(
-        (comment) => comment.codigoComentario
-      );
-
-      if (commentsToUpdate.length) {
-        await Promise.all(
-          commentsToUpdate.map(async (comment) => {
-            const resultUpdate = await this.executeQuery(
-              OpportunityRepository.updateCommentQuery(),
-              [comment.descricao, comment.codigoComentario]
-            );
-          })
-        );
-      }
-      if (commentsToInsert.length) {
-        await Promise.all(
-          commentsToInsert.map(async (comment) => {
-            const resultInsert = await this.executeQuery(
-              OpportunityRepository.insertCommentQuery(),
-              [
-                0,
-                comment.codOs,
-                comment.descricao,
-                comment.criadoEm.slice(0, 19).replace("T", " "),
-                comment.criadoPor,
-                0,
-              ]
-            );
-          })
-        );
-      }
-    }
-  };
-
   static getOpportunities = async (req) => {
-     return await OpportunityRepository.getOppornities(req.query);
+    return await OpportunityRepository.getOppornities(req.query);
   };
 
   static async executeQuery(query, params) {

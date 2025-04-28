@@ -200,13 +200,16 @@ FROM
     delete opp.projetos;
     delete opp.web_anexos_os;
     delete opp.adicionais;
-    return await prisma.ordemservico.update({
+    await prisma.ordemservico.update({
       where: {
       CODOS: Number(oppId),
       },
       data: opp
-    })
+    });
+    const updatedOpportunity = await this.getOpportunityById(oppId);
+    return updatedOpportunity;
   };
+
   static createAdicional = () => {
     return `INSERT INTO ADICIONAIS (ID_PROJETO, NUMERO)
       SELECT ?, IFNULL(MAX(NUMERO), -1) + 1
