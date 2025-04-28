@@ -288,13 +288,13 @@ class OpportunityService {
   };
 
   static updateOpportunity = async (oppId, opp, user) => {
-    console.log("BEFORE UPDATE", opp);
+
     const updatedOpportunity = await OpportunityRepository.updateOpportunity(
       oppId,
       opp,
       user
     );
-    console.log('AFTER UPDATE', updatedOpportunity);
+
     return updatedOpportunity;
   };
 

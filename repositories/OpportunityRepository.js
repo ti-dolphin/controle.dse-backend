@@ -190,8 +190,16 @@ FROM
   };
 
   static updateOpportunity = async (oppId, opp, user) => {
-    delete opp.CODOS;
+    delete opp.responsavel;
+    delete opp.projeto;
+    delete opp.adicional;
+    delete opp.comentarios;
+    delete opp.status;
+    delete opp.pessoa;
+    delete opp.cliente;
+    delete opp.projetos;
     delete opp.web_anexos_os;
+    delete opp.adicionais;
     return await prisma.ordemservico.update({
       where: {
       CODOS: Number(oppId),
