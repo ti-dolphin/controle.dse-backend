@@ -2,6 +2,18 @@ var express = require('express');
 var router = express.Router();
 const UserController = require('../controllers/userController');
 
-router.post('/login', UserController.logIn)
+router.get('/', UserController.getMany)
+
+router.get('/:CODPESSOA', UserController.getById)
+
+router.post("/login",  UserController.login);
+
+router.post("/register", UserController.register);
+
+router.put("/:CODPESSOA", UserController.update);
+
+router.delete("/:CODPESSOA", UserController.delete);
+
+
 
 module.exports = router;

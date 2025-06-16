@@ -458,20 +458,20 @@ model pessoa {
   NOME                                                   String                    @db.VarChar(60)
   LOGIN                                                  String?                   @db.VarChar(255)
   SENHA                                                  String?                   @db.VarChar(255)
-  SOLICITANTE                                            Boolean
-  RESPONSAVEL                                            Boolean
-  LIDER                                                  Boolean
-  PERM_LOGIN                                             Boolean
-  PERM_EPI                                               Boolean
-  PERM_AUTENTICACAO                                      Boolean
-  PERM_OS                                                Boolean
-  PERM_TIPO                                              Boolean
-  PERM_STATUS                                            Boolean
-  PERM_APONT                                             Boolean
-  PERM_STATUS_APONT                                      Boolean
-  PERM_PESSOAS                                           Boolean
-  PERM_COMENT_OS                                         Boolean
-  PERM_COMENT_APONT                                      Boolean
+  SOLICITANTE                                            Boolean                   @default(false)
+  RESPONSAVEL                                            Boolean                   @default(false)
+  LIDER                                                  Boolean                   @default(false)
+  PERM_LOGIN                                             Boolean                   @default(true)
+  PERM_EPI                                               Boolean                   @default(false)
+  PERM_AUTENTICACAO                                      Boolean                   @default(false)
+  PERM_OS                                                Boolean                   @default(false)
+  PERM_TIPO                                              Boolean                   @default(false)
+  PERM_STATUS                                            Boolean                   @default(false)
+  PERM_APONT                                             Boolean                   @default(false)
+  PERM_STATUS_APONT                                      Boolean                   @default(false)
+  PERM_PESSOAS                                           Boolean                   @default(false)
+  PERM_COMENT_OS                                         Boolean                   @default(false)
+  PERM_COMENT_APONT                                      Boolean                   @default(false)
   CODGERENTE                                             Int?                      @unique(map: "CODGERENTE_UNIQUE")
   ATIVO                                                  Boolean                   @default(true)
   EMAIL                                                  String?                   @db.VarChar(255)
@@ -485,8 +485,8 @@ model pessoa {
   PERM_FERRAMENTAS                                       Boolean                   @default(false)
   PERM_CHECKLIST                                         Boolean                   @default(false)
   PERM_PROSPECCAO                                        Boolean                   @default(false)
-  PERM_APONTAMENTO_PONTO                                 Boolean
-  PERM_APONTAMENTO_PONTO_JUSTIFICATIVA                   Boolean
+  PERM_APONTAMENTO_PONTO                                 Boolean                   @default(false)
+  PERM_APONTAMENTO_PONTO_JUSTIFICATIVA                   Boolean                   @default(false)
   PERM_BANCO_HORAS                                       Boolean                   @default(false)
   PERM_FOLGA                                             Boolean                   @default(false)
   ULTIMO_LOGIN                                           DateTime?                 @db.Date

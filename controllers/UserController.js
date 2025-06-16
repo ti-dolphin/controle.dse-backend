@@ -1,47 +1,48 @@
 const UserService  = require("../services/UserService");
 
 class UserController {
-    static async login(req, res) {
+     async login(req, res) {
         try {
-            const { email, password } = req.body;
-            const data = await UserService.login(email, password);
-            const {token, user} = data;
-            res.status(200).json(result);
+            const payload = req.body;
+            const {token, user} = await UserService.login(payload);
+            res.status(200).json({ token, user });
         } catch (err) {
             res.status(401).json({ error: err.message });
         }
     }
 
-    static async create(req, res) {
+     async register(req, res) {
         try {
-            const user = await UserService.create(req.body);
+            const payload = req.body;
+            const user = await UserService.create(payload);
             res.status(201).json(user);
         } catch (err) {
             res.status(400).json({ error: err.message });
         }
     }
 
-    static async update(req, res) {
+     async update(req, res) {
         try {
-            const user = await UserService.update(req.params.id, req.body);
+            const payload = req.body;
+            const user = await UserService.update(req.params.CODPESSOA, payload);
             res.status(200).json(user);
         } catch (err) {
             res.status(400).json({ error: err.message });
         }
     }
 
-    static async delete(req, res) {
+     async delete(req, res) {
         try {
-            await UserService.delete(req.params.id);
+            await UserService.delete(req.params.CODPESSOA);
             res.status(204).send();
         } catch (err) {
             res.status(400).json({ error: err.message });
         }
     }
 
-    static async getById(req, res) {
+    async getById(req, res) {
         try {
-            const user = await UserService.getById(req.params.id);
+            const user = await UserService.getById(req.params.CODPESSOA);
             if (!user) {
                 return res.status(404).json({ error: "User not found" });
             }
@@ -51,7 +52,7 @@ class UserController {
         }
     }
 
-    static async getMany(req, res) {
+    async getMany(req, res) {
         try {
             const users = await UserService.getMany(req.query); //passa parâmetros para a busca
             res.status(200).json(users);
@@ -59,6 +60,8 @@ class UserController {
             res.status(400).json({ error: err.message });
         }
     }
+
+
 }
 
-module.exports = UserController;
+module.exports = new UserController();

@@ -11,7 +11,6 @@ var requisitionItemsRouter = require('./routes/resquisitionItemsRouter');
 var requisitionFilesRouter = require( './routes/requisitionFilesRouter');
 var patrimonyAccessoryRouter = require('./routes/patrimonyAccessoryRouter');
 var productsRouter = require('./routes/productsRouter');
-var personRouter = require('./routes/personRouter');
 var projectRouter = require('./routes/projectRouter');
 var patrimonyRouter = require('./routes/patrimonyRouter');
 var itemFileRouter = require('./routes/itemFileRouter');
@@ -44,7 +43,7 @@ app.use('/requisition/quote', authorize, quoteRouter)
 app.use('/movementation', authorize, movementationRouter)
 app.use("/patrimony", authorize, patrimonyRouter);
 app.use('/products', authorize, productsRouter);
-app.use('/pessoa', authorize, personRouter);
+
 app.use('/project', authorize, projectRouter);
 app.use('/requisitionFiles', authorize, requisitionFilesRouter);
 app.use('/itemFiles', authorize, itemFileRouter);

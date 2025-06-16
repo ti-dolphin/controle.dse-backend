@@ -1,18 +1,36 @@
 var express = require("express");
 var router = express.Router();
-const RequisitionController = require("../controllers/requisitionController");
+// const RequisitionController = require("../controllers/requisitionController");
 
 // GET /requisition/
-router.get("/", RequisitionController.getRequisitions);
+router.get("/", (req, res) => {
+  // RequisitionController.getRequisitions(req, res)
+  res.status(501).send('Not Implemented');
+});
 
-router.get('/types', RequisitionController.getTypes);
+router.get('/types', (req, res) => {
+  // RequisitionController.getTypes(req, res)
+  res.status(501).send('Not Implemented');
+});
 
-router.get("/:id", RequisitionController.getRequisitionByID);
+router.get("/:id", (req, res) => {
+  // RequisitionController.getRequisitionByID(req, res)
+  res.status(501).send('Not Implemented');
+});
 
-router.post("/", RequisitionController.insertRequisitions);
+router.post("/", (req, res) => {
+  // RequisitionController.insertRequisitions(req, res)
+  res.status(501).send('Not Implemented');
+});
 
-router.put("/:requisitionID", RequisitionController.updateRequisitionById);
+router.put("/:requisitionID", (req, res) => {
+  // RequisitionController.updateRequisitionById(req, res)
+  res.status(501).send('Not Implemented');
+});
 
-router.delete("/:requisitionID", RequisitionController.deleteRequisitionById);
+router.delete("/:requisitionID", (req, res) => {
+  // RequisitionController.deleteRequisitionById(req, res)
+  res.status(501).send('Not Implemented');
+});
 
 module.exports = router;

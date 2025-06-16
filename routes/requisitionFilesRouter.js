@@ -2,21 +2,33 @@ var express = require("express");
 var router = express.Router();
 const multerConfig = require("../multer");
 const multer = require("multer");
-const RequisitionFilesController = require("../controllers/requisitionFilesController");
+// const RequisitionFilesController = require("../controllers/requisitionFilesController");
 
 const upload = multer({ storage: multerConfig });
 
 router.post(
   "/:requisitionID",
   upload.single("file"),
-  RequisitionFilesController.createRequisitionFile
+  (req, res) => {
+    // RequisitionFilesController.createRequisitionFile(req, res)
+    res.status(501).send('Not Implemented');
+  }
 );
 
-router.post("/link/:requisitionID", RequisitionFilesController.createRequisitionFileFromLink);
+router.post("/link/:requisitionID", (req, res) => {
+  // RequisitionFilesController.createRequisitionFileFromLink(req, res)
+  res.status(501).send('Not Implemented');
+});
 
-router.get("/:requisitionID", RequisitionFilesController.getRequisitionFiles);
+router.get("/:requisitionID", (req, res) => {
+  // RequisitionFilesController.getRequisitionFiles(req, res)
+  res.status(501).send('Not Implemented');
+});
 
-router.delete("/:filename/:fileID", RequisitionFilesController.deleteRequisitionFile);
+router.delete("/:filename/:fileID", (req, res) => {
+  // RequisitionFilesController.deleteRequisitionFile(req, res)
+  res.status(501).send('Not Implemented');
+});
 
 
 // router.post("/:requisitionID", upload.single("file"), async (req, res, next) => {
