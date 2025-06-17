@@ -1,13 +1,26 @@
 const OpportunityRepository = require("../repositories/OpportunityRepository");
-const pool = require("../database");
-const ProjectService = require("./ProjectService");
-const fireBaseService = require("./fireBaseService");
-const utils = require("../utils");
-const EmailService = require("./EmailService");
-const OpportunityView = require("../views/OpportunityViews");
-const {prisma} = require("../database");
+
 
 class OpportunityService {
+  async getById(CODOS) {
+    return await OpportunityRepository.getById(CODOS);
+  }
+
+  async getMany(params) {
+    return await OpportunityRepository.getMany({ ...params });
+  }
+
+  async create(data) {
+    return await OpportunityRepository.create(data);
+  }
+
+  async update(CODOS, data) {
+    return await OpportunityRepository.update(CODOS, data);
+  }
+
+  async delete(CODOS) {
+    return await OpportunityRepository.delete(CODOS);
+  }
 }
 
-module.exports = OpportunityService;
+module.exports = new OpportunityService();

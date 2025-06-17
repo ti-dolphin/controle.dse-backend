@@ -839,11 +839,13 @@ model web_requisicao {
   projetos                                       projetos?              @relation(fields: [ID_PROJETO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ID_PROJETO")
   pessoa_web_requisicao_ID_RESPONSAVELTopessoa   pessoa?                @relation("web_requisicao_ID_RESPONSAVELTopessoa", fields: [ID_RESPONSAVEL], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "ID_RESPONSAVEL")
   pessoa_web_requisicao_LAST_MODIFIED_BYTopessoa pessoa?                @relation("web_requisicao_LAST_MODIFIED_BYTopessoa", fields: [LAST_MODIFIED_BY], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "LAST_MODIFIED_BY")
+  web_tipo_requisicao                            web_tipo_requisicao?   @relation(fields: [TIPO], references: [id_tipo_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "TIPO")
   web_requisicao_items                           web_requisicao_items[]
 
   @@index([ID_PROJETO], map: "ID_PROJETO_idx")
   @@index([ID_RESPONSAVEL], map: "ID_RESPONSAVEL_idx")
   @@index([LAST_MODIFIED_BY], map: "LAST_MODIFIED_BY_idx")
+  @@index([TIPO], map: "TIPO_idx")
 }
 
 model web_requisicao_items {
@@ -901,4 +903,5 @@ model web_tipo_requisicao {
   id_tipo_requisicao Int                @id @default(autoincrement())
   nome_tipo          String             @db.VarChar(255)
   web_familia_tipo   web_familia_tipo[]
+  web_requisicao     web_requisicao[]
 }
