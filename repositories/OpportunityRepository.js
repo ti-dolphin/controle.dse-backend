@@ -4,15 +4,43 @@ class OpportunityRepository {
     static async getById(CODOS) {
         
         return await prisma.ordemservico.findUnique({
-            where: { CODOS }
+            where: { CODOS },
+            include: { 
+                projetos: true,
+                cliente: { 
+                    select:{ 
+                        CNPJ: true, 
+                        NOMEFANTASIA: true, 
+                        CODCLIENTE: true, 
+                        CODCOLIGADA: true
+                    }
+                }
+            }
+        }).then(opportunity => { 
+            const formattedOpp = {
+              ...opportunity,
+              projeto: opportunity.projetos,
+            };
+            delete formattedOpp.projetos;
+            return formattedOpp;
         });
     }
 
-    static async getMany(query) {        
-        console.log('query: ', query)
+    static async getMany(params) {        
         return await prisma.ordemservico.findMany({ 
-            where: query
-        });
+            where: params,
+            include: { 
+                projetos: true,
+                cliente: true
+            }
+        }).then(opps => (opps.map(opportunity => {
+            const formattedOpp = {
+              ...opportunity,
+              projeto: opportunity.projetos,
+            };
+            delete formattedOpp.projetos;
+            return formattedOpp;
+        })));
     }
 
     static async create(payload) {

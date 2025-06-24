@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
-// const ProductsController = require("../controllers/productsController");
+const ProductsController = require("../controllers/ProductsController");
 
-router.get('/',  (req, res) => { 
-    // ProductsController.getProductsBySearch(req, res);
-    res.status(501).send('Not Implemented');
-});
+router.get("/", ProductsController.getMany);
+router.get("/:id", ProductsController.getById);
+router.post("/", ProductsController.create);
+router.put("/:id", ProductsController.update);
+router.delete("/:id", ProductsController.delete);
 
 module.exports = router;

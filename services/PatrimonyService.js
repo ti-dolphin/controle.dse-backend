@@ -1,18 +1,25 @@
 const PatrimonyRepository = require("../repositories/PatrimonyRepository");
-const pool = require("../database");
-const fireBaseService = require("./fireBaseService");
-const opcoes = {
-  timeZone: "America/Sao_Paulo",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  hour12: true,
-};
 
 class PatrimonyService {
+  async create(payload) {
+    return await PatrimonyRepository.create(payload);
+  }
+
+  async getMany(params) {
+    return await PatrimonyRepository.getMany(params);
+  }
+
+  async getById(id_patrimonio) {
+    return await PatrimonyRepository.getById(id_patrimonio);
+  }
+
+  async update(id_patrimonio, patrimonyData) {
+    return await PatrimonyRepository.update(id_patrimonio, patrimonyData);
+  }
+
+  async delete(id_patrimonio) {
+    return await PatrimonyRepository.delete(id_patrimonio);
+  }
 }
 
-module.exports = PatrimonyService;
+module.exports = new PatrimonyService();

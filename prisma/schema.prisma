@@ -7,17 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model acessorio_patrimonio {
-  id_acessorio_patrimonio    Int                          @id @default(autoincrement())
-  nome                       String                       @db.Text
-  id_patrimonio              Int?
-  descricao                  String?                      @db.Text
-  web_patrimonio             web_patrimonio?              @relation(fields: [id_patrimonio], references: [id_patrimonio], onDelete: NoAction, onUpdate: NoAction, map: "acessorio_patrimonio_ibfk_1")
-  anexo_acessorio_patrimonio anexo_acessorio_patrimonio[]
-
-  @@index([id_patrimonio], map: "id_patrimonio")
-}
-
 model adicionais {
   ID           Int            @id @default(autoincrement())
   NUMERO       Int
@@ -37,53 +26,6 @@ model alteracoesos {
   ordemservico    ordemservico @relation(fields: [CODOS], references: [CODOS], onDelete: Cascade, map: "FK_ALTERACOESOS_ORDEMSERVICO")
 
   @@index([CODOS], map: "FK_ALTERACOESOS_ORDEMSERVICO")
-}
-
-model anexo_acessorio_patrimonio {
-  id_anexo_acessorio_patrimonio Int                   @id @default(autoincrement())
-  id_acessorio_patrimonio       Int?
-  nome                          String                @db.VarChar(255)
-  arquivo                       String                @db.VarChar(255)
-  acessorio_patrimonio          acessorio_patrimonio? @relation(fields: [id_acessorio_patrimonio], references: [id_acessorio_patrimonio], onDelete: Cascade, onUpdate: NoAction, map: "anexo_acessorio_patrimonio_ibfk_1")
-
-  @@index([id_acessorio_patrimonio], map: "anexo_acessorio_patrimonio_ibfk_1")
-}
-
-model anexo_movimentacao {
-  id_anexo_movimentacao   Int                      @id @default(autoincrement())
-  arquivo                 String                   @db.Text
-  nome_arquivo            String?                  @db.VarChar(255)
-  id_movimentacao         Int?
-  movimentacao_patrimonio movimentacao_patrimonio? @relation(fields: [id_movimentacao], references: [id_movimentacao], onDelete: Cascade, onUpdate: NoAction, map: "anexo_movimentacao_ibfk_1")
-
-  @@index([id_movimentacao], map: "anexo_movimentacao_ibfk_1")
-}
-
-model anexo_patrimonio {
-  id_anexo_patrimonio Int             @id @default(autoincrement())
-  arquivo             String          @db.Text
-  nome_arquivo        String?         @db.VarChar(255)
-  id_patrimonio       Int?
-  web_patrimonio      web_patrimonio? @relation(fields: [id_patrimonio], references: [id_patrimonio], onDelete: Cascade, onUpdate: NoAction, map: "anexo_patrimonio_ibfk_1")
-
-  @@index([id_patrimonio], map: "anexo_patrimonio_ibfk_1")
-}
-
-model anexos_item {
-  id                   Int                  @id @default(autoincrement())
-  arquivo              String?              @db.LongText
-  id_item              Int
-  nome_arquivo         String?              @db.LongText
-  web_requisicao_items web_requisicao_items @relation(fields: [id_item], references: [ID], onDelete: Cascade, onUpdate: NoAction, map: "id_item")
-
-  @@index([id_item], map: "id_item_idx")
-}
-
-model anexos_requisicao {
-  id_requisicao Int
-  arquivo       String? @db.Text
-  nome_arquivo  String? @db.VarChar(100)
-  id            Int     @id @default(autoincrement())
 }
 
 model apontamentos {
@@ -334,26 +276,6 @@ model motivo_perdido {
   ordemservico ordemservico[]
 }
 
-model movimentacao_patrimonio {
-  id_movimentacao            Int                          @id @default(autoincrement())
-  data                       DateTime                     @db.DateTime(0)
-  id_patrimonio              Int?
-  id_projeto                 Int?
-  id_responsavel             Int?
-  id_ultima_movimentacao     Int?
-  observacao                 String?                      @db.Text
-  aceito                     Int?                         @default(0)
-  anexo_movimentacao         anexo_movimentacao[]
-  projetos                   projetos?                    @relation(fields: [id_projeto], references: [ID], onDelete: Cascade, onUpdate: NoAction, map: "fk_projeto")
-  pessoa                     pessoa?                      @relation(fields: [id_responsavel], references: [CODPESSOA], onDelete: Cascade, onUpdate: NoAction, map: "fk_responsavel")
-  web_patrimonio             web_patrimonio?              @relation(fields: [id_patrimonio], references: [id_patrimonio], onDelete: Cascade, onUpdate: NoAction, map: "movimentacao_patrimonio_ibfk_1")
-  web_checklist_movimentacao web_checklist_movimentacao[]
-
-  @@index([id_projeto], map: "fk_projeto")
-  @@index([id_responsavel], map: "fk_responsavel")
-  @@index([id_patrimonio], map: "movimentacao_patrimonio_ibfk_1")
-}
-
 model notificacoes {
   ID        Int       @id @default(autoincrement())
   DESCRICAO String    @db.VarChar(255)
@@ -413,13 +335,11 @@ model ordemservico {
   EMAIL_VENDA_ENVIADO     Boolean?          @default(false)
   alteracoesos            alteracoesos[]
   historicostatus         historicostatus[]
-  status                  status?           @relation(fields: [CODSTATUS], references: [CODSTATUS], onDelete: NoAction, onUpdate: NoAction, map: "CODSTATUS")
   cidade                  cidade?           @relation(fields: [CODCIDADE], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "FK_CIDADE_ORDEMSERVICO")
   cliente                 cliente?          @relation(fields: [FK_CODCOLIGADA, FK_CODCLIENTE], references: [CODCOLIGADA, CODCLIENTE], onDelete: NoAction, onUpdate: NoAction, map: "FK_ORDEMSERVICO_CLIENTE")
   segmento                segmento          @relation(fields: [CODSEGMENTO], references: [CODSEGMENTO], onDelete: NoAction, onUpdate: NoAction, map: "FK_SEGMENTO_ORDEMSERVICO")
   adicionais              adicionais        @relation(fields: [ID_ADICIONAL], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ORDEMSERVICO_ibfk_1")
   projetos                projetos          @relation(fields: [ID_PROJETO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ORDEMSERVICO_ibfk_2")
-  pessoa                  pessoa?           @relation(fields: [RESPONSAVEL], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "RESPONSAVEL")
   motivo_perdido          motivo_perdido    @relation(fields: [id_motivo_perdido], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ordemservico_motivo_perdido")
   web_anexos_os           web_anexos_os[]
 
@@ -454,59 +374,62 @@ model ordemservico_criterios {
 }
 
 model pessoa {
-  CODPESSOA                                              Int                       @id @default(autoincrement())
-  NOME                                                   String                    @db.VarChar(60)
-  LOGIN                                                  String?                   @db.VarChar(255)
-  SENHA                                                  String?                   @db.VarChar(255)
-  SOLICITANTE                                            Boolean                   @default(false)
-  RESPONSAVEL                                            Boolean                   @default(false)
-  LIDER                                                  Boolean                   @default(false)
-  PERM_LOGIN                                             Boolean                   @default(true)
-  PERM_EPI                                               Boolean                   @default(false)
-  PERM_AUTENTICACAO                                      Boolean                   @default(false)
-  PERM_OS                                                Boolean                   @default(false)
-  PERM_TIPO                                              Boolean                   @default(false)
-  PERM_STATUS                                            Boolean                   @default(false)
-  PERM_APONT                                             Boolean                   @default(false)
-  PERM_STATUS_APONT                                      Boolean                   @default(false)
-  PERM_PESSOAS                                           Boolean                   @default(false)
-  PERM_COMENT_OS                                         Boolean                   @default(false)
-  PERM_COMENT_APONT                                      Boolean                   @default(false)
-  CODGERENTE                                             Int?                      @unique(map: "CODGERENTE_UNIQUE")
-  ATIVO                                                  Boolean                   @default(true)
-  EMAIL                                                  String?                   @db.VarChar(255)
-  PERM_PONTO                                             Boolean                   @default(false)
-  PERM_VENDA                                             Boolean                   @default(false)
-  PERM_CADEPI                                            Boolean?                  @default(false)
-  PERM_DESCONTADO                                        Boolean?                  @default(false)
-  PERM_GESTAO_PESSOAS                                    Boolean?
-  PERM_CONTROLE_RECESSO                                  Boolean?
-  PERM_CUSTO                                             Boolean?                  @default(false)
-  PERM_FERRAMENTAS                                       Boolean                   @default(false)
-  PERM_CHECKLIST                                         Boolean                   @default(false)
-  PERM_PROSPECCAO                                        Boolean                   @default(false)
-  PERM_APONTAMENTO_PONTO                                 Boolean                   @default(false)
-  PERM_APONTAMENTO_PONTO_JUSTIFICATIVA                   Boolean                   @default(false)
-  PERM_BANCO_HORAS                                       Boolean                   @default(false)
-  PERM_FOLGA                                             Boolean                   @default(false)
-  ULTIMO_LOGIN                                           DateTime?                 @db.Date
-  PERM_REQUISITAR                                        Int?                      @db.TinyInt
-  PERM_COMPRADOR                                         Int?                      @default(0) @db.TinyInt
-  PERM_CADASTRAR_PAT                                     Int?                      @db.TinyInt
-  PERM_ADMINISTRADOR                                     Int?                      @db.TinyInt
-  PERM_COMERCIAL                                         Int?                      @default(0) @db.TinyInt
-  cliente                                                cliente[]
-  historicostatus                                        historicostatus[]
-  movimentacao_patrimonio                                movimentacao_patrimonio[]
-  ordemservico                                           ordemservico[]
-  pessoa_grupos                                          pessoa_grupos[]
-  pessoa_responsavel                                     pessoa_responsavel[]
-  pessoa_tipo                                            pessoa_tipo[]
-  projetos                                               projetos[]
-  web_cotacao                                            web_cotacao[]
-  web_requisicao_web_requisicao_ID_RESPONSAVELTopessoa   web_requisicao[]          @relation("web_requisicao_ID_RESPONSAVELTopessoa")
-  web_requisicao_web_requisicao_LAST_MODIFIED_BYTopessoa web_requisicao[]          @relation("web_requisicao_LAST_MODIFIED_BYTopessoa")
-  web_seguidores_projeto                                 web_seguidores_projeto[]
+  CODPESSOA                                            Int                           @id @default(autoincrement())
+  NOME                                                 String                        @db.VarChar(60)
+  LOGIN                                                String?                       @db.VarChar(255)
+  SENHA                                                String?                       @db.VarChar(255)
+  SOLICITANTE                                          Boolean
+  RESPONSAVEL                                          Boolean
+  LIDER                                                Boolean
+  PERM_LOGIN                                           Boolean
+  PERM_EPI                                             Boolean
+  PERM_AUTENTICACAO                                    Boolean
+  PERM_OS                                              Boolean
+  PERM_TIPO                                            Boolean
+  PERM_STATUS                                          Boolean
+  PERM_APONT                                           Boolean
+  PERM_STATUS_APONT                                    Boolean
+  PERM_PESSOAS                                         Boolean
+  PERM_COMENT_OS                                       Boolean
+  PERM_COMENT_APONT                                    Boolean
+  CODGERENTE                                           Int?                          @unique(map: "CODGERENTE")
+  ATIVO                                                Boolean                       @default(true)
+  EMAIL                                                String?                       @db.VarChar(255)
+  PERM_PONTO                                           Boolean                       @default(false)
+  PERM_VENDA                                           Boolean                       @default(false)
+  PERM_CADEPI                                          Boolean?                      @default(false)
+  PERM_DESCONTADO                                      Boolean?                      @default(false)
+  PERM_GESTAO_PESSOAS                                  Boolean?
+  PERM_CONTROLE_RECESSO                                Boolean?
+  PERM_CUSTO                                           Boolean?                      @default(false)
+  PERM_FERRAMENTAS                                     Boolean                       @default(false)
+  PERM_CHECKLIST                                       Boolean                       @default(false)
+  PERM_PROSPECCAO                                      Boolean                       @default(false)
+  PERM_APONTAMENTO_PONTO                               Boolean
+  PERM_APONTAMENTO_PONTO_JUSTIFICATIVA                 Boolean
+  PERM_BANCO_HORAS                                     Boolean                       @default(false)
+  PERM_FOLGA                                           Boolean                       @default(false)
+  ULTIMO_LOGIN                                         DateTime?                     @db.Date
+  PERM_REQUISITAR                                      Int?                          @db.TinyInt
+  PERM_COMPRADOR                                       Int?                          @default(0) @db.TinyInt
+  PERM_CADASTRAR_PAT                                   Int?                          @db.TinyInt
+  PERM_ADMINISTRADOR                                   Int?                          @db.TinyInt
+  PERM_COMERCIAL                                       Int?                          @default(0) @db.TinyInt
+  PERM_DIRETOR                                         Int?                          @default(0) @db.TinyInt
+  PERM_EDITAR_PRODUTOS                                 Int?                          @db.TinyInt
+  cliente                                              cliente[]
+  historicostatus                                      historicostatus[]
+  pessoa_grupos                                        pessoa_grupos[]
+  pessoa_responsavel                                   pessoa_responsavel[]
+  pessoa_tipo                                          pessoa_tipo[]
+  projetos                                             projetos[]
+  web_alteracao_req_status                             web_alteracao_req_status[]
+  web_cotacao                                          web_cotacao[]
+  web_movimentacao_patrimonio                          web_movimentacao_patrimonio[]
+  web_requisicao_web_requisicao_ID_RESPONSAVELTopessoa web_requisicao[]              @relation("web_requisicao_ID_RESPONSAVELTopessoa")
+  web_requisicao_web_requisicao_alterado_porTopessoa   web_requisicao[]              @relation("web_requisicao_alterado_porTopessoa")
+  web_requisicao_web_requisicao_criado_porTopessoa     web_requisicao[]              @relation("web_requisicao_criado_porTopessoa")
+  web_seguidores_projeto                               web_seguidores_projeto[]
 }
 
 model pessoa_grupos {
@@ -585,20 +508,23 @@ model produtos {
   ultimo_nivel         Int                    @default(0) @db.SmallInt
   unidade              String?                @db.VarChar(10)
   familia              String?                @db.VarChar(9)
+  quantidade_estoque   Int?
+  web_patrimonio       web_patrimonio[]
   web_requisicao_items web_requisicao_items[]
 }
 
 model projetos {
-  ID                      Int                       @id @default(autoincrement())
-  DESCRICAO               String?                   @db.VarChar(250)
-  CODGERENTE              Int?
-  ATIVO                   Int?                      @default(1)
-  adicionais              adicionais[]
-  movimentacao_patrimonio movimentacao_patrimonio[]
-  ordemservico            ordemservico[]
-  pessoa                  pessoa?                   @relation(fields: [CODGERENTE], references: [CODGERENTE], onDelete: Cascade, map: "fk_codgerente")
-  web_requisicao          web_requisicao[]
-  web_seguidores_projeto  web_seguidores_projeto[]
+  ID                          Int                           @id @default(autoincrement())
+  DESCRICAO                   String?                       @db.VarChar(250)
+  CODGERENTE                  Int?
+  ATIVO                       Int?                          @default(1)
+  ID_RESPONSAVEL              Int?
+  adicionais                  adicionais[]
+  ordemservico                ordemservico[]
+  pessoa                      pessoa?                       @relation(fields: [CODGERENTE], references: [CODGERENTE], onDelete: NoAction, onUpdate: NoAction, map: "gerente")
+  web_movimentacao_patrimonio web_movimentacao_patrimonio[]
+  web_requisicao              web_requisicao[]
+  web_seguidores_projeto      web_seguidores_projeto[]
 
   @@index([CODGERENTE], map: "CODGERENTE_idx")
 }
@@ -635,7 +561,6 @@ model status {
   ATIVO                                                Boolean           @default(true)
   historicostatus_historicostatus_CODSTATUSNEWTostatus historicostatus[] @relation("historicostatus_CODSTATUSNEWTostatus")
   historicostatus_historicostatus_CODSTATUSOLDTostatus historicostatus[] @relation("historicostatus_CODSTATUSOLDTostatus")
-  ordemservico                                         ordemservico[]
 }
 
 model statusapont {
@@ -719,7 +644,7 @@ model web_checklist_movimentacao {
   data_aprovado                    DateTime?                          @db.Timestamp(0)
   observacao                       String?                            @db.Text
   reprovado                        Int?                               @db.TinyInt
-  movimentacao_patrimonio          movimentacao_patrimonio            @relation(fields: [id_movimentacao], references: [id_movimentacao], onDelete: Cascade, map: "web_checklist_movimentacao_ibfk_1")
+  movimentacao_patrimonio          web_movimentacao_patrimonio        @relation(fields: [id_movimentacao], references: [id_movimentacao], onDelete: Cascade, map: "web_checklist_movimentacao_ibfk_1")
   web_items_checklist_movimentacao web_items_checklist_movimentacao[]
 
   @@index([id_movimentacao], map: "id_movimentacao")
@@ -738,12 +663,14 @@ model web_cotacao {
   data_cotacao             DateTime?                 @default(now()) @db.DateTime(0)
   observacao               String?                   @db.Text
   descricao                String?                   @db.Text
-  cnpj_faturamento         String?                   @default("04016153000188") @db.VarChar(14)
+  cnpj_faturamento         String?                   @default("04016153000188") @db.VarChar(255)
   valor_frete              Decimal?                  @db.Decimal(10, 2)
   id_tipo_frete            Int?
   id_classificacao_fiscal  Int?
-  cnpj_fornecedor          String?                   @db.VarChar(14)
+  cnpj_fornecedor          String?                   @db.VarChar(255)
   criado_por               Int?
+  id_condicao_pagamento    Int?
+  web_anexo_cotacao        web_anexo_cotacao[]
   web_classificacao_fiscal web_classificacao_fiscal? @relation(fields: [id_classificacao_fiscal], references: [id_classificao_fiscal], onDelete: NoAction, onUpdate: NoAction, map: "classificacao_fiscal")
   pessoa                   pessoa?                   @relation(fields: [criado_por], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "criado_por")
   web_tipo_frete           web_tipo_frete?           @relation(fields: [id_tipo_frete], references: [id_tipo_frete], onDelete: NoAction, onUpdate: NoAction, map: "tipo_frete")
@@ -809,67 +736,70 @@ model web_items_cotacao {
 }
 
 model web_patrimonio {
-  id_patrimonio           Int                       @id @default(autoincrement())
-  nome                    String                    @db.Text
-  data_compra             DateTime?                 @db.Date
-  nserie                  String?                   @db.VarChar(255)
-  descricao               String?                   @db.Text
-  pat_legado              String?                   @db.VarChar(100)
-  tipo                    Int?                      @db.TinyInt
-  ativo                   Int?                      @default(1) @db.TinyInt
-  fabricante              String?                   @db.Text
-  valor_compra            Decimal?                  @db.Decimal(10, 2)
-  acessorio_patrimonio    acessorio_patrimonio[]
-  anexo_patrimonio        anexo_patrimonio[]
-  movimentacao_patrimonio movimentacao_patrimonio[]
+  id_patrimonio               Int                           @id @default(autoincrement())
+  nome                        String                        @db.Text
+  data_compra                 DateTime?                     @db.Date
+  nserie                      String?                       @db.VarChar(255)
+  descricao                   String?                       @db.Text
+  pat_legado                  String?                       @db.VarChar(100)
+  tipo                        Int?
+  ativo                       Int?                          @default(1) @db.TinyInt
+  fabricante                  String?                       @db.Text
+  valor_compra                Decimal?                      @db.Decimal(10, 2)
+  id_produto                  Int?
+  web_acessorio_patrimonio    web_acessorio_patrimonio[]
+  web_anexos_patrimonio       web_anexos_patrimonio[]
+  web_movimentacao_patrimonio web_movimentacao_patrimonio[]
+  produtos                    produtos?                     @relation(fields: [id_produto], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "produto")
+  web_tipo_patrimonio         web_tipo_patrimonio?          @relation(fields: [tipo], references: [id_tipo_patrimonio], onDelete: NoAction, onUpdate: NoAction, map: "tipo")
+
+  @@index([id_produto], map: "produto_idx")
+  @@index([tipo], map: "tipo_idx")
 }
 
 model web_requisicao {
-  ID_REQUISICAO                                  Int                    @id @default(autoincrement())
-  STATUS                                         String?                @db.VarChar(30)
-  DESCRIPTION                                    String?                @db.VarChar(100)
-  ID_PROJETO                                     Int?
-  ID_RESPONSAVEL                                 Int?
-  LAST_UPDATE_ON                                 DateTime?              @db.DateTime(0)
-  CREATED_ON                                     DateTime?              @db.DateTime(0)
-  OBSERVACAO                                     String?                @db.Text
-  LAST_MODIFIED_BY                               Int?
-  TIPO                                           Int?
-  web_cotacao                                    web_cotacao[]
-  projetos                                       projetos?              @relation(fields: [ID_PROJETO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ID_PROJETO")
-  pessoa_web_requisicao_ID_RESPONSAVELTopessoa   pessoa?                @relation("web_requisicao_ID_RESPONSAVELTopessoa", fields: [ID_RESPONSAVEL], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "ID_RESPONSAVEL")
-  pessoa_web_requisicao_LAST_MODIFIED_BYTopessoa pessoa?                @relation("web_requisicao_LAST_MODIFIED_BYTopessoa", fields: [LAST_MODIFIED_BY], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "LAST_MODIFIED_BY")
-  web_tipo_requisicao                            web_tipo_requisicao?   @relation(fields: [TIPO], references: [id_tipo_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "TIPO")
-  web_requisicao_items                           web_requisicao_items[]
+  ID_REQUISICAO                                Int                        @id @default(autoincrement())
+  DESCRIPTION                                  String?                    @db.VarChar(100)
+  ID_PROJETO                                   Int?
+  ID_RESPONSAVEL                               Int?
+  data_alteracao                               DateTime?                  @db.DateTime(0)
+  data_criacao                                 DateTime?                  @db.DateTime(0)
+  id_status_requisicao                         Int?
+  OBSERVACAO                                   String?                    @db.Text
+  alterado_por                                 Int?
+  TIPO                                         Int?
+  criado_por                                   Int?
+  web_alteracao_req_status                     web_alteracao_req_status[]
+  web_cotacao                                  web_cotacao[]
+  projetos                                     projetos?                  @relation(fields: [ID_PROJETO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ID_PROJETO")
+  pessoa_web_requisicao_ID_RESPONSAVELTopessoa pessoa?                    @relation("web_requisicao_ID_RESPONSAVELTopessoa", fields: [ID_RESPONSAVEL], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "ID_RESPONSAVEL")
+  pessoa_web_requisicao_alterado_porTopessoa   pessoa?                    @relation("web_requisicao_alterado_porTopessoa", fields: [alterado_por], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "alterado")
+  pessoa_web_requisicao_criado_porTopessoa     pessoa?                    @relation("web_requisicao_criado_porTopessoa", fields: [criado_por], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "alterado por")
+  web_status_requisicao                        web_status_requisicao?     @relation(fields: [id_status_requisicao], references: [id_status_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "id_status")
+  web_tipo_requisicao                          web_tipo_requisicao?       @relation(fields: [TIPO], references: [id_tipo_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "id_tipo")
 
   @@index([ID_PROJETO], map: "ID_PROJETO_idx")
   @@index([ID_RESPONSAVEL], map: "ID_RESPONSAVEL_idx")
-  @@index([LAST_MODIFIED_BY], map: "LAST_MODIFIED_BY_idx")
-  @@index([TIPO], map: "TIPO_idx")
+  @@index([TIPO], map: "id_tipo_idx")
+  @@index([id_status_requisicao], map: "status_idx")
+  @@index([alterado_por], map: "alterado_idx")
+  @@index([criado_por], map: "criado_por_idx")
 }
 
 model web_requisicao_items {
-  ID             Int            @id @unique(map: "ID_UNIQUE") @default(autoincrement())
-  QUANTIDADE     Int?
-  ID_REQUISICAO  Int
-  ID_PRODUTO     Int?
-  OBSERVACAO     String?        @db.Text
-  ATIVO          Int            @default(1) @db.TinyInt
-  OC             Int?
-  anexos_item    anexos_item[]
-  produtos       produtos?      @relation(fields: [ID_PRODUTO], references: [ID], onDelete: Cascade, onUpdate: NoAction, map: "ID_PRODUTO")
-  web_requisicao web_requisicao @relation(fields: [ID_REQUISICAO], references: [ID_REQUISICAO], onDelete: Cascade, onUpdate: NoAction, map: "ID_REQUISICAO")
+  id_item_requisicao         Int                          @id @unique(map: "ID_UNIQUE") @default(autoincrement())
+  quantidade                 Int?
+  id_requisicao              Int
+  id_produto                 Int?
+  observacao                 String?                      @db.Text
+  ativo                      Int                          @default(1) @db.TinyInt
+  oc                         Int?
+  data_entrega               DateTime?                    @db.DateTime(0)
+  web_anexos_item_requisicao web_anexos_item_requisicao[]
+  produtos                   produtos?                    @relation(fields: [id_produto], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "produtos")
 
-  @@index([ID_PRODUTO], map: "ID_PRODUTO_idx")
-  @@index([ID_REQUISICAO], map: "ID_REQUISICAO_idx")
-}
-
-model web_seguidores {
-  CODOS     Int
-  CODPESSOA Int
-
-  @@id([CODOS, CODPESSOA])
-  @@index([CODPESSOA], map: "CODPESSOA")
+  @@index([id_produto], map: "ID_PRODUTO_idx")
+  @@index([id_requisicao], map: "ID_REQUISICAO_idx")
 }
 
 model web_seguidores_projeto {
@@ -878,7 +808,7 @@ model web_seguidores_projeto {
   codpessoa           Int
   ativo               Boolean  @default(true)
   pessoa              pessoa   @relation(fields: [codpessoa], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "fk_seguidor_projeto_pessoa")
-  projetos            projetos @relation(fields: [id_projeto], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "fk_seguidor_projeto_projeto")
+  projetos            projetos @relation(fields: [id_projeto], references: [ID], onDelete: Cascade, map: "fk_seguidor_projeto_projeto")
 
   @@index([codpessoa], map: "fk_seguidor_projeto_pessoa")
   @@index([id_projeto], map: "fk_seguidor_projeto_projeto")
@@ -897,6 +827,7 @@ model web_tipo_patrimonio {
   periodicidade            Int?
   responsavel_tipo         Int?
   web_items_checklist_tipo web_items_checklist_tipo[]
+  web_patrimonio           web_patrimonio[]
 }
 
 model web_tipo_requisicao {
@@ -904,4 +835,170 @@ model web_tipo_requisicao {
   nome_tipo          String             @db.VarChar(255)
   web_familia_tipo   web_familia_tipo[]
   web_requisicao     web_requisicao[]
+}
+
+model seguidores {
+  CODOS     Int
+  CODPESSOA Int
+
+  @@id([CODOS, CODPESSOA])
+  @@index([CODPESSOA], map: "CODPESSOA")
+}
+
+model web_alteracao_req_status {
+  id_alteracao          Int                   @id @default(autoincrement())
+  id_status_requisicao  Int
+  alterado_por          Int
+  data_alteracao        DateTime              @db.DateTime(0)
+  id_requisicao         Int?
+  justificativa         String?               @db.Text
+  id_status_anterior    Int
+  pessoa                pessoa                @relation(fields: [alterado_por], references: [CODPESSOA], onDelete: Cascade, map: "alterado_por")
+  web_requisicao        web_requisicao?       @relation(fields: [id_requisicao], references: [ID_REQUISICAO], onDelete: Cascade, map: "id-requisicao")
+  web_status_requisicao web_status_requisicao @relation(fields: [id_status_requisicao], references: [id_status_requisicao], onDelete: Cascade, map: "web_alteracao_req_status_ibfk_1")
+
+  @@index([alterado_por], map: "alterado_por_idx")
+  @@index([id_requisicao], map: "id-requisicao_idx")
+  @@index([id_status_requisicao], map: "id_status_requisicao")
+}
+
+model web_anexo_cotacao {
+  id_anexo_cotacao Int         @id @default(autoincrement())
+  id_cotacao       Int
+  nome_arquivo     String      @db.VarChar(255)
+  url              String      @db.Text
+  web_cotacao      web_cotacao @relation(fields: [id_cotacao], references: [id_cotacao], onDelete: Cascade, map: "fk_id_cotacao")
+
+  @@index([id_cotacao], map: "fk_id_cotacao")
+}
+
+model web_condicao_pagamento {
+  id_condicao_pagamento Int     @id @default(autoincrement())
+  nome                  String? @db.Text
+}
+
+model web_kanban_requisicao {
+  id_kanban_requisicao Int     @id @default(autoincrement())
+  nome                 String? @db.VarChar(255)
+}
+
+model web_kanban_status_requisicao {
+  id_kanban_requisicao Int
+  id_status_requisicao Int
+  perfil               String? @db.VarChar(45)
+
+  @@id([id_kanban_requisicao, id_status_requisicao])
+}
+
+model web_oc {
+  codoc             Int       @id
+  data_entrega_obra DateTime? @db.DateTime(0)
+  status            String?   @db.VarChar(10)
+}
+
+model web_perfil_acao_status_requisicao {
+  id_perfil_permissao_status Int  @id
+  id_perfil_usuario          Int?
+  id_status_requisicao       Int?
+  acao                       Int?
+}
+
+model web_perfil_usuario {
+  id_perfil_usuario Int      @id @default(autoincrement())
+  nome              String   @db.VarChar(100)
+  data_criacao      DateTime @default(now()) @db.Timestamp(0)
+  data_atualizacao  DateTime @default(now()) @db.Timestamp(0)
+  ativo             Boolean? @default(true)
+}
+
+model web_status_requisicao {
+  id_status_requisicao     Int                        @id @default(autoincrement())
+  nome                     String                     @db.VarChar(50)
+  acao_posterior           String                     @db.Text
+  etapa                    Int?
+  acao_anterior            String?                    @db.Text
+  web_alteracao_req_status web_alteracao_req_status[]
+  web_requisicao           web_requisicao[]
+
+  @@index([acao_posterior(length: 255)], map: "idx_web_status_acao")
+}
+
+model web_acessorio_patrimonio {
+  id_acessorio_patrimonio         Int                               @id @default(autoincrement())
+  nome                            String                            @db.Text
+  id_patrimonio                   Int?
+  descricao                       String?                           @db.Text
+  web_patrimonio                  web_patrimonio?                   @relation(fields: [id_patrimonio], references: [id_patrimonio], onDelete: NoAction, onUpdate: NoAction, map: "web_acessorio_patrimonio_ibfk_1")
+  web_anexos_acessorio_patrimonio web_anexos_acessorio_patrimonio[]
+
+  @@index([id_patrimonio], map: "id_patrimonio")
+}
+
+model web_movimentacao_patrimonio {
+  id_movimentacao            Int                          @id @default(autoincrement())
+  data                       DateTime                     @db.DateTime(0)
+  id_patrimonio              Int?
+  id_projeto                 Int?
+  id_responsavel             Int?
+  id_ultima_movimentacao     Int?
+  observacao                 String?                      @db.Text
+  aceito                     Int?                         @default(0)
+  web_anexos_movimentacao    web_anexos_movimentacao[]
+  web_checklist_movimentacao web_checklist_movimentacao[]
+  projetos                   projetos?                    @relation(fields: [id_projeto], references: [ID], onDelete: Cascade, onUpdate: NoAction, map: "fk_projeto")
+  pessoa                     pessoa?                      @relation(fields: [id_responsavel], references: [CODPESSOA], onDelete: Cascade, onUpdate: NoAction, map: "fk_responsavel")
+  web_patrimonio             web_patrimonio?              @relation(fields: [id_patrimonio], references: [id_patrimonio], onDelete: Cascade, onUpdate: NoAction, map: "web_movimentacao_patrimonio_ibfk_1")
+
+  @@index([id_projeto], map: "fk_projeto")
+  @@index([id_responsavel], map: "fk_responsavel")
+  @@index([id_patrimonio], map: "movimentacao_patrimonio_ibfk_1")
+}
+
+model web_anexos_acessorio_patrimonio {
+  id_anexo_acessorio_patrimonio Int                       @id @default(autoincrement())
+  id_acessorio_patrimonio       Int?
+  nome                          String                    @db.VarChar(255)
+  arquivo                       String                    @db.VarChar(255)
+  web_acessorio_patrimonio      web_acessorio_patrimonio? @relation(fields: [id_acessorio_patrimonio], references: [id_acessorio_patrimonio], onDelete: Cascade, onUpdate: NoAction, map: "web_anexos_acessorio_patrimonio_ibfk_1")
+
+  @@index([id_acessorio_patrimonio], map: "anexo_acessorio_patrimonio_ibfk_1")
+}
+
+model web_anexos_item_requisicao {
+  id                   Int                  @id @default(autoincrement())
+  arquivo              String?              @db.LongText
+  id_item              Int
+  nome_arquivo         String?              @db.LongText
+  web_requisicao_items web_requisicao_items @relation(fields: [id_item], references: [id_item_requisicao], onDelete: Cascade, onUpdate: NoAction, map: "id_item")
+
+  @@index([id_item], map: "id_item_idx")
+}
+
+model web_anexos_movimentacao {
+  id_anexo_movimentacao       Int                          @id @default(autoincrement())
+  arquivo                     String                       @db.Text
+  nome_arquivo                String?                      @db.VarChar(255)
+  id_movimentacao             Int?
+  web_movimentacao_patrimonio web_movimentacao_patrimonio? @relation(fields: [id_movimentacao], references: [id_movimentacao], onDelete: Cascade, onUpdate: NoAction, map: "web_anexos_movimentacao_ibfk_1")
+
+  @@index([id_movimentacao], map: "anexo_movimentacao_ibfk_1")
+}
+
+model web_anexos_patrimonio {
+  id_anexo_patrimonio Int             @id @default(autoincrement())
+  arquivo             String          @db.Text
+  nome_arquivo        String?         @db.VarChar(255)
+  id_patrimonio       Int?
+  web_patrimonio      web_patrimonio? @relation(fields: [id_patrimonio], references: [id_patrimonio], onDelete: Cascade, onUpdate: NoAction, map: "web_anexos_patrimonio_ibfk_1")
+
+  @@index([id_patrimonio], map: "anexo_patrimonio_ibfk_1")
+}
+
+model web_anexos_requisicao {
+  id_requisicao Int
+  arquivo       String?   @db.Text
+  nome_arquivo  String?   @db.VarChar(100)
+  id            Int       @id @default(autoincrement())
+  criado_por    Int?
+  criado_em     DateTime? @db.DateTime(0)
 }

@@ -1,9 +1,57 @@
-
-var CheckListService = require('../services/CheckListService');
+const CheckListService = require("../services/CheckListService");
 
 class CheckListController {
+  async create(req, res) {
+    try {
+      const checklist = await CheckListService.create(req.body);
+      res.status(201).json(checklist);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
 
+  async getMany(req, res) {
+    try {
+      const checklists = await CheckListService.getMany(req.query);
+      res.json(checklists);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
 
-};
+  async getById(req, res) {
+    try {
+      const checklist = await CheckListService.getById(
+        Number(req.params.id_checklist)
+      );
+      if (!checklist)
+        return res.status(404).json({ error: "Checklist não encontrado" });
+      res.json(checklist);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
 
-module.exports = CheckListController;
+  async update(req, res) {
+    try {
+      const checklist = await CheckListService.update(
+        Number(req.params.id_checklist),
+        req.body
+      );
+      res.json(checklist);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async delete(req, res) {
+    try {
+      await CheckListService.delete(Number(req.params.id_checklist));
+      res.status(204).send();
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+}
+
+module.exports = new CheckListController();

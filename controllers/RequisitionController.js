@@ -3,8 +3,11 @@ const RequisitionService = require("../services/RequisitionService");
 class RequisitionController {
   async getMany(req, res) {
     try {
-        const params = req.query;
-      const requisitions = await RequisitionService.getMany(params);
+        const params = req.query.params;
+        const user = req.query.user;
+        
+      const requisitions = await RequisitionService.getMany(user, params);
+
       res.status(200).json(requisitions);
     } catch (error) {
       res.status(500).json({ error: error.message });

@@ -1,42 +1,38 @@
 const { prisma } = require("../database");
+const { buildWhere } = require("../utils");
 
 class UserRepository {
-  async getMany(query) {
-    return await prisma.pessoa.findMany({
-      where: query
-    }
-  );
-  }
-
   async getById(CODPESSOA) {
-    return await prisma.pessoa.findFirst({
+    return prisma.pessoa.findUnique({
       where: { CODPESSOA: Number(CODPESSOA) },
     });
   }
 
-  async getUserByLogin(login) {
-    return await prisma.pessoa.findFirst({
-      where: { LOGIN: login },
-    });
+  async getMany(query = {}) {
+    const numericFields = [
+      "CODPESSOA",
+    ];
+    const where = buildWhere(query, numericFields);
+    return prisma.pessoa.findMany({ where });
+  }
+
+  async getUserByLogin(LOGIN) {
+    return prisma.pessoa.findFirst({ where: { LOGIN } });
   }
 
   async create(payload) {
-    return await prisma.pessoa.create({
+    return prisma.pessoa.create({ data: payload });
+  }
+
+  async update(CODPESSOA, payload) {
+    return prisma.pessoa.update({
+      where: { CODPESSOA: Number(CODPESSOA) },
       data: payload,
     });
   }
 
-  async update(CODPESSOA, payload) {
-    return await prisma.pessoa.update({
-      where: { CODPESSOA: Number(CODPESSOA) },
-      data: payload
-    });
-  }
-
   async delete(CODPESSOA) {
-    return await prisma.pessoa.delete({
-      where: { CODPESSOA: Number(CODPESSOA) },
-    });
+    return prisma.pessoa.delete({ where: { CODPESSOA: Number(CODPESSOA) } });
   }
 }
 

@@ -1,20 +1,26 @@
 const MovementationRepository = require("../repositories/MovementationRepository");
-const ChecklistRepository = require('../repositories/CheckListRepository');
-const pool = require("../database");
-const fireBaseService = require("./fireBaseService");
-const CheckListService = require("./CheckListService");
 
-const opcoes = {
-  timeZone: "America/Sao_Paulo",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  hour12: false,
-};
 
 class MovementationService {
+
+    async create(payload) {
+        return await MovementationRepository.create(payload);
+    }
+
+    async getMany(params) {
+        return await MovementationRepository.getMany(params);
+    }
+
+    async getById(id_movimentacao) {
+        return await MovementationRepository.getById(id_movimentacao);
+    }
+
+    async update(id_movimentacao, payload) {
+        return await MovementationRepository.update(id_movimentacao, payload);
+    }
+
+    async delete(id_movimentacao) {
+        return await MovementationRepository.delete(id_movimentacao);
+    }
 }
-module.exports = MovementationService;
+module.exports = new MovementationService();
