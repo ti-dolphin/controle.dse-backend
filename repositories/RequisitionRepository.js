@@ -4,7 +4,6 @@ const {buildWhere} = require("../utils");
 class RequisitionRepository {
   async findMany(params) {
     const where = buildWhere(params, ['id_requisicao','id_status_requisicao', 'TIPO', 'ID_PROJETO', 'TIPO', 'ID_RESPONSAVEL'])
-    console.log('where: ', where);
 
 
     const requisicoes = await prisma.web_requisicao

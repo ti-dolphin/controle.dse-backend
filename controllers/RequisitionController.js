@@ -10,6 +10,7 @@ class RequisitionController {
 
       res.status(200).json(requisitions);
     } catch (error) {
+      console.error(error);
       res.status(500).json({ error: error.message });
     }
   }

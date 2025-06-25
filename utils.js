@@ -1,5 +1,22 @@
 const fs = require("fs");
 
+
+const getSystemProfileList = async (user)=> { 
+  const profiles = await prisma.web_perfil_usuario.findMany();
+  const profileMap = {
+    PERM_COMPRADOR: "Comprador",
+    PERM_DIRETOR: "Diretor",
+    PERM_ADMINISTRADOR: "Administrador",
+  };
+
+  Object.entries(profileMap).forEach(([permKey, profileName]) => {
+    if (user[permKey] === 1) {
+      const profile = profiles.find((p) => p.nome === profileName);
+      if (profile) user_profile_id_list.push(profile.id_perfil_usuario);
+    }
+  });
+}
+
 function buildWhere(params, numericFields = []) {
   const where = {};
   for (const key in params) {
@@ -43,5 +60,6 @@ const utils = {
     });
   },
   buildWhere,
+  getSystemProfileList
 };
 module.exports = utils;
