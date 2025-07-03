@@ -4,8 +4,8 @@ var router = express.Router();
 
 
 router.get("/", RequisitionController.getMany);
-router.get("/:id", RequisitionController.getById);
+router.get("/:id_requisicao", RequisitionController.getById);
 router.post("/", RequisitionController.create);
-router.put("/:id", RequisitionController.update);
-router.delete("/:id", RequisitionController.delete);
+router.put("/:id_requisicao", RequisitionController.update);
+router.delete("/:id_requisicao", RequisitionController.delete);
 module.exports = router;

@@ -1,17 +1,15 @@
 var express = require("express");
+const ProjectController = require("../controllers/ProjectController");
 var router = express.Router();
 // const ProjectController = require("../controllers/projectController");
+router.get("/", ProjectController.getMany);
 
-// GET /projects
-router.get("/", (req, res) => {
-  // ProjectController.getAllProjects(req, res);
-  res.status(501).send('Not Implemented');
-});
+router.get("/:ID", ProjectController.getById);
 
-// GET /projects/:id
-router.get("/:id", (req, res) => {
-  // ProjectController.getProjectById(req, res);
-  res.status(501).send('Not Implemented');
-});
+router.post("/", ProjectController.create);
+
+router.put("/:ID", ProjectController.update);
+
+router.delete("/:ID", ProjectController.delete);
 
 module.exports = router;

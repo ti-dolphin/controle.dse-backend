@@ -4,7 +4,28 @@ const { buildWhere } = require('../utils');
 class RequisitionFileRepository {
     async getMany(params) {
         const where = buildWhere(params, ['id_requisicao']);
-        return await prisma.web_anexos_requisicao.findMany({ where });
+        return await prisma.web_anexos_requisicao
+          .findMany({
+            where,
+            include: {
+              pessoa: {
+                select: {
+                  CODPESSOA: true,
+                  NOME: true,
+                },
+              },
+            },
+          })
+          .then((anexos) =>
+            anexos.map((anexo) => {
+              const formattedAnexo = {
+                ...anexo,
+                pessoa_criado_por: anexo.pessoa,
+              };
+              delete formattedAnexo.pessoa;
+              return formattedAnexo;
+            })
+          );
     }
 
     async getById(id) {

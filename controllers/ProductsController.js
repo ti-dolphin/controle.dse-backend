@@ -4,9 +4,12 @@ class ProductsController {
     async getMany(req, res) {
        try {
          const params = req.query;
-          const products = await ProductService.getMany(params);
+         const {searchTerm } = params;
+
+          const products = await ProductService.getMany({}, searchTerm);
           res.json(products);
        } catch (err) {
+         console.log(err)
           res.status(500).json({ error: err.message });
        }
     }

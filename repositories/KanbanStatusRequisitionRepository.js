@@ -19,12 +19,9 @@ class KanbanStatusRequisitionRepository{
     }
 
     async getMany(params){
-        const where = {};
-        if(Object.keys(params).length > 0){ 
-            where.id_kanban_requisicao = Number(params.id_kanban_requisicao);
-        }
+
         return prisma.web_kanban_status_requisicao.findMany({ 
-            where
+            where : params
         });
     }
 }

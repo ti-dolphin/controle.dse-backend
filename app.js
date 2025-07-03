@@ -14,6 +14,7 @@ var requisitionRouter = require('./routes/requisitionRouter');
 var requisitionItemsRouter = require('./routes/resquisitionItemsRouter');
 var requisitionKanbanRouter = require('./routes/requisitionKanbanRouter'); 
 var requisitionStatusRouter = require('./routes/requisitionStatusRouter');
+var requisitionTypeRouter = require('./routes/requisitionTypeRouter');
 
 // Entidade: Anexos
 var reqItemFileRouter = require('./routes/reqItemFileRouter');
@@ -66,8 +67,10 @@ app.use('/users', usersRouter);
 // Rotas de Requisições
 app.use('/requisicoes', requisitionRouter);
 app.use("/item_requisicao", requisitionItemsRouter); // faltando update many, create many, delete many
+app.use('/tipo_requisicao', requisitionTypeRouter)
 app.use("/requisicao_kanban", requisitionKanbanRouter);
 app.use("/status_requisicao", requisitionStatusRouter); 
+app.use("/anexo_requisicao", requisitionFileRouter); // rota para anexos)
 // Rotas de Movimentação de Patrimônio
 
 app.use('/movimentacao_patrimonio', movementationRouter);
@@ -78,6 +81,10 @@ app.use("/acessorio_patrimonio", patrimonyAccessoryRouter);
 
 // Rotas de Produtos
 app.use('/produtos', productsRouter);
+
+//projetos
+app.use('/projetos', projectRouter);
+
 
 // Rotas de Oportunidades
 app.use("/oportunidades", oppoprtunityRouter);

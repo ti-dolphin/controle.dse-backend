@@ -29,12 +29,49 @@ class RequisitionStatusController {
     }
   }
 
+  async getStatusPermission(req, res){
+    console.log("getStatusPermission");
+    const {user, requisition} = req.query;
+    try{ 
+       const permissions = await RequisitionStatusService.getStatusPermission(user, requisition);
+       res.json(permissions);
+    }catch(e){ 
+      console.log(e)
+      res.status(400).json({error: e.message});
+    }
+  }
+  async getStatusAlteration(req, res){
+    console.log("getStatusAlteration");
+    const {id_requisicao} = req.query;
+    try{ 
+        const alterations = await RequisitionStatusService.getStatusAlteration(Number(id_requisicao));
+ 
+        res.json(alterations);
+    }catch(e){ 
+      console.log(e)
+      res.status(400).json({error: e.message});
+    }
+  }
+
   async update(req, res) {
     try {
       const status = await RequisitionStatusService.update(Number(req.params.id_status_requisicao), req.body);
       res.json(status);
     } catch (error) {
       res.status(400).json({ error: error.message });
+    }
+  }
+
+  async updateRequisitionStatus(req, res){ 
+    const {id_status_requisicao, id_requisicao} = req.body;
+    try{ 
+      const status = await RequisitionStatusService.updateRequisitionStatus(
+        Number(id_status_requisicao),
+        Number(id_requisicao)
+      );
+      res.json(status);
+    }catch(e){ 
+      res.status(400).json({error: e.message});
     }
   }
 

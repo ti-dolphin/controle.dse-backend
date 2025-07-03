@@ -424,6 +424,7 @@ model pessoa {
   pessoa_tipo                                          pessoa_tipo[]
   projetos                                             projetos[]
   web_alteracao_req_status                             web_alteracao_req_status[]
+  web_anexos_requisicao                                web_anexos_requisicao[]
   web_cotacao                                          web_cotacao[]
   web_movimentacao_patrimonio                          web_movimentacao_patrimonio[]
   web_requisicao_web_requisicao_ID_RESPONSAVELTopessoa web_requisicao[]              @relation("web_requisicao_ID_RESPONSAVELTopessoa")
@@ -883,11 +884,13 @@ model web_kanban_requisicao {
 }
 
 model web_kanban_status_requisicao {
+  id                   Int     @id @default(autoincrement())
   id_kanban_requisicao Int
   id_status_requisicao Int
   perfil               String? @db.VarChar(45)
-
-  @@id([id_kanban_requisicao, id_status_requisicao])
+  nome_perfil          String? @db.VarChar(45)
+  nome_status          String? @db.VarChar(45)
+  nome_kanban          String? @db.VarChar(45)
 }
 
 model web_oc {
@@ -897,10 +900,12 @@ model web_oc {
 }
 
 model web_perfil_acao_status_requisicao {
-  id_perfil_permissao_status Int  @id
+  id_perfil_permissao_status Int     @id
   id_perfil_usuario          Int?
   id_status_requisicao       Int?
   acao                       Int?
+  nome_perfil                String? @db.VarChar(45)
+  nome_status                String? @db.VarChar(45)
 }
 
 model web_perfil_usuario {
@@ -912,13 +917,15 @@ model web_perfil_usuario {
 }
 
 model web_status_requisicao {
-  id_status_requisicao     Int                        @id @default(autoincrement())
-  nome                     String                     @db.VarChar(50)
-  acao_posterior           String                     @db.Text
-  etapa                    Int?
-  acao_anterior            String?                    @db.Text
-  web_alteracao_req_status web_alteracao_req_status[]
-  web_requisicao           web_requisicao[]
+  id_status_requisicao                                                                  Int                        @id @default(autoincrement())
+  nome                                                                                  String                     @db.VarChar(50)
+  acao_posterior                                                                        String                     @db.Text
+  etapa                                                                                 Int?
+  acao_anterior                                                                         String?                    @db.Text
+  web_alteracao_req_status                                                              web_alteracao_req_status[]
+  web_requisicao                                                                        web_requisicao[]
+  web_transicao_status_web_transicao_status_id_status_anteriorToweb_status_requisicao   web_transicao_status[]     @relation("web_transicao_status_id_status_anteriorToweb_status_requisicao")
+  web_transicao_status_web_transicao_status_id_status_requisicaoToweb_status_requisicao web_transicao_status[]     @relation("web_transicao_status_id_status_requisicaoToweb_status_requisicao")
 
   @@index([acao_posterior(length: 255)], map: "idx_web_status_acao")
 }
@@ -1001,4 +1008,20 @@ model web_anexos_requisicao {
   id            Int       @id @default(autoincrement())
   criado_por    Int?
   criado_em     DateTime? @db.DateTime(0)
+  pessoa        pessoa?   @relation(fields: [criado_por], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "criado por")
+
+  @@index([criado_por], map: "criado por_idx")
+}
+
+model web_transicao_status {
+  id_transicao                                                                           Int                   @id @default(autoincrement())
+  id_status_anterior                                                                     Int
+  id_status_requisicao                                                                   Int
+  nome_transicao                                                                         String                @db.VarChar(100)
+  ativo                                                                                  Boolean?              @default(true)
+  web_status_requisicao_web_transicao_status_id_status_anteriorToweb_status_requisicao   web_status_requisicao @relation("web_transicao_status_id_status_anteriorToweb_status_requisicao", fields: [id_status_anterior], references: [id_status_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "web_transicao_status_ibfk_1")
+  web_status_requisicao_web_transicao_status_id_status_requisicaoToweb_status_requisicao web_status_requisicao @relation("web_transicao_status_id_status_requisicaoToweb_status_requisicao", fields: [id_status_requisicao], references: [id_status_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "web_transicao_status_ibfk_2")
+
+  @@unique([id_status_anterior, id_status_requisicao], map: "id_status_anterior")
+  @@index([id_status_requisicao], map: "id_status_requisicao")
 }

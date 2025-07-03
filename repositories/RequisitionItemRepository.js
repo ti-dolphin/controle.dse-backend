@@ -1,10 +1,47 @@
-const {prisma} = require('../database');
-const { buildWhere } = require('../utils');
+const { prisma } = require("../database");
+const { buildWhere } = require("../utils");
 
 class RequistionItemRepository {
-  async getMany(params) {
-    const where = buildWhere(params, ['id_requisicao']);
-    return prisma.web_requisicao_items.findMany({ where });
+  async getMany(params, searchTerm) {
+    const normalizedParams = buildWhere(params, ["id_requisicao"]);
+    const generalFilters =
+      searchTerm && searchTerm.trim() !== ""
+        ? {
+            OR: [
+              { produtos: { descricao: { contains: searchTerm } } },
+              { produtos: { codigo: { contains: searchTerm } } },
+              { produtos: { unidade: { contains: searchTerm } } },
+              { observacao: { contains: searchTerm } },
+            ],
+          }
+        : {};
+
+    const items = await prisma.web_requisicao_items
+      .findMany({
+        where: {
+          ...normalizedParams,
+          ...generalFilters,
+        },
+        include: {
+          produtos: true,
+        },
+      })
+      .then((items) =>
+        items.map((item) => {
+          const formattedItem = {
+            ...item,
+            produto: item.produtos,
+            produto_descricao: item.produtos.descricao,
+            produto_codigo: item.produtos.codigo,
+            produto_unidade: item.produtos.unidade,
+            produto_quantidade_estoque: item.produtos.quantidade_estoque,
+          };
+          delete formattedItem.produtos;
+          return formattedItem;
+        })
+      );
+
+      return items;
   }
 
   async getById(id_item_requisicao) {

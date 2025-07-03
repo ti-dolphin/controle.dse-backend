@@ -4,9 +4,11 @@ class RequisitionItemController {
   async getMany(req, res) {
     try {
       const params = req.query;
-      const items = await RequisitionItemService.getMany(params);
+      const {searchTerm, id_requisicao} = req.query;
+      const items = await RequisitionItemService.getMany({id_requisicao}, searchTerm);
       res.json(items);
     } catch (err) {
+      console.log(err);
       res
         .status(500)
         .json({ error: "Erro interno do servidor: " + err.message });
@@ -51,6 +53,7 @@ class RequisitionItemController {
       }
       res.json(updatedItem);
     } catch (err) {
+      console.log(err);
       res.status(400).json({ error: "Erro ao atualizar item: " + err.message });
     }
   }

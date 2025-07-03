@@ -30,6 +30,7 @@ class RequisitionFileController {
             const newFile = await RequisitionFileService.create(payload);
             res.status(201).json(newFile);
         } catch (error) {
+            console.error(error);
             res.status(500).json({ error: error.message });
         }
     }

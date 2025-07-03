@@ -2,24 +2,27 @@ const KanbanStatusRequisitionRepository = require("../repositories/KanbanStatusR
 const RequisitionRepository = require("../repositories/RequisitionRepository");
 const {prisma } = require('../database');
 class RequisitionService {
-
   async getMany(user, params) {
-    // Busca lista de status por perfil no kanban
-    const { id_kanban_requisicao } = params;
+    const { id_kanban_requisicao, searchTerm, filters } = params;
+    const normalizedFilters = this.normalizeFilters(filters);
+    // Se não for o kanban "5", aplica regras de acesso e status
     if (Number(id_kanban_requisicao) !== 5) {
-      const kanbanStatusList = await KanbanStatusRequisitionRepository.getMany({
-        id_kanban_requisicao,
-      });
+      // Busca os status do kanban selecionado
+      const kanbanStatusList = await KanbanStatusRequisitionRepository.getMany({id_kanban_requisicao: Number(id_kanban_requisicao)});
+      // Filtra as requisições permitidas para o usuário
       const filteredReqsByKanban = await this.getReqsBykanban(
         user,
         kanbanStatusList
       );
-      return await RequisitionRepository.findMany({
-        ID_REQUISICAO: { in: filteredReqsByKanban },
-      });
-    };
-
-    return await RequisitionRepository.findMany({});
+      // Busca as requisições filtradas por ID, termo de busca geral e filtros adicionais
+      return await RequisitionRepository.findMany(
+        { ID_REQUISICAO: { in: filteredReqsByKanban } },
+        searchTerm,
+        normalizedFilters
+      );
+    }
+    // Se for o kanban "5", retorna todas as requisições com filtros aplicados
+    return await RequisitionRepository.findMany({}, searchTerm, normalizedFilters);
   }
 
   async getReqsBykanban(user, kanbanStatusList) {
@@ -55,21 +58,30 @@ class RequisitionService {
     }, {});
   }
 
-  async getById(id) {
-    return await RequisitionRepository.findById(id);
+  async getById(id_requisicao) {
+    return await RequisitionRepository.findById(id_requisicao);
   }
 
   async create(data) {
-    console.log("Creating requisition with data:", data);
-    return await RequisitionRepository.create(data);
+    let normalizedData = { ...data };
+    const now = new Date();
+    now.setHours(now.getHours() - 3);
+    normalizedData.data_criacao = now.toISOString();
+    normalizedData.data_alteracao = now.toISOString();
+    normalizedData.criado_por = data.ID_RESPONSAVEL;
+    normalizedData.alterado_por = data.ID_RESPONSAVEL;
+    
+    delete normalizedData.ID_REQUISICAO;
+  
+    return await RequisitionRepository.create(normalizedData);
   }
 
-  async update(id, data) {
-    return await RequisitionRepository.update(id, data);
+  async update(id_requisicao, data) {
+    return await RequisitionRepository.update(id_requisicao, data);
   }
 
-  async delete(id) {
-    return await RequisitionRepository.delete(id);
+  async delete(id_requisicao) {
+    return await RequisitionRepository.delete(id_requisicao);
   }
   async getAccessRulesByKanban(user, kanbanStatusList) {
     const profiles = await prisma.web_perfil_usuario.findMany();
@@ -81,6 +93,7 @@ class RequisitionService {
         check: () => Number(user.PERM_ADMINISTRADOR) === 1,
         statusList: () => null, // ignora status
         match: () => true,
+        profileId: 1
       },
       {
         // Comprador
@@ -93,6 +106,7 @@ class RequisitionService {
         },
         match: (req, user, statusList) =>
           statusList && statusList.includes(Number(req.id_status_requisicao)),
+        profileId: 6
       },
       {
         // Diretor
@@ -105,6 +119,7 @@ class RequisitionService {
         },
         match: (req, user, statusList) =>
           statusList && statusList.includes(Number(req.id_status_requisicao)),
+        profileId: 5
       },
       {
         // Gerente do projeto
@@ -120,6 +135,7 @@ class RequisitionService {
           Number(req.gerente.CODPESSOA) === Number(user.CODPESSOA) &&
           statusList &&
           statusList.includes(Number(req.id_status_requisicao)),
+          profileId: 4
       },
       {
         // Coordenador do projeto
@@ -135,6 +151,7 @@ class RequisitionService {
           Number(req.projeto.ID_RESPONSAVEL) === Number(user.CODPESSOA) &&
           statusList &&
           statusList.includes(Number(req.id_status_requisicao)),
+          profileId: 3
       },
       {
         // Requisitante
@@ -150,9 +167,57 @@ class RequisitionService {
           Number(req.responsavel.CODPESSOA) === Number(user.CODPESSOA) &&
           statusList &&
           statusList.includes(Number(req.id_status_requisicao)),
+          profileId: 2
       },
     ];
   }
+
+   normalizeFilters(filtersArray) {
+    if(filtersArray){ 
+      const intFields = ["ID_REQUISICAO"];
+      return filtersArray.map((filter) => {
+        // Só há uma chave por objeto
+        const [field, value] = Object.entries(filter)[0];
+        // Se for campo numérico, converte todos os valores possíveis para número
+        if (intFields.includes(field)) {
+          // Exemplo: { equals: "88" } => { equals: 88 }
+          const newValue = {};
+          for (const op in value) {
+            if (typeof value[op] === "string" && !isNaN(value[op])) {
+              newValue[op] = Number(value[op]);
+            } else {
+              newValue[op] = value[op];
+            }
+          }
+          return { [field]: newValue };
+        }
+
+        // Para campos aninhados, verifica recursivamente
+        function deepNormalize(obj) {
+          if (typeof obj !== "object" || obj === null) return obj;
+          const result = Array.isArray(obj) ? [] : {};
+          for (const k in obj) {
+            if (
+              intFields.includes(k) &&
+              typeof obj[k] === "string" &&
+              !isNaN(obj[k])
+            ) {
+              result[k] = Number(obj[k]);
+            } else if (typeof obj[k] === "object") {
+              result[k] = deepNormalize(obj[k]);
+            } else {
+              result[k] = obj[k];
+            }
+          }
+          return result;
+        }
+
+        return { [field]: deepNormalize(value) };
+      });
+    }
+    return [];
+  }
+  
 }
 
 module.exports = new RequisitionService();

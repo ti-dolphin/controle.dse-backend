@@ -17,6 +17,12 @@ const getSystemProfileList = async (user)=> {
   });
 }
 
+const getNowISODate = () =>  { 
+  const now = new Date();
+  now.setHours(now.getHours() - 3);
+  return now.toISOString();
+}
+
 function buildWhere(params, numericFields = []) {
   const where = {};
   for (const key in params) {
@@ -60,6 +66,7 @@ const utils = {
     });
   },
   buildWhere,
-  getSystemProfileList
+  getSystemProfileList,
+  getNowISODate
 };
 module.exports = utils;

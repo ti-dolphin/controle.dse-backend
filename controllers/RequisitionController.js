@@ -17,7 +17,9 @@ class RequisitionController {
 
   async getById(req, res) {
     try {
-      const requisition = await RequisitionService.getById(req.params.id);
+      const requisition = await RequisitionService.getById(
+        Number(req.params.id_requisicao)
+      );
       if (!requisition) {
         return res.status(404).json({ error: "Requisição não encontrada" });
       }
@@ -32,13 +34,17 @@ class RequisitionController {
       const requisition = await RequisitionService.create(req.body);
       res.status(201).json(requisition);
     } catch (error) {
+      console.error(error);
       res.status(400).json({ error: error.message });
     }
   }
 
   async update(req, res) {
     try {
-      const updated = await RequisitionService.update(req.params.id, req.body);
+      const updated = await RequisitionService.update(
+        Number(req.params.id_requisicao),
+        req.body
+      );
       if (!updated) {
         return res.status(404).json({ error: "Requisição não encontrada" });
       }
@@ -50,7 +56,9 @@ class RequisitionController {
 
   async delete(req, res) {
     try {
-      const deleted = await RequisitionService.delete(req.params.id);
+      const deleted = await RequisitionService.delete(
+        Number(req.params.id_requisicao)
+      );
       if (!deleted) {
         return res.status(404).json({ error: "Requisição não encontrada" });
       }

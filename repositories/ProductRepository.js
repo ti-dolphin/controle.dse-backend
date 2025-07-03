@@ -1,9 +1,24 @@
 const {prisma} = require('../database');
 
 class ProductRepository {
-  async getMany(params) {
+  async getMany(params, searchTerm) {
+    const generalFilter =
+      searchTerm && searchTerm.trim() !== ""
+        ? {
+            OR: [
+              { descricao: { contains: searchTerm } },
+              { codigo: { contains: searchTerm } },
+              { unidade: { contains: searchTerm } },
+            ],
+          }
+        : {};
+
+
     return await prisma.produtos.findMany({
-      where: params,
+      where: { 
+        ...params, 
+        ...generalFilter
+      },
     });
   }
 
