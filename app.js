@@ -40,7 +40,7 @@ var checklistRouter = require('./routes/checkListRouter');
 var itemsChecklistMovimentacaoRouter = require('./routes/itemsCheckListMovimentacaoRouter');
 // Entidade: Cotações
 var quoteRouter = require('./routes/quoteRouter');
-var quoteItemRouter = require("./routes/QuoteItemRouter");
+var quoteItemRouter = require("./routes/quoteItemRouter");
 var quoteFileRouter = require("./routes/quoteFIleRouter");
 // Middlewares e Schedulers
 const authorize = require('./middleware/authentication');

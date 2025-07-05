@@ -510,6 +510,7 @@ model produtos {
   unidade              String?                @db.VarChar(10)
   familia              String?                @db.VarChar(9)
   quantidade_estoque   Int?
+  web_items_cotacao    web_items_cotacao[]
   web_patrimonio       web_patrimonio[]
   web_requisicao_items web_requisicao_items[]
 }
@@ -731,9 +732,11 @@ model web_items_cotacao {
   ST                    Decimal?    @db.Decimal(10, 3)
   quantidade_cotada     Int?
   id_produto            Int?
+  produtos              produtos?   @relation(fields: [id_produto], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "id_produto")
   web_cotacao           web_cotacao @relation(fields: [id_cotacao], references: [id_cotacao], onDelete: Cascade, map: "web_items_cotacao_ibfk_1")
 
   @@index([id_cotacao], map: "id_cotacao")
+  @@index([id_produto], map: "id_produto_idx")
 }
 
 model web_patrimonio {

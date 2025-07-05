@@ -4,12 +4,32 @@ const { buildWhere } = require('../utils');
 class QuoteItemRepository {
     async getMany(params) {
         const where = buildWhere(params, ['id_cotacao']);
-        return await prisma.web_items_cotacao.findMany({ where });
+        return  prisma.web_items_cotacao.findMany({ 
+            where, 
+            include: { 
+              produtos: true
+            }
+         }).then((items) => (
+            items.map((item) => { 
+                const formatedItem = {
+                  ...item,
+                  produto: item.produtos || null,
+                  produto_descricao: item.produtos ? item.produtos.descricao : null,
+                  produto_codigo: item.produtos ? item.produtos.codigo : null,
+                  produto_unidade: item.produtos ? item.produtos.unidade : null,
+                };
+                delete formatedItem.produtos;
+                return formatedItem;
+            })
+         ));
     }
 
     async getById(id_item_cotacao) {
         return await prisma.web_items_cotacao.findUnique({
-            where: { id_item_cotacao: Number(id_item_cotacao) }
+            where: { id_item_cotacao: Number(id_item_cotacao) }, 
+            include: { 
+                produtos: true
+            }
         });
     }
 

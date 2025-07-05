@@ -22,6 +22,36 @@ class QuoteController {
             }
             res.json(quote);
         } catch (err) {
+            console.log(err)
+            res.status(500).json({ error: "Erro interno do servidor." });
+        }
+    }
+    async getTaxClassifications(req, res) {
+        try {
+            const taxClassifications = await QuoteService.getTaxClassifications();
+            res.json(taxClassifications);
+        } catch (err) {
+            console.log(err)
+            res.status(500).json({ error: "Erro interno do servidor." });
+        }
+    }
+
+     async getPaymentConditions(req, res) {
+        try {
+            const paymentConditions = await QuoteService.getPaymentConditions();
+            res.json(paymentConditions);
+        } catch (err) {
+            console.log(err);
+            res.status(500).json({ error: "Erro interno do servidor." });
+        }
+    }
+
+    async getShipmentTypes(req, res) {
+        try {
+            const shipmentTypes = await QuoteService.getShipmentTypes();
+            res.json(shipmentTypes);
+        } catch (err) {
+            console.log(err);
             res.status(500).json({ error: "Erro interno do servidor." });
         }
     }
@@ -46,6 +76,7 @@ class QuoteController {
             }
             res.json(updatedQuote);
         } catch (err) {
+            console.log(err);
             res.status(400).json({ error: "Erro ao atualizar cotação: " + err.message });
         }
     }

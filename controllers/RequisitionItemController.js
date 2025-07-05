@@ -3,9 +3,17 @@ const RequisitionItemService = require("../services/RequisitionItemService");
 class RequisitionItemController {
   async getMany(req, res) {
     try {
-      const params = req.query;
-      const {searchTerm, id_requisicao} = req.query;
-      const items = await RequisitionItemService.getMany({id_requisicao}, searchTerm);
+      let {searchTerm, id_requisicao, id_item_requisicao} = req.query;
+      id_item_requisicao = id_item_requisicao ? { 
+        in : id_item_requisicao.in.map((id) => Number(id))
+      } : {}
+      const items = await RequisitionItemService.getMany(
+        {
+          id_requisicao : Number(id_requisicao),
+          id_item_requisicao,
+        },
+        searchTerm
+      );
       res.json(items);
     } catch (err) {
       console.log(err);
@@ -38,6 +46,22 @@ class RequisitionItemController {
       res.status(201).json(newItem);
     } catch (err) {
       res.status(400).json({ error: "Erro ao criar item: " + err.message });
+    }
+  }
+
+  async createMany(req, res) {
+    try{ 
+      const productIds = req.body;
+      const {id_requisicao} = req.query;
+      const newItemIds = await RequisitionItemService.createMany({ 
+        productIds,
+        id_requisicao : Number(id_requisicao)
+      });
+
+      res.status(201).json(newItemIds);
+    }catch(e){ 
+      console.log(e)
+      res.status(400).json({error: e.message});
     }
   }
 

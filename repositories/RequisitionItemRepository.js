@@ -3,7 +3,6 @@ const { buildWhere } = require("../utils");
 
 class RequistionItemRepository {
   async getMany(params, searchTerm) {
-    const normalizedParams = buildWhere(params, ["id_requisicao"]);
     const generalFilters =
       searchTerm && searchTerm.trim() !== ""
         ? {
@@ -19,7 +18,7 @@ class RequistionItemRepository {
     const items = await prisma.web_requisicao_items
       .findMany({
         where: {
-          ...normalizedParams,
+          ...params,
           ...generalFilters,
         },
         include: {
@@ -54,6 +53,50 @@ class RequistionItemRepository {
     return prisma.web_requisicao_items.create({
       data,
     });
+  }
+
+  async createMany(payload) {
+    const { productIds, id_requisicao } = payload;
+
+    const items = productIds.map((productId) => {
+      return {
+        id_requisicao,
+        id_produto: productId,
+        ativo: 1,
+        quantidade: 0,
+        observacao: "",
+      }
+    });
+    await prisma.web_requisicao_items.createMany({
+      data: items
+    });
+    return await prisma.web_requisicao_items
+      .findMany({
+        where: {
+          id_requisicao,
+          id_produto: {
+            in: productIds,
+          },
+        },
+        include: {
+          produtos: true,
+        },
+      })
+      .then((items) =>
+        items.map((item) => {
+          const formattedItem = {
+            ...item,
+            produto: item.produtos,
+            produto_descricao: item.produtos.descricao,
+            produto_codigo: item.produtos.codigo,
+            produto_unidade: item.produtos.unidade,
+            produto_quantidade_estoque: item.produtos.quantidade_estoque,
+          };
+          delete formattedItem.produtos;
+          return formattedItem;
+        })
+      );
+    
   }
 
   async update(id_item_requisicao, data) {

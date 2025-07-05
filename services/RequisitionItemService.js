@@ -13,6 +13,12 @@ class RequisitionItemService {
     return await RequisitionItemRepository.create(data);
   }
 
+  async createMany(payload) {
+    const newItems =  await RequisitionItemRepository.createMany(payload);
+    return newItems.map((item) => item.id_item_requisicao);
+  }
+
+
   async update(id_item_requisicao, data) {
     return await RequisitionItemRepository.update(id_item_requisicao, data);
   }

@@ -9,6 +9,18 @@ class QuoteService {
     return await QuoteRepository.getById(id_cotacao);
   }
 
+  async getTaxClassifications() {
+    return await QuoteRepository.getTaxClassifications();
+  }
+
+  async getPaymentConditions() {
+    return await QuoteRepository.getPaymentConditions();
+  }
+
+  async getShipmentTypes() {
+    return await QuoteRepository.getShipmentTypes();
+  }
+
   async create(data) {
     return await QuoteRepository.create(data);
   }

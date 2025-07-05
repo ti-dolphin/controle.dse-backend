@@ -5,6 +5,7 @@ var router = express.Router();
 router.get("/", RequisitionItemController.getMany);
 router.get("/:id_item_requisicao", RequisitionItemController.getById);
 router.post("/", RequisitionItemController.create);
+router.post("/many", RequisitionItemController.createMany);
 router.put("/:id_item_requisicao", RequisitionItemController.update);
 router.delete("/:id_item_requisicao", RequisitionItemController.delete);
 

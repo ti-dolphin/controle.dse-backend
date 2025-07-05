@@ -8,7 +8,37 @@ class QuoteRepository {
   }
 
   async getById(id_cotacao) {
-    return await prisma.web_cotacao.findUnique({ where: { id_cotacao } });
+    const result = await prisma.web_cotacao
+      .findUnique({
+        where: { id_cotacao },
+        include: {
+          web_classificacao_fiscal: true,
+          web_tipo_frete: true,
+        },
+      })
+      .then((result) => ({
+        ...result,
+        classificacao_fiscal: result.web_classificacao_fiscal,
+        tipo_frete: result.web_tipo_frete,
+      }));
+
+    if (!result) return null;
+    delete result.web_classificacao_fiscal;
+    delete result.web_tipo_frete;
+    return result;
+    
+  }
+
+  async getTaxClassifications() {
+    return await prisma.web_classificacao_fiscal.findMany();
+  }
+
+  async getPaymentConditions() {
+    return await prisma.web_condicao_pagamento.findMany();
+  }
+
+  async getShipmentTypes() {
+    return await prisma.web_tipo_frete.findMany();
   }
 
   async create(data) {
