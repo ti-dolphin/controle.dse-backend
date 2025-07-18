@@ -41,6 +41,13 @@ class QuoteRepository {
     return await prisma.web_tipo_frete.findMany();
   }
 
+  async getQuotesByRequisition(id_requisicao) {
+    return await prisma.web_cotacao.findMany({ where: { id_requisicao }, select :{ 
+      id_cotacao: true,
+      fornecedor: true
+    } });
+  }
+
   async create(data) {
     return await prisma.web_cotacao.create({ data });
   }
@@ -55,5 +62,7 @@ class QuoteRepository {
   async delete(id_cotacao) {
     return await prisma.web_cotacao.delete({ where: { id_cotacao } });
   }
+
+  
 }
 module.exports = new QuoteRepository();

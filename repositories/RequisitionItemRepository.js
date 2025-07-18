@@ -23,6 +23,7 @@ class RequistionItemRepository {
         },
         include: {
           produtos: true,
+          web_items_cotacao: true
         },
       })
       .then((items) =>
@@ -34,7 +35,9 @@ class RequistionItemRepository {
             produto_codigo: item.produtos.codigo,
             produto_unidade: item.produtos.unidade,
             produto_quantidade_estoque: item.produtos.quantidade_estoque,
+            items_cotacao: item.web_items_cotacao
           };
+          delete formattedItem.web_items_cotacao;
           delete formattedItem.produtos;
           return formattedItem;
         })
@@ -67,9 +70,11 @@ class RequistionItemRepository {
         observacao: "",
       }
     });
+
     await prisma.web_requisicao_items.createMany({
       data: items
     });
+    
     return await prisma.web_requisicao_items
       .findMany({
         where: {
@@ -80,10 +85,12 @@ class RequistionItemRepository {
         },
         include: {
           produtos: true,
+          web_items_cotacao: true
         },
       })
       .then((items) =>
         items.map((item) => {
+          
           const formattedItem = {
             ...item,
             produto: item.produtos,
@@ -91,7 +98,9 @@ class RequistionItemRepository {
             produto_codigo: item.produtos.codigo,
             produto_unidade: item.produtos.unidade,
             produto_quantidade_estoque: item.produtos.quantidade_estoque,
+            items_cotacao: item.web_items_cotacao,
           };
+          delete formattedItem.web_items_cotacao;
           delete formattedItem.produtos;
           return formattedItem;
         })
@@ -103,7 +112,41 @@ class RequistionItemRepository {
     return prisma.web_requisicao_items.update({
       where: { id_item_requisicao },
       data,
+      include: {
+        produtos: true,
+        web_items_cotacao: true,
+      },
+    }).then((item) => { 
+       const formattedItem = {
+         ...item,
+         produto: item.produtos,
+         produto_descricao: item.produtos.descricao,
+         produto_codigo: item.produtos.codigo,
+         produto_unidade: item.produtos.unidade,
+         produto_quantidade_estoque: item.produtos.quantidade_estoque,
+         items_cotacao: item.web_items_cotacao,
+       };
+       delete formattedItem.web_items_cotacao;
+       delete formattedItem.produtos;
+       return formattedItem;
     });
+  }
+
+  async updateShippingDate(ids, date) {
+     await prisma.web_requisicao_items.updateMany({
+      where: { id_item_requisicao: { in: ids } },
+      data: { data_entrega: date }
+    });
+    return await this.getMany({ id_item_requisicao: { in: ids } });
+  }
+
+  async updateOCS(ids, oc) {
+    await prisma.web_requisicao_items.updateMany({
+      where: { id_item_requisicao: { in: ids } },
+      data: { oc: oc },
+    });
+
+    return await this.getMany({ id_item_requisicao: { in: ids } });
   }
 
   async delete(id_item_requisicao) {

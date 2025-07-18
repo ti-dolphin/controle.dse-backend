@@ -227,14 +227,22 @@ class RequisitionRepository {
           web_status_requisicao: true
         },
       })
-      .then((result) => ({
-        ...result,
-        tipo_requisicao: result.web_tipo_requisicao,
-        projeto: result.projetos,
-        gerente: result.projetos.pessoa,
-        status: result.web_status_requisicao,
-        responsavel: result.pessoa_web_requisicao_ID_RESPONSAVELTopessoa,
-      }));
+      .then((result) => { 
+        const formatedRequisition = {
+          ...result,
+          tipo_requisicao: result.web_tipo_requisicao,
+          projeto: result.projetos,
+          gerente: result.projetos.pessoa,
+          status: result.web_status_requisicao,
+          responsavel: result.pessoa_web_requisicao_ID_RESPONSAVELTopessoa,
+        };
+        delete formatedRequisition.web_tipo_requisicao;
+        delete formatedRequisition.projetos;
+        delete formatedRequisition.projeto.pessoa;
+        delete formatedRequisition.pessoa_web_requisicao_ID_RESPONSAVELTopessoa;
+        delete formatedRequisition.web_status_requisicao;
+        return formatedRequisition;
+      });
   }
 
   async delete(ID_REQUISICAO) {

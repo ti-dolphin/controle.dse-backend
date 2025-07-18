@@ -15,14 +15,6 @@ class RequisitionStatusService {
   async getById(id_status_requisicao) {
     return RequisitionStatusRepository.getById(id_status_requisicao);
   }
-
-  /**
-   * Verifica se o usuário tem permissão para alterar o status da requisição.
-   *
-   * @param {Object} user - Usuário autenticado.
-   * @param {Object} requisition - Requisição a ser verificada.
-   * @returns {Promise<Object>} Retorna um objeto com a permissão para alterar o status.
-   */
   async getStatusPermission(user, requisition){
     let permissionToChangeStatus;
     

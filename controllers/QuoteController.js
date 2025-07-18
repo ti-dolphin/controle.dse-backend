@@ -61,6 +61,7 @@ class QuoteController {
             const newQuote = await QuoteService.create(req.body);
             res.status(201).json(newQuote);
         } catch (err) {
+            console.log(err);
             res.status(400).json({ error: "Erro ao criar cotação: " + err.message });
         }
     }
@@ -91,6 +92,7 @@ class QuoteController {
             }
             res.json({ message: "Cotação excluída com sucesso." });
         } catch (err) {
+            console.log(err);
             res.status(500).json({ error: "Erro interno do servidor: " + err.message });
         }
     }

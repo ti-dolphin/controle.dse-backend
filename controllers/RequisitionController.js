@@ -40,6 +40,7 @@ class RequisitionController {
   }
 
   async update(req, res) {
+    console.log("update requisition");
     try {
       const updated = await RequisitionService.update(
         Number(req.params.id_requisicao),
@@ -50,6 +51,7 @@ class RequisitionController {
       }
       res.status(200).json(updated);
     } catch (error) {
+      console.error(error);
       res.status(400).json({ error: error.message });
     }
   }

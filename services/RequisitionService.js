@@ -1,6 +1,7 @@
 const KanbanStatusRequisitionRepository = require("../repositories/KanbanStatusRequisitionRepository");
 const RequisitionRepository = require("../repositories/RequisitionRepository");
 const {prisma } = require('../database');
+const { getNowISODate } = require("../utils");
 class RequisitionService {
   async getMany(user, params) {
     const { id_kanban_requisicao, searchTerm, filters } = params;
@@ -77,7 +78,39 @@ class RequisitionService {
   }
 
   async update(id_requisicao, data) {
+    const req = await this.getById(id_requisicao);
+    const statusChange = req.id_status_requisicao !== data.id_status_requisicao
+    if (statusChange && data.id_status_requisicao) {
+      await this.processStatusChange(
+        id_requisicao,
+        data.alterado_por,
+        req.id_status_requisicao,
+        data.id_status_requisicao
+      );
+    }
+    data.data_alteracao = getNowISODate();
     return await RequisitionRepository.update(id_requisicao, data);
+  }
+
+  async processStatusChange(id_requisicao, alterado_por, oldStatusId, newStatusId) {
+    console.log("data: ", {
+      id_status_anterior: Number(oldStatusId),
+      id_status_requisicao: Number(newStatusId),
+      id_requisicao: Number(id_requisicao),
+      alterado_por: Number(alterado_por),
+      data_alteracao: getNowISODate(),
+    });
+
+    const newStatusChange = await prisma.web_alteracao_req_status.create({
+      data: {
+        id_status_anterior: Number(oldStatusId),
+        id_status_requisicao: Number(newStatusId),
+        id_requisicao: Number(id_requisicao),
+        alterado_por: Number(alterado_por),
+        data_alteracao: getNowISODate(),
+      },
+    });
+    return;
   }
 
   async delete(id_requisicao) {

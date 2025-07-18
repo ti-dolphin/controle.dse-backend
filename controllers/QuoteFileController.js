@@ -35,6 +35,7 @@ class QuoteFileController {
             const newQuoteFile = await QuoteFileService.create(payload);
             res.status(201).json(newQuoteFile);
         } catch (error) {
+            console.error(error);
             res.status(500).json({ erro: error.message });
         }
     }

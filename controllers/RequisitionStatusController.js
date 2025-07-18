@@ -55,6 +55,7 @@ class RequisitionStatusController {
 
   async update(req, res) {
     try {
+      
       const status = await RequisitionStatusService.update(Number(req.params.id_status_requisicao), req.body);
       res.json(status);
     } catch (error) {

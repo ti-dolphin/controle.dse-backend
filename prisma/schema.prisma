@@ -672,6 +672,7 @@ model web_cotacao {
   cnpj_fornecedor          String?                   @db.VarChar(255)
   criado_por               Int?
   id_condicao_pagamento    Int?
+  valor_total              Decimal?                  @db.Decimal(10, 0)
   web_anexo_cotacao        web_anexo_cotacao[]
   web_classificacao_fiscal web_classificacao_fiscal? @relation(fields: [id_classificacao_fiscal], references: [id_classificao_fiscal], onDelete: NoAction, onUpdate: NoAction, map: "classificacao_fiscal")
   pessoa                   pessoa?                   @relation(fields: [criado_por], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "criado_por")
@@ -719,24 +720,27 @@ model web_items_checklist_tipo {
 }
 
 model web_items_cotacao {
-  id_item_cotacao       Int         @id @default(autoincrement())
+  id_item_cotacao       Int                   @id @default(autoincrement())
   id_cotacao            Int
-  descricao_item        String      @db.VarChar(255)
-  preco_unitario        Decimal     @default(0.00) @db.Decimal(10, 2)
-  quantidade_solicitada Int         @default(0)
-  subtotal              Decimal?    @default(0.00) @db.Decimal(10, 2)
+  descricao_item        String                @db.VarChar(255)
+  preco_unitario        Decimal               @default(0.00) @db.Decimal(10, 2)
+  quantidade_solicitada Int                   @default(0)
+  subtotal              Decimal?              @default(0.00) @db.Decimal(10, 2)
   id_item_requisicao    Int?
-  observacao            String?     @db.Text
-  ICMS                  Decimal?    @db.Decimal(10, 3)
-  IPI                   Decimal?    @db.Decimal(10, 3)
-  ST                    Decimal?    @db.Decimal(10, 3)
+  observacao            String?               @db.Text
+  ICMS                  Decimal?              @db.Decimal(10, 3)
+  IPI                   Decimal?              @db.Decimal(10, 3)
+  ST                    Decimal?              @db.Decimal(10, 3)
   quantidade_cotada     Int?
   id_produto            Int?
-  produtos              produtos?   @relation(fields: [id_produto], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "id_produto")
-  web_cotacao           web_cotacao @relation(fields: [id_cotacao], references: [id_cotacao], onDelete: Cascade, map: "web_items_cotacao_ibfk_1")
+  indisponivel          Int?                  @db.TinyInt
+  produtos              produtos?             @relation(fields: [id_produto], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "id_produto")
+  web_requisicao_items  web_requisicao_items? @relation(fields: [id_item_requisicao], references: [id_item_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "id_requisicao")
+  web_cotacao           web_cotacao           @relation(fields: [id_cotacao], references: [id_cotacao], onDelete: Cascade, map: "web_items_cotacao_ibfk_1")
 
   @@index([id_cotacao], map: "id_cotacao")
   @@index([id_produto], map: "id_produto_idx")
+  @@index([id_item_requisicao], map: "id_requisicao_idx")
 }
 
 model web_patrimonio {
@@ -773,6 +777,9 @@ model web_requisicao {
   alterado_por                                 Int?
   TIPO                                         Int?
   criado_por                                   Int?
+  custo_total_frete                            Decimal?                   @default(0) @db.Decimal(10, 0)
+  custo_total_itens                            Decimal?                   @default(0) @db.Decimal(10, 0)
+  custo_total                                  Decimal?                   @db.Decimal(10, 0)
   web_alteracao_req_status                     web_alteracao_req_status[]
   web_cotacao                                  web_cotacao[]
   projetos                                     projetos?                  @relation(fields: [ID_PROJETO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ID_PROJETO")
@@ -799,7 +806,9 @@ model web_requisicao_items {
   ativo                      Int                          @default(1) @db.TinyInt
   oc                         Int?
   data_entrega               DateTime?                    @db.DateTime(0)
+  id_item_cotacao            Int?
   web_anexos_item_requisicao web_anexos_item_requisicao[]
+  web_items_cotacao          web_items_cotacao[]
   produtos                   produtos?                    @relation(fields: [id_produto], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "produtos")
 
   @@index([id_produto], map: "ID_PRODUTO_idx")
