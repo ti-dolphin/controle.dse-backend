@@ -31,6 +31,12 @@ class ProjectRepository {
             where: { ID: Number(ID) },
         });
     }
+
+    async getProjectsFollowedByUser(COPESSOA) {
+        return prisma.web_seguidores_projeto.findMany({ 
+            where: {codpessoa: Number(COPESSOA)},
+        })
+    }
 }
 
 module.exports = new ProjectRepository();

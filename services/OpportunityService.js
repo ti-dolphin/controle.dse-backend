@@ -7,7 +7,12 @@ class OpportunityService {
   }
 
   async getMany(params) {
-    return await OpportunityRepository.getMany({ ...params });
+    const{ user, searchTerm, filters, finalizados } = params;
+    return await OpportunityRepository.getMany(user, searchTerm, filters, finalizados);
+  }
+
+  async getStatuses() {
+    return await OpportunityRepository.getStatuses();
   }
 
   async create(data) {

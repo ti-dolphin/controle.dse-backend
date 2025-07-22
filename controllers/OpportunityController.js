@@ -17,10 +17,20 @@ class OpportunityController {
 
        async getMany(req, res) {
         try {
-          const params = req.query;
-          const opportunities = await OpportunityService.getMany(params);
+          const opportunities = await OpportunityService.getMany(req.query);
           res.json(opportunities);
         } catch (error) {
+          console.log(error);
+          res.status(500).json({ message: error.message });
+        }
+      }
+
+      async getStatuses(req, res){ 
+        try {
+          const statuses = await OpportunityService.getStatuses();
+          res.json(statuses);
+        } catch (error) {
+          console.log(error);
           res.status(500).json({ message: error.message });
         }
       }

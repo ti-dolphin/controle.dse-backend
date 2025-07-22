@@ -12,6 +12,12 @@ class UserService {
     const users = await UserRepository.getMany(query);
     return users;
   }
+
+  async isAdmin(user) {
+    if(!user) return false;
+    const isAdmin = Number(user.PERM_ADMINISTRADOR) === 1;
+    return isAdmin;
+  }
   
   async login(payload) {
     const { LOGIN, SENHA } = payload;

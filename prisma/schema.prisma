@@ -335,11 +335,13 @@ model ordemservico {
   EMAIL_VENDA_ENVIADO     Boolean?          @default(false)
   alteracoesos            alteracoesos[]
   historicostatus         historicostatus[]
+  adicionais              adicionais        @relation(fields: [ID_ADICIONAL], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ORDEMSERVICO_ibfk_1")
   cidade                  cidade?           @relation(fields: [CODCIDADE], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "FK_CIDADE_ORDEMSERVICO")
   cliente                 cliente?          @relation(fields: [FK_CODCOLIGADA, FK_CODCLIENTE], references: [CODCOLIGADA, CODCLIENTE], onDelete: NoAction, onUpdate: NoAction, map: "FK_ORDEMSERVICO_CLIENTE")
   segmento                segmento          @relation(fields: [CODSEGMENTO], references: [CODSEGMENTO], onDelete: NoAction, onUpdate: NoAction, map: "FK_SEGMENTO_ORDEMSERVICO")
-  adicionais              adicionais        @relation(fields: [ID_ADICIONAL], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ORDEMSERVICO_ibfk_1")
   projetos                projetos          @relation(fields: [ID_PROJETO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ORDEMSERVICO_ibfk_2")
+  pessoa                  pessoa?           @relation(fields: [RESPONSAVEL], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "RESPONSAVEL_FK")
+  status                  status?           @relation(fields: [CODSTATUS], references: [CODSTATUS], onDelete: NoAction, onUpdate: NoAction, map: "STATATUS_FK")
   motivo_perdido          motivo_perdido    @relation(fields: [id_motivo_perdido], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ordemservico_motivo_perdido")
   web_anexos_os           web_anexos_os[]
 
@@ -419,6 +421,7 @@ model pessoa {
   PERM_EDITAR_PRODUTOS                                 Int?                          @db.TinyInt
   cliente                                              cliente[]
   historicostatus                                      historicostatus[]
+  ordemservico                                         ordemservico[]
   pessoa_grupos                                        pessoa_grupos[]
   pessoa_responsavel                                   pessoa_responsavel[]
   pessoa_tipo                                          pessoa_tipo[]
@@ -563,6 +566,7 @@ model status {
   ATIVO                                                Boolean           @default(true)
   historicostatus_historicostatus_CODSTATUSNEWTostatus historicostatus[] @relation("historicostatus_CODSTATUSNEWTostatus")
   historicostatus_historicostatus_CODSTATUSOLDTostatus historicostatus[] @relation("historicostatus_CODSTATUSOLDTostatus")
+  ordemservico                                         ordemservico[]
 }
 
 model statusapont {
