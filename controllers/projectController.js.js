@@ -28,27 +28,27 @@ class ProjectController {
     }
 
     async getFollowers(req, res) {
-        console.log("get followers")
+        
         try {
             const { ID } = req.params;
             const followers = await ProjectService.getFollowers(ID);
             res.json(followers);
         } catch (err) {
-            console.log(err);
+            ;
             res.status(500).json({ error: err.message });
         }
     }
 
     async deleteFollower(req, res) {
-        console.log("delete follower")
+        
         try {
-            console.log(req.params)
-            const { id_seguidor_projeto } = req.params;
-            const follower = await ProjectService.deleteFollower(Number(id_seguidor_projeto));
-            res.json(follower);
+          const { id_seguidor_projeto } = req.params;
+          const follower = await ProjectService.deleteFollower(
+            Number(id_seguidor_projeto)
+          );
+          res.json(follower);
         } catch (err) {
-            console.log(err);
-            res.status(500).json({ error: err.message });
+          res.status(500).json({ error: err.message });
         }
     }
 

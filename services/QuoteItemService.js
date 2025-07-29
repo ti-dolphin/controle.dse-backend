@@ -43,7 +43,6 @@ class QuoteItemService {
   //calcula o novo total da cotação e da requisição de acordo com o item atualizado
   async calculateTotal(id_item_cotacao, item) {
     try {
-      console.log("item: ", item);
       // Validar entrada
       if (!id_item_cotacao || !item?.id_cotacao) {
         return;
@@ -66,18 +65,21 @@ class QuoteItemService {
       );
       // Retornar se n o houver mudado o total
       if (totalBeforeUpdate === newTotal) {
-        console.log("retornando sem atualizar - total não mudou");
         return;
       }
       // Buscar cotação
       const quote = await QuoteRepository.getById(item.id_cotacao);
-      const requsiton = await RequisitionRepository.findById(Number(quote.id_requisicao));
-      const reqItem = await RequisitionItemRepository.getById(Number(item.id_item_requisicao));
+      const requsiton = await RequisitionRepository.findById(
+        Number(quote.id_requisicao)
+      );
+      const reqItem = await RequisitionItemRepository.getById(
+        Number(item.id_item_requisicao)
+      );
 
       if (!quote) {
         throw new Error(`Cotação não encontrada para id: ${item.id_cotacao}`);
       }
-      // Calcular diferença 
+      // Calcular diferença
       const difference = Math.abs(newTotal - totalBeforeUpdate);
       const isIncreasing = newTotal > totalBeforeUpdate;
 
@@ -99,10 +101,6 @@ class QuoteItemService {
       await QuoteRepository.update(quote.id_cotacao, {
         valor_total: newQuoteTotal,
       });
-
-      console.log(`Novo valor total da cotação: ${newQuoteTotal}`);
-
-      console.log(`Novo valor total da requisição: ${requsiton.custo_total_itens}`);
 
       return { success: true, newTotal: newQuoteTotal };
     } catch (error) {
@@ -139,8 +137,8 @@ class QuoteItemService {
     const item = await this.getById(id_item_cotacao);
     const quote = await QuoteRepository.getById(item.id_cotacao);
     const newTotal = Number(quote.valor_total) + Number(item.subtotal);
-    console.log(`novo total da cotação ${quote.id_cotacao}:`, newTotal);
-    console.log(`novo total da requisição: `);
+    ;
+    ;
     // await QuoteRepository.update(quote.id_cotacao, { valor_total: newTotal });
   }
 

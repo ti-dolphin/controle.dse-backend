@@ -67,7 +67,7 @@ class RequisitionRepository {
       .then((results) =>
         results.map((item) => {
           if (!item.projetos) {
-            console.log("Requisição sem projeto:", item.ID_REQUISICAO);
+            ;
           }
           const requisition = {
             ...item,
@@ -187,7 +187,7 @@ class RequisitionRepository {
 
       }));
 
-    console.log("Requisição criada:", requisicao);
+    ;
     delete requisicao.web_tipo_requisicao;
     delete requisicao.projetos;
     delete requisicao.projeto.pessoa;

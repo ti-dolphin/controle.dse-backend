@@ -60,17 +60,15 @@ class QuoteService {
   }
 
   async setUpdatedShippingCostOnRequisition(oldQuote, newQuote){
-
     const { id_requisicao, valor_total, valor_frete, id_cotacao } = oldQuote;
     const new_valor_frete = Number(newQuote.valor_frete || 0);
 
     const difference = Number(new_valor_frete) - Number(valor_frete);
-    const selectedQuoteItems = await QuoteItemRepository.getQuoteItemsSelectedInRequisition(id_cotacao);
-
-    console.log("selectedQuoteItems: ", selectedQuoteItems);
+    const selectedQuoteItems =
+      await QuoteItemRepository.getQuoteItemsSelectedInRequisition(id_cotacao);
 
     let quoteTotal = 0;
-    if(!selectedQuoteItems.length > 0){ 
+    if (!selectedQuoteItems.length > 0) {
       //atualiza valor na requisição apenas se houver items daquela cotação selecionados
       quoteTotal = Number(valor_total) + difference;
       return quoteTotal;
@@ -79,7 +77,8 @@ class QuoteService {
       Number(id_requisicao)
     );
 
-    const custo_total_frete = Number(requisition.custo_total_frete) + difference;
+    const custo_total_frete =
+      Number(requisition.custo_total_frete) + difference;
     await RequisitionService.update(Number(id_requisicao), {
       custo_total_frete,
     });

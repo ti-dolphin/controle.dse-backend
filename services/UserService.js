@@ -15,7 +15,6 @@ class UserService {
 
   async getComercialUsers() {
     const users = await UserRepository.getComercialUsers();
-    console.log("usuários comerciais: ", users.forEach((user) => console.log(user.NOME)));
     return users;
   }
 

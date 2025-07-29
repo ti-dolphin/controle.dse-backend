@@ -2,14 +2,14 @@ const OpportunityCommentService = require("../services/OpportunityCommentService
 
 class OpportunityCommentController {
   async getMany(req, res) {
-    console.log("get many comentários")
+    
     try {
       const { CODOS } = req.query;
       const opportunityComments = await OpportunityCommentService.getMany(Number(CODOS));
-      console.log("opportunityComments: ", opportunityComments.length);
+      ;
       res.json(opportunityComments);
     } catch (error) {
-      console.log(error);
+      ;
       res.status(500).json({ message: "Erro ao buscar comentários da oportunidade" });
     }
   }
@@ -24,7 +24,7 @@ class OpportunityCommentController {
         return res.status(404).json({ message: "Comentário da oportunidade não encontrado" });
       res.json(opportunityComment);
     } catch (error) {
-      console.log(error);
+      ;
       res.status(500).json({ message: "Erro ao buscar comentário da oportunidade" });
     }
   }
@@ -36,7 +36,7 @@ class OpportunityCommentController {
       );
       res.status(201).json(opportunityComment);
     } catch (error) {
-      console.log(error);
+      ;
       res.status(500).json({ message: "Erro ao criar comentário da oportunidade" });
     }
   }
@@ -52,7 +52,7 @@ class OpportunityCommentController {
         return res.status(404).json({ message: "Comentário da oportunidade não encontrado" });
       res.json(opportunityComment);
     } catch (error) {
-      console.log(error);
+      ;
       res.status(500).json({ message: "Erro ao atualizar comentário da oportunidade" });
     }
   }
@@ -63,7 +63,7 @@ class OpportunityCommentController {
       await OpportunityCommentService.delete(parseInt(CODCOMENTARIO));
       res.json({ message: "Comentário da oportunidade deletado" });
     } catch (error) {
-      console.log(error);
+      ;
       res.status(500).json({ message: "Erro ao deletar comentário da oportunidade" });
     }
   }

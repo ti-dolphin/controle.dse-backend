@@ -10,7 +10,7 @@ class QuoteItemController {
       const items = await QuoteItemService.getMany(params, searchTerm);
       res.json(items);
     } catch (error) {
-      console.log(error);
+      ;
       res.status(500).json({ error: error.message });
     }
   }
@@ -59,7 +59,7 @@ class QuoteItemController {
       }
       res.json(updatedItem);
     } catch (error) {
-      console.log(error)
+      
       res.status(400).json({ error: error.message });
     }
   }

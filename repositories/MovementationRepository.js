@@ -95,7 +95,6 @@ class MovementationRepository {
   }
 
   async delete(id_movimentacao) {
-    console.log('delete - id_movimentacao', id_movimentacao);
     return await prisma.web_movimentacao_patrimonio.delete({
       where: { id_movimentacao },
     });

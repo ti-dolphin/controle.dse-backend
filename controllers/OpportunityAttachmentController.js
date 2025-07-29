@@ -9,7 +9,7 @@ class OpportunityAttachmentController {
             );
             res.json(attachments);
         } catch (error) {
-            console.log(error);
+            ;
             res.status(500).json({ message: "Erro ao buscar anexos da oportunidade" });
         }
     }
@@ -25,19 +25,19 @@ class OpportunityAttachmentController {
             }
             res.json(attachment);
         } catch (error) {
-            console.log(error);
+            ;
             res.status(500).json({ message: "Erro ao buscar anexo da oportunidade" });
         }
     }
 
     async create(req, res) {
-        console.log("create anexo");
+        ;
         try {
           
             const attachment = await OpportunityAttachmentService.create(req.body);
             res.status(201).json(attachment);
         } catch (error) {
-            console.log(error);
+            ;
             res.status(500).json({ message: "Erro ao criar anexo da oportunidade" });
         }
     }
@@ -54,7 +54,7 @@ class OpportunityAttachmentController {
             }
             res.json(updatedAttachment);
         } catch (error) {
-            console.log(error);
+            ;
             res.status(500).json({ message: "Erro ao atualizar anexo da oportunidade" });
         }
     }
@@ -62,7 +62,7 @@ class OpportunityAttachmentController {
     async delete(req, res) {
         try {
             const { id_anexo_os } = req.params;
-            console.log("params: ", req.params);
+            ;
             const deleted = await OpportunityAttachmentService.delete(
               Number(id_anexo_os)
             );
@@ -71,7 +71,7 @@ class OpportunityAttachmentController {
             }
             res.status(204).end();
         } catch (error) {
-            console.log(error);
+            ;
             res.status(500).json({ message: "Erro ao deletar anexo da oportunidade" });
         }
     }

@@ -14,7 +14,7 @@ class RequisitionItemController {
       );
       res.json(items);
     } catch (err) {
-      console.log(err);
+      ;
       res
         .status(500)
         .json({ error: "Erro interno do servidor: " + err.message });
@@ -45,7 +45,7 @@ class RequisitionItemController {
       );
       res.json(columns);
     } catch (err) {
-      console.log(err);
+      ;
       res
         .status(500)
         .json({ error: "Erro interno do servidor: " + err.message });
@@ -91,7 +91,6 @@ class RequisitionItemController {
 
       res.status(201).json(newItemIds);
     } catch (e) {
-      console.log(e);
       res.status(400).json({ error: e.message });
     }
   };
@@ -108,7 +107,6 @@ class RequisitionItemController {
       }
       res.json(updatedItem);
     } catch (err) {
-      console.log(err);
       res.status(400).json({ error: "Erro ao atualizar item: " + err.message });
     }
   };
@@ -119,7 +117,6 @@ class RequisitionItemController {
       const updatedItems = RequisitionItemService.updateShippingDate(ids, date);
       res.json(updatedItems);
     } catch (err) {
-      console.log(err);
       res
         .status(400)
         .json({ error: "Erro ao atualizar data de entrega: " + err.message });
@@ -127,32 +124,30 @@ class RequisitionItemController {
   };
 
   updateOCS = async (req, res) => {
-    console.log("updateOCS");
     try {
       const { ids, oc } = req.body;
       const updatedItems = await RequisitionItemService.updateOCS(ids, oc);
       res.json(updatedItems);
     } catch (err) {
-      console.log(err);
       res.status(400).json({ error: "Erro ao preencher oc's: " + err.message });
     }
   };
 
-  updateQuoteItemsSelected = async (req, res) => { 
+  updateQuoteItemsSelected = async (req, res) => {
     try {
       const quoteItemsSelectedMap = req.body;
       const { id_requisicao } = req.query;
-      const { updatedItems, updatedRequisition } = await RequisitionItemService.updateQuoteItemsSelected(
-        Number(id_requisicao),
-        quoteItemsSelectedMap
-      );
+      const { updatedItems, updatedRequisition } =
+        await RequisitionItemService.updateQuoteItemsSelected(
+          Number(id_requisicao),
+          quoteItemsSelectedMap
+        );
       res.json({ updatedItems, updatedRequisition });
       // res.json(updatedItems);
     } catch (err) {
-      console.log(err);
       res.status(400).json({ error: "Erro ao preencher oc's: " + err.message });
     }
-  }
+  };
 
   delete = async (req, res) => {
     try {
@@ -164,7 +159,7 @@ class RequisitionItemController {
       }
       res.json({ message: "Item excluído com sucesso" });
     } catch (err) {
-      console.log(err);
+      ;
       res
         .status(500)
         .json({ error: "Erro interno do servidor: " + err.message });

@@ -10,7 +10,7 @@ class OpportunityService {
 
   async getMany(params) {
     const { user, searchTerm, filters, finalizados } = params;
-    console.log("user in Service: ", user);
+    ;
     return await OpportunityRepository.getMany(
       user,
       searchTerm,
@@ -27,20 +27,16 @@ class OpportunityService {
     if (isAdicional) {
       const newAdicional = await this.createAdicional(Number(data.ID_PROJETO));
       data.ID_ADICIONAL = newAdicional.ID;
-      console.log("novo adicional: ", newAdicional);
-      console.log("data: ", data);
-       return await OpportunityRepository.create(data);
+      return await OpportunityRepository.create(data);
     }
     let newProject = {
       CODGERENTE: 9999,
-      DESCRICAO : data.DESCRICAO,
-      ATIVO : 1
+      DESCRICAO: data.DESCRICAO,
+      ATIVO: 1,
     };
     newProject = await ProjectRepository.create(newProject);
-    console.log("novo projeto criado: ", newProject);
     const newAdicional = await this.createAdicional(Number(newProject.ID));
-   
-    console.log("novo adicional zero criado: ", newAdicional);
+
     data.ID_PROJETO = newProject.ID;
     data.ID_ADICIONAL = newAdicional.ID;
 

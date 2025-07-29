@@ -55,7 +55,7 @@ class OpportunityRepository {
   }
 
   static async getMany(user, searchTerm, filters, finalizados) {
-    console.log("user: ", user);
+    ;
     let projectsFollowedByUser = await ProjectRepository.getProjectsFollowedByUser(user.CODPESSOA);
     projectsFollowedByUser = projectsFollowedByUser.map(
       (project) => project.ID
@@ -99,7 +99,7 @@ class OpportunityRepository {
     payload.CODTIPOOS = 21;
     payload.VALOR_COMISSAO = 0;
     payload.id_motivo_perdido = 1;
-    console.log("payload: ", payload);
+    ;
     return await prisma.ordemservico.create({
       data: payload,
       include: this.include(),
@@ -107,12 +107,13 @@ class OpportunityRepository {
   }
 
   static async update(CODOS, payload) {
-    console.log("payload: ", payload);
-    return await prisma.ordemservico.update({
-      where: { CODOS },
-      data: payload,
-      include: this.include(),
-    }).then((opportunity) => this.format(opportunity));
+    return await prisma.ordemservico
+      .update({
+        where: { CODOS },
+        data: payload,
+        include: this.include(),
+      })
+      .then((opportunity) => this.format(opportunity));
   }
 
   static async delete(CODOS) {

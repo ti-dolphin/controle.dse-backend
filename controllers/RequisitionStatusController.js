@@ -30,25 +30,25 @@ class RequisitionStatusController {
   }
 
   async getStatusPermission(req, res){
-    console.log("getStatusPermission");
+    ;
     const {user, requisition} = req.query;
     try{ 
        const permissions = await RequisitionStatusService.getStatusPermission(user, requisition);
        res.json(permissions);
     }catch(e){ 
-      console.log(e)
+      
       res.status(400).json({error: e.message});
     }
   }
   async getStatusAlteration(req, res){
-    console.log("getStatusAlteration");
+    ;
     const {id_requisicao} = req.query;
     try{ 
         const alterations = await RequisitionStatusService.getStatusAlteration(Number(id_requisicao));
  
         res.json(alterations);
     }catch(e){ 
-      console.log(e)
+      
       res.status(400).json({error: e.message});
     }
   }

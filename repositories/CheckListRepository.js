@@ -13,7 +13,7 @@ class CheckListRepository {
       { movimentacao_patrimonio: "id_patrimonio" },
     ];
     const where = buildWhere(params, numericFields);
-    console.log('where: ', where)
+
     return prisma.web_checklist_movimentacao
       .findMany({
         where,

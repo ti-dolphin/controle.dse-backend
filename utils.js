@@ -62,7 +62,7 @@ function buildWhere(params, numericFields = []) {
 const utils = {
   removeFile: (filePath) => {
     fs.unlink(filePath, (err) => {
-      if (err) console.log(err);
+      if (err);
     });
   },
   buildWhere,

@@ -65,14 +65,13 @@ class RequisitionService {
 
   async create(data) {
     let normalizedData = { ...data };
-    console.log("normalizedData: ", normalizedData);
     const now = new Date();
     now.setHours(now.getHours() - 3);
     normalizedData.data_criacao = now.toISOString();
     normalizedData.data_alteracao = now.toISOString();
     normalizedData.criado_por = data.ID_RESPONSAVEL;
     normalizedData.alterado_por = data.ID_RESPONSAVEL;
-  
+
     return await RequisitionRepository.create(normalizedData);
   }
 
@@ -92,13 +91,6 @@ class RequisitionService {
   }
 
   async processStatusChange(id_requisicao, alterado_por, oldStatusId, newStatusId) {
-    console.log("data: ", {
-      id_status_anterior: Number(oldStatusId),
-      id_status_requisicao: Number(newStatusId),
-      id_requisicao: Number(id_requisicao),
-      alterado_por: Number(alterado_por),
-      data_alteracao: getNowISODate(),
-    });
 
     const newStatusChange = await prisma.web_alteracao_req_status.create({
       data: {

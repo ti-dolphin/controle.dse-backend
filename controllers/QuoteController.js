@@ -22,7 +22,7 @@ class QuoteController {
             }
             res.json(quote);
         } catch (err) {
-            console.log(err)
+            
             res.status(500).json({ error: "Erro interno do servidor." });
         }
     }
@@ -31,7 +31,7 @@ class QuoteController {
             const taxClassifications = await QuoteService.getTaxClassifications();
             res.json(taxClassifications);
         } catch (err) {
-            console.log(err)
+            
             res.status(500).json({ error: "Erro interno do servidor." });
         }
     }
@@ -41,7 +41,7 @@ class QuoteController {
             const paymentConditions = await QuoteService.getPaymentConditions();
             res.json(paymentConditions);
         } catch (err) {
-            console.log(err);
+            ;
             res.status(500).json({ error: "Erro interno do servidor." });
         }
     }
@@ -51,7 +51,7 @@ class QuoteController {
             const shipmentTypes = await QuoteService.getShipmentTypes();
             res.json(shipmentTypes);
         } catch (err) {
-            console.log(err);
+            ;
             res.status(500).json({ error: "Erro interno do servidor." });
         }
     }
@@ -61,7 +61,7 @@ class QuoteController {
             const newQuote = await QuoteService.create(req.body);
             res.status(201).json(newQuote);
         } catch (err) {
-            console.log(err);
+            ;
             res.status(400).json({ error: "Erro ao criar cotação: " + err.message });
         }
     }
@@ -77,7 +77,7 @@ class QuoteController {
             }
             res.json(updatedQuote);
         } catch (err) {
-            console.log(err);
+            ;
             res.status(400).json({ error: "Erro ao atualizar cotação: " + err.message });
         }
     }
@@ -92,8 +92,9 @@ class QuoteController {
             }
             res.json({ message: "Cotação excluída com sucesso." });
         } catch (err) {
-            console.log(err);
-            res.status(500).json({ error: "Erro interno do servidor: " + err.message });
+          res
+            .status(500)
+            .json({ error: "Erro interno do servidor: " + err.message });
         }
     }
 }
