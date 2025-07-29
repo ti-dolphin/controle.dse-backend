@@ -1,5 +1,6 @@
 const ProductService = require("../services/ProductService");
 
+// productsController.js
 class ProductsController {
     async getMany(req, res) {
        try {
