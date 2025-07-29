@@ -65,14 +65,13 @@ class RequisitionService {
 
   async create(data) {
     let normalizedData = { ...data };
+    console.log("normalizedData: ", normalizedData);
     const now = new Date();
     now.setHours(now.getHours() - 3);
     normalizedData.data_criacao = now.toISOString();
     normalizedData.data_alteracao = now.toISOString();
     normalizedData.criado_por = data.ID_RESPONSAVEL;
     normalizedData.alterado_por = data.ID_RESPONSAVEL;
-    
-    delete normalizedData.ID_REQUISICAO;
   
     return await RequisitionRepository.create(normalizedData);
   }
