@@ -13,16 +13,37 @@ class ProjectRepository {
         });
     }
 
+    async getFollowers(ID) {
+        return await prisma.web_seguidores_projeto.findMany({
+            where: { id_projeto: Number(ID)},
+            include: { 
+                pessoa: {
+                    select: {
+                        CODPESSOA: true,
+                        NOME: true,
+                    }
+                }
+            }
+        });
+    }
+
     async create(projectData) {
-        return await prisma.projetos.create({
+        const newProject =  await prisma.projetos.create({
             data: projectData,
         });
+        return newProject;
     }
 
     async update(ID, projectData) {
         return await prisma.projetos.update({
             where: { ID: Number(ID) },
             data: projectData,
+        });
+    }
+
+    async deleteFollower(id_seguidor_projeto) {
+        return await prisma.web_seguidores_projeto.delete({
+            where: { id_seguidor_projeto: Number(id_seguidor_projeto) },
         });
     }
 

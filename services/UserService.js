@@ -13,6 +13,12 @@ class UserService {
     return users;
   }
 
+  async getComercialUsers() {
+    const users = await UserRepository.getComercialUsers();
+    console.log("usuários comerciais: ", users.forEach((user) => console.log(user.NOME)));
+    return users;
+  }
+
   async isAdmin(user) {
     if(!user) return false;
     const isAdmin = Number(user.PERM_ADMINISTRADOR) === 1;

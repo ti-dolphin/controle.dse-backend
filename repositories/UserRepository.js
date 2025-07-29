@@ -16,6 +16,10 @@ class UserRepository {
     return prisma.pessoa.findMany({ where });
   }
 
+  async getComercialUsers() {
+    return prisma.pessoa.findMany({ where: { PERM_COMERCIAL: 1 } });
+  }
+
   async getUserByLogin(LOGIN) {
     return prisma.pessoa.findFirst({ where: { LOGIN } });
   }

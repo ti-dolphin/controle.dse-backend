@@ -6,6 +6,9 @@ router.get('/', UserController.getMany)
 
 router.get('/:CODPESSOA', UserController.getById)
 
+//pessoa_comercial
+router.get('/comercial/pessoa_comercial', UserController.getComercialUsers)
+
 router.post("/login",  UserController.login);
 
 router.post("/register", UserController.register);

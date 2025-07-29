@@ -10,6 +10,14 @@ class ProjectService {
         return await ProjectRepository.getById(ID);
     }
 
+    async getFollowers(ID) {
+        return await ProjectRepository.getFollowers(ID);
+    }
+
+    async deleteFollower(id_seguidor_projeto) {
+        return await ProjectRepository.deleteFollower(id_seguidor_projeto);
+    }
+
     async create(projectData) {
         return await ProjectRepository.create(projectData);
     }

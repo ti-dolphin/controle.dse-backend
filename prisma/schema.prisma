@@ -333,6 +333,7 @@ model ordemservico {
   observacoes             String?           @db.Text
   DESCRICAO_VENDA         String?           @db.Text
   EMAIL_VENDA_ENVIADO     Boolean?          @default(false)
+  VALOR_TOTAL             Decimal?          @db.Decimal(16, 2)
   alteracoesos            alteracoesos[]
   historicostatus         historicostatus[]
   adicionais              adicionais        @relation(fields: [ID_ADICIONAL], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ORDEMSERVICO_ibfk_1")

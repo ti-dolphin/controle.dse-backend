@@ -16,6 +16,10 @@ var requisitionKanbanRouter = require('./routes/requisitionKanbanRouter');
 var requisitionStatusRouter = require('./routes/requisitionStatusRouter');
 var requisitionTypeRouter = require('./routes/requisitionTypeRouter');
 
+
+//Entidade: Clientes
+
+var clientRouter = require('./routes/clientRouter');
 // Entidade: Anexos
 var reqItemFileRouter = require('./routes/reqItemFileRouter');
 var requisitionFileRouter = require('./routes/requisitionFileRouter');
@@ -34,7 +38,8 @@ var projectRouter = require('./routes/projectRouter');
 
 // Entidade: Oportunidades
 var oppoprtunityRouter = require('./routes/OpportunityRouter');
-
+var opportunityAttachmentRouter = require("./routes/opportunityAttachmentRouter");
+var opportunityCommentRouter = require("./routes/opportunityCommentRouter");
 // Entidade: Checklist
 var checklistRouter = require('./routes/checkListRouter');
 var itemsChecklistMovimentacaoRouter = require('./routes/itemsCheckListMovimentacaoRouter');
@@ -88,7 +93,9 @@ app.use('/projetos', projectRouter);
 
 // Rotas de Oportunidades
 app.use("/oportunidades", oppoprtunityRouter);
-
+app.use("/clientes", clientRouter);
+app.use("/anexos_oportunidade", opportunityAttachmentRouter);   
+app.use("/comentarios_oportunidade", opportunityCommentRouter);
 // Rotas de Checklist
 
 app.use("/checklist", checklistRouter);

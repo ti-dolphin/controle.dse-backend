@@ -9,7 +9,7 @@ router.get('/:CODOS', OpportunityController.getById);
 //recupera oportunidades
 router.get('/', OpportunityController.getMany);
 
-// router.get("/status/status_oportunidade", OpportunityController.getStatus);
+router.get("/status/status_oportunidade", OpportunityController.getStatuses);
 
 //criar nova oportunidade
 router.post('/', OpportunityController.create);

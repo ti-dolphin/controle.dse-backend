@@ -17,6 +17,7 @@ class OpportunityController {
 
        async getMany(req, res) {
         try {
+          console.log('user: ', req.query);
           const opportunities = await OpportunityService.getMany(req.query);
           res.json(opportunities);
         } catch (error) {
@@ -37,9 +38,15 @@ class OpportunityController {
 
        async create(req, res) {
         try {
-          const opportunity = await OpportunityService.create(req.body);
+          const {isAdicional} = req.query;
+        
+          const opportunity = await OpportunityService.create(
+            req.body,
+            isAdicional === 'true'
+          );
           res.status(201).json(opportunity);
         } catch (error) {
+          console.log(error);
           res.status(500).json({ message: error.message });
         }
       }

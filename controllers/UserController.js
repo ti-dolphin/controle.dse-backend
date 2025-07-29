@@ -61,6 +61,16 @@ class UserController {
         }
     }
 
+    async getComercialUsers(req, res) {
+        try {
+            const users = await UserService.getComercialUsers(); //passa parâmetros para a busca
+            res.status(200).json(users);
+        } catch (err) {
+            console.log(err);
+            res.status(400).json({ error: err.message });
+        }
+    }
+
 
 }
 
