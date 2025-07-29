@@ -1,6 +1,6 @@
 var express = require("express");
 var router = express.Router();
- const RequisitionController = require("../controllers/RequisitionController");
+ const RequisitionController = require("../controllers/requisitionController.js");
 
 
 router.get("/", RequisitionController.getMany);

@@ -37,7 +37,7 @@ var productsRouter = require('./routes/productsRouter');
 var projectRouter = require('./routes/projectRouter');
 
 // Entidade: Oportunidades
-var oppoprtunityRouter = require('./routes/OpportunityRouter');
+var oppoprtunityRouter = require('./routes/OpportunityRouter.js');
 var opportunityAttachmentRouter = require("./routes/opportunityAttachmentRouter");
 var opportunityCommentRouter = require("./routes/opportunityCommentRouter");
 // Entidade: Checklist
