@@ -5,6 +5,7 @@ var logger = require('morgan');
 const cors = require('cors');
 const cookieParser = require("cookie-parser");
 
+
 // Rotas principais
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -70,52 +71,52 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 // Rotas de Requisições
-app.use('/requisicoes', requisitionRouter);
-app.use("/item_requisicao", requisitionItemsRouter); // faltando update many, create many, delete many
-app.use('/tipo_requisicao', requisitionTypeRouter)
-app.use("/requisicao_kanban", requisitionKanbanRouter);
-app.use("/status_requisicao", requisitionStatusRouter); 
-app.use("/anexo_requisicao", requisitionFileRouter); // rota para anexos)
+app.use('/requisicoes', authorize,  requisitionRouter);
+app.use("/item_requisicao",  authorize, requisitionItemsRouter); // faltando update many, create many, delete many
+app.use('/tipo_requisicao',  authorize, requisitionTypeRouter)
+app.use("/requisicao_kanban", authorize, requisitionKanbanRouter);
+app.use("/status_requisicao",  authorize, requisitionStatusRouter); 
+app.use("/anexo_requisicao",  authorize, requisitionFileRouter); // rota para anexos)
 // Rotas de Movimentação de Patrimônio
 
-app.use('/movimentacao_patrimonio', movementationRouter);
+app.use('/movimentacao_patrimonio',  authorize, movementationRouter);
 
 // Rotas de Patrimônio
-app.use("/patrimonios", patrimonyRouter);
-app.use("/acessorio_patrimonio", patrimonyAccessoryRouter);
+app.use("/patrimonios",  authorize, patrimonyRouter);
+app.use("/acessorio_patrimonio", authorize, patrimonyAccessoryRouter);
 
 // Rotas de Produtos
-app.use('/produtos', productsRouter);
+app.use('/produtos',  authorize, productsRouter);
 
 //projetos
-app.use('/projetos', projectRouter);
+app.use('/projetos',  authorize, projectRouter);
 
 
 // Rotas de Oportunidades
-app.use("/oportunidades", oppoprtunityRouter);
-app.use("/clientes", clientRouter);
-app.use("/anexos_oportunidade", opportunityAttachmentRouter);   
-app.use("/comentarios_oportunidade", opportunityCommentRouter);
+app.use("/oportunidades",  authorize, oppoprtunityRouter);
+app.use("/clientes",  authorize, clientRouter);
+app.use("/anexos_oportunidade",  authorize, opportunityAttachmentRouter);   
+app.use("/comentarios_oportunidade",  authorize, opportunityCommentRouter);
 // Rotas de Checklist
 
-app.use("/checklist", checklistRouter);
-app.use("/checklist_movimentacao", checklistRouter);
-app.use("/item_checklist_movimentacao", itemsChecklistMovimentacaoRouter); // faltando update many, create many, delete many
+app.use("/checklist",  authorize, checklistRouter);
+app.use("/checklist_movimentacao",  authorize, checklistRouter);
+app.use("/item_checklist_movimentacao",  authorize, itemsChecklistMovimentacaoRouter); // faltando update many, create many, delete many
 // Rotas de Projetos
-app.use("/projetos", projectRouter);
+app.use("/projetos",  authorize, projectRouter);
 
 // Rotas de Cotações
-app.use("/cotacoes", quoteRouter);
+app.use("/cotacoes",  authorize, quoteRouter);
 app.use('/item_cotacao', quoteItemRouter); // faltando update many, create many, delete many
 
 // Rotas de Anexos da requisição
-app.use("/anexo_requisicao", requisitionFileRouter); // rota para anexos de requisição
-app.use("/anexo_item_requisicao", reqItemFileRouter);
+app.use("/anexo_requisicao", authorize, requisitionFileRouter); // rota para anexos de requisição
+app.use("/anexo_item_requisicao", authorize, reqItemFileRouter);
 //Rotas de Anexos do Patrimônio
-app.use("/anexo_patrimonio", patrimonyFileRouter); // rota para anexos de patrimônio
+app.use("/anexo_patrimonio", authorize, patrimonyFileRouter); // rota para anexos de patrimônio
 
 //Rotas de anexos da Cotação
-app.use("/anexo_cotacao", quoteFileRouter); // rota para anexos de itens de cotação
+app.use("/anexo_cotacao", authorize, quoteFileRouter); // rota para anexos de itens de cotação
 // Tratamento de erros
 app.use(function(req, res, next) {
   next(createError(404));

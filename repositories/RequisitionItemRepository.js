@@ -28,6 +28,9 @@ class RequistionItemRepository {
       })
       .then((items) =>
         items.map((item) => {
+          if(!item.produtos){ 
+            return item;
+          }
           const formattedItem = {
             ...item,
             produto: item.produtos,
@@ -90,7 +93,6 @@ class RequistionItemRepository {
       })
       .then((items) =>
         items.map((item) => {
-          
           const formattedItem = {
             ...item,
             produto: item.produtos,
