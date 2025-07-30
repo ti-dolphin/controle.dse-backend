@@ -1,6 +1,6 @@
 var express = require("express");
 var router = express.Router();
- const RequisitionItemController = require("../controllers/RequisitionItemController");
+ const RequisitionItemController = require("../controllers/requisitionItemController");
 
 router.get("/", RequisitionItemController.getMany);
 router.get("/:id_item_requisicao", RequisitionItemController.getById);
