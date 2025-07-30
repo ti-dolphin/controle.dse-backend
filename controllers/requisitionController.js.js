@@ -1,4 +1,4 @@
-const RequisitionService = require("../services/requisitionService");
+const RequisitionService = require("../services/RequisitionService");
 
 class RequisitionController {
   async getMany(req, res) {
