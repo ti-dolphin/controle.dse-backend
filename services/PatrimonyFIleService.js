@@ -1,4 +1,4 @@
-const PatrymonyFileRepository = require('../repositories/PatrimonyFileRepository');
+const PatrymonyFileRepository = require('../repositories/PatrimonyFIleRepository');
 
 class PatrimonyFileService {
   async getMany(params) {
