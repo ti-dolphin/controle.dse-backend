@@ -3,7 +3,7 @@ const RequisitionItemRepository = require("../repositories/RequisitionItemReposi
 const QuoteItemService = require("./QuoteItemService");
 const RequisitionRepository = require("../repositories/RequisitionRepository");
 const RequisitionService = require("./RequisitionService");
-
+const QuoteService = require("./QuoteService");
 class RequisitionItemService {
   async getMany(params, searchTerm) {
     const reqItems = await RequisitionItemRepository.getMany(
@@ -144,6 +144,9 @@ class RequisitionItemService {
         await QuoteItemService.delete(quoteItem.id_item_cotacao);
         const onlyOneItem = await this.requisitionHasOnlyOneItem(id_requisicao);
         if (onlyOneItem) {
+          await QuoteService.update(Number(quoteItem.id_cotacao), {
+            valor_total: 0
+          });
           await RequisitionService.update(Number(id_requisicao), {
             custo_total_itens: 0,
             custo_total_frete: 0,

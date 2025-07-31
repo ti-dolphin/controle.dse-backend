@@ -50,8 +50,10 @@ class QuoteService {
       // veirifica se o valor do frete mudou, se houver mudado, atualiza o valor total de acordo com a diferença
       if (data.valor_frete !== undefined) {
         const quote = await this.getById(id_cotacao);
-        data.valor_total = await this.setUpdatedShippingCostOnRequisition(quote, data);
+        data.valor_frete = Number(data.valor_frete);
+        await this.setUpdatedShippingCostOnRequisition(quote, data);
       }
+      delete data.valor_total;
       return await QuoteRepository.update(id_cotacao, data);
     } catch (e) {
       console.error("Error in update:", e.message);
@@ -64,8 +66,7 @@ class QuoteService {
     const new_valor_frete = Number(newQuote.valor_frete || 0);
 
     const difference = Number(new_valor_frete) - Number(valor_frete);
-    const selectedQuoteItems =
-      await QuoteItemRepository.getQuoteItemsSelectedInRequisition(id_cotacao);
+    const selectedQuoteItems = await QuoteItemRepository.getQuoteItemsSelectedInRequisition(id_cotacao);
 
     let quoteTotal = 0;
     if (!selectedQuoteItems.length > 0) {
@@ -73,9 +74,7 @@ class QuoteService {
       quoteTotal = Number(valor_total) + difference;
       return quoteTotal;
     }
-    const requisition = await RequisitionRepository.findById(
-      Number(id_requisicao)
-    );
+    const requisition = await RequisitionRepository.findById(Number(id_requisicao));
 
     const custo_total_frete =
       Number(requisition.custo_total_frete) + difference;

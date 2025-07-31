@@ -11,7 +11,7 @@ model adicionais {
   ID           Int            @id @default(autoincrement())
   NUMERO       Int
   ID_PROJETO   Int
-  projetos     projetos       @relation(fields: [ID_PROJETO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "FK_ADICIONAIS_PROJETOS")
+  projetos     projetos       @relation(fields: [ID_PROJETO], references: [ID], onUpdate: Restrict, map: "FK_ADICIONAIS_PROJETOS")
   ordemservico ordemservico[]
 
   @@index([ID_PROJETO], map: "ID_PROJETO")
@@ -71,7 +71,7 @@ model cidade {
   ID           Int            @id
   NOME         String?        @db.VarChar(120)
   ESTADO       Int?
-  estado       estado?        @relation(fields: [ESTADO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "FK_CIDADE_ESTADO")
+  estado       estado?        @relation(fields: [ESTADO], references: [ID], onDelete: Restrict, onUpdate: Restrict, map: "FK_CIDADE_ESTADO")
   ordemservico ordemservico[]
 
   @@index([ESTADO], map: "FK_CIDADE_ESTADO")
@@ -102,8 +102,8 @@ model cliente {
   PAGREC            Int?
   CNPJ              String?        @db.VarChar(20)
   PESSOAFISOUJUR    String?        @db.VarChar(1)
-  classificacao     classificacao  @relation(fields: [CLASSIFICACAO_ID], references: [ID], onDelete: NoAction, map: "CLIENTE_ibfk_1")
-  pessoa            pessoa         @relation(fields: [PESSOA_CODPESSOA], references: [CODPESSOA], onDelete: NoAction, map: "FK_PESSOA")
+  classificacao     classificacao  @relation(fields: [CLASSIFICACAO_ID], references: [ID], map: "CLIENTE_ibfk_1")
+  pessoa            pessoa         @relation(fields: [PESSOA_CODPESSOA], references: [CODPESSOA], map: "FK_PESSOA")
   ordemservico      ordemservico[]
 
   @@id([CODCOLIGADA, CODCLIENTE])
@@ -282,7 +282,7 @@ model notificacoes {
   LIDO      Boolean?  @default(false)
   DATAHORA  DateTime? @default(now()) @db.DateTime(0)
   GRUPO_ID  Int
-  grupos    grupos    @relation(fields: [GRUPO_ID], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "NOTIFICACOES_ibfk_1")
+  grupos    grupos    @relation(fields: [GRUPO_ID], references: [ID], onUpdate: Restrict, map: "NOTIFICACOES_ibfk_1")
 
   @@index([GRUPO_ID], map: "GRUPO_ID")
 }
@@ -336,14 +336,14 @@ model ordemservico {
   VALOR_TOTAL             Decimal?          @db.Decimal(16, 2)
   alteracoesos            alteracoesos[]
   historicostatus         historicostatus[]
-  adicionais              adicionais        @relation(fields: [ID_ADICIONAL], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ORDEMSERVICO_ibfk_1")
-  cidade                  cidade?           @relation(fields: [CODCIDADE], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "FK_CIDADE_ORDEMSERVICO")
-  cliente                 cliente?          @relation(fields: [FK_CODCOLIGADA, FK_CODCLIENTE], references: [CODCOLIGADA, CODCLIENTE], onDelete: NoAction, onUpdate: NoAction, map: "FK_ORDEMSERVICO_CLIENTE")
-  segmento                segmento          @relation(fields: [CODSEGMENTO], references: [CODSEGMENTO], onDelete: NoAction, onUpdate: NoAction, map: "FK_SEGMENTO_ORDEMSERVICO")
-  projetos                projetos          @relation(fields: [ID_PROJETO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ORDEMSERVICO_ibfk_2")
-  pessoa                  pessoa?           @relation(fields: [RESPONSAVEL], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "RESPONSAVEL_FK")
-  status                  status?           @relation(fields: [CODSTATUS], references: [CODSTATUS], onDelete: NoAction, onUpdate: NoAction, map: "STATATUS_FK")
-  motivo_perdido          motivo_perdido    @relation(fields: [id_motivo_perdido], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ordemservico_motivo_perdido")
+  adicionais              adicionais        @relation(fields: [ID_ADICIONAL], references: [ID], onUpdate: Restrict, map: "ORDEMSERVICO_ibfk_1")
+  cidade                  cidade?           @relation(fields: [CODCIDADE], references: [ID], onDelete: Restrict, onUpdate: Restrict, map: "FK_CIDADE_ORDEMSERVICO")
+  cliente                 cliente?          @relation(fields: [FK_CODCOLIGADA, FK_CODCLIENTE], references: [CODCOLIGADA, CODCLIENTE], onUpdate: Restrict, map: "FK_ORDEMSERVICO_CLIENTE")
+  segmento                segmento          @relation(fields: [CODSEGMENTO], references: [CODSEGMENTO], onUpdate: Restrict, map: "FK_SEGMENTO_ORDEMSERVICO")
+  projetos                projetos          @relation(fields: [ID_PROJETO], references: [ID], onUpdate: Restrict, map: "ORDEMSERVICO_ibfk_2")
+  pessoa                  pessoa?           @relation(fields: [RESPONSAVEL], references: [CODPESSOA], onDelete: Restrict, onUpdate: Restrict, map: "RESPONSAVEL_FK")
+  status                  status?           @relation(fields: [CODSTATUS], references: [CODSTATUS], onDelete: Restrict, onUpdate: Restrict, map: "STATATUS_FK")
+  motivo_perdido          motivo_perdido    @relation(fields: [id_motivo_perdido], references: [id], onUpdate: Restrict, map: "fk_ordemservico_motivo_perdido")
   web_anexos_os           web_anexos_os[]
 
   @@index([CODCIDADE], map: "FK_CIDADE_ORDEMSERVICO")
@@ -440,8 +440,8 @@ model pessoa {
 model pessoa_grupos {
   PESSOA_ID Int
   GRUPO_ID  Int
-  pessoa    pessoa @relation(fields: [PESSOA_ID], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "PESSOA_GRUPOS_ibfk_1")
-  grupos    grupos @relation(fields: [GRUPO_ID], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "PESSOA_GRUPOS_ibfk_2")
+  pessoa    pessoa @relation(fields: [PESSOA_ID], references: [CODPESSOA], onUpdate: Restrict, map: "PESSOA_GRUPOS_ibfk_1")
+  grupos    grupos @relation(fields: [GRUPO_ID], references: [ID], onUpdate: Restrict, map: "PESSOA_GRUPOS_ibfk_2")
 
   @@id([PESSOA_ID, GRUPO_ID])
   @@index([GRUPO_ID], map: "GRUPO_ID")
@@ -450,7 +450,7 @@ model pessoa_grupos {
 model pessoa_responsavel {
   CODPESSOA      Int
   CODRESPONSAVEL Int
-  pessoa         pessoa @relation(fields: [CODPESSOA], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "FK_PESSOA_PESSOA_RESPONSAVEL_1")
+  pessoa         pessoa @relation(fields: [CODPESSOA], references: [CODPESSOA], onUpdate: Restrict, map: "FK_PESSOA_PESSOA_RESPONSAVEL_1")
 
   @@id([CODPESSOA, CODRESPONSAVEL])
 }
@@ -458,8 +458,8 @@ model pessoa_responsavel {
 model pessoa_tipo {
   CODPESSOA Int
   CODTIPOOS Int
-  pessoa    pessoa @relation(fields: [CODPESSOA], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "FK_PESSOA_PESSOA_TIPO")
-  tipoos    tipoos @relation(fields: [CODTIPOOS], references: [CODTIPOOS], onDelete: NoAction, onUpdate: NoAction, map: "FK_TIPO_PESSOA_TIPO")
+  pessoa    pessoa @relation(fields: [CODPESSOA], references: [CODPESSOA], onUpdate: Restrict, map: "FK_PESSOA_PESSOA_TIPO")
+  tipoos    tipoos @relation(fields: [CODTIPOOS], references: [CODTIPOOS], onUpdate: Restrict, map: "FK_TIPO_PESSOA_TIPO")
 
   @@id([CODPESSOA, CODTIPOOS])
   @@index([CODTIPOOS], map: "FK_TIPO_PESSOA_TIPO")
@@ -527,7 +527,7 @@ model projetos {
   ID_RESPONSAVEL              Int?
   adicionais                  adicionais[]
   ordemservico                ordemservico[]
-  pessoa                      pessoa?                       @relation(fields: [CODGERENTE], references: [CODGERENTE], onDelete: NoAction, onUpdate: NoAction, map: "gerente")
+  pessoa                      pessoa?                       @relation(fields: [CODGERENTE], references: [CODGERENTE], onDelete: Restrict, onUpdate: Restrict, map: "gerente")
   web_movimentacao_patrimonio web_movimentacao_patrimonio[]
   web_requisicao              web_requisicao[]
   web_seguidores_projeto      web_seguidores_projeto[]
@@ -677,11 +677,12 @@ model web_cotacao {
   cnpj_fornecedor          String?                   @db.VarChar(255)
   criado_por               Int?
   id_condicao_pagamento    Int?
-  valor_total              Decimal?                  @db.Decimal(10, 0)
+  valor_total_itens        Decimal?                  @db.Decimal(10, 0)
+  valor_total              Decimal?                  @db.Decimal(10, 2)
   web_anexo_cotacao        web_anexo_cotacao[]
-  web_classificacao_fiscal web_classificacao_fiscal? @relation(fields: [id_classificacao_fiscal], references: [id_classificao_fiscal], onDelete: NoAction, onUpdate: NoAction, map: "classificacao_fiscal")
-  pessoa                   pessoa?                   @relation(fields: [criado_por], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "criado_por")
-  web_tipo_frete           web_tipo_frete?           @relation(fields: [id_tipo_frete], references: [id_tipo_frete], onDelete: NoAction, onUpdate: NoAction, map: "tipo_frete")
+  web_classificacao_fiscal web_classificacao_fiscal? @relation(fields: [id_classificacao_fiscal], references: [id_classificao_fiscal], onDelete: Restrict, onUpdate: Restrict, map: "classificacao_fiscal")
+  pessoa                   pessoa?                   @relation(fields: [criado_por], references: [CODPESSOA], onDelete: Restrict, onUpdate: Restrict, map: "criado_por")
+  web_tipo_frete           web_tipo_frete?           @relation(fields: [id_tipo_frete], references: [id_tipo_frete], onDelete: Restrict, onUpdate: Restrict, map: "tipo_frete")
   web_requisicao           web_requisicao            @relation(fields: [id_requisicao], references: [ID_REQUISICAO], onDelete: Cascade, map: "web_cotacao_ibfk_1")
   web_items_cotacao        web_items_cotacao[]
 
@@ -739,8 +740,8 @@ model web_items_cotacao {
   quantidade_cotada     Int?
   id_produto            Int?
   indisponivel          Int?                  @db.TinyInt
-  produtos              produtos?             @relation(fields: [id_produto], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "id_produto")
-  web_requisicao_items  web_requisicao_items? @relation(fields: [id_item_requisicao], references: [id_item_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "id_requisicao")
+  produtos              produtos?             @relation(fields: [id_produto], references: [ID], onDelete: Restrict, onUpdate: Restrict, map: "id_produto")
+  web_requisicao_items  web_requisicao_items? @relation(fields: [id_item_requisicao], references: [id_item_requisicao], onDelete: Restrict, onUpdate: Restrict, map: "id_requisicao")
   web_cotacao           web_cotacao           @relation(fields: [id_cotacao], references: [id_cotacao], onDelete: Cascade, map: "web_items_cotacao_ibfk_1")
 
   @@index([id_cotacao], map: "id_cotacao")
@@ -763,8 +764,8 @@ model web_patrimonio {
   web_acessorio_patrimonio    web_acessorio_patrimonio[]
   web_anexos_patrimonio       web_anexos_patrimonio[]
   web_movimentacao_patrimonio web_movimentacao_patrimonio[]
-  produtos                    produtos?                     @relation(fields: [id_produto], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "produto")
-  web_tipo_patrimonio         web_tipo_patrimonio?          @relation(fields: [tipo], references: [id_tipo_patrimonio], onDelete: NoAction, onUpdate: NoAction, map: "tipo")
+  produtos                    produtos?                     @relation(fields: [id_produto], references: [ID], onDelete: Restrict, onUpdate: Restrict, map: "produto")
+  web_tipo_patrimonio         web_tipo_patrimonio?          @relation(fields: [tipo], references: [id_tipo_patrimonio], onDelete: Restrict, onUpdate: Restrict, map: "tipo")
 
   @@index([id_produto], map: "produto_idx")
   @@index([tipo], map: "tipo_idx")
@@ -787,12 +788,12 @@ model web_requisicao {
   custo_total                                  Decimal?                   @db.Decimal(10, 0)
   web_alteracao_req_status                     web_alteracao_req_status[]
   web_cotacao                                  web_cotacao[]
-  projetos                                     projetos?                  @relation(fields: [ID_PROJETO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ID_PROJETO")
-  pessoa_web_requisicao_ID_RESPONSAVELTopessoa pessoa?                    @relation("web_requisicao_ID_RESPONSAVELTopessoa", fields: [ID_RESPONSAVEL], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "ID_RESPONSAVEL")
-  pessoa_web_requisicao_alterado_porTopessoa   pessoa?                    @relation("web_requisicao_alterado_porTopessoa", fields: [alterado_por], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "alterado")
-  pessoa_web_requisicao_criado_porTopessoa     pessoa?                    @relation("web_requisicao_criado_porTopessoa", fields: [criado_por], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "alterado por")
-  web_status_requisicao                        web_status_requisicao?     @relation(fields: [id_status_requisicao], references: [id_status_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "id_status")
-  web_tipo_requisicao                          web_tipo_requisicao?       @relation(fields: [TIPO], references: [id_tipo_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "id_tipo")
+  projetos                                     projetos?                  @relation(fields: [ID_PROJETO], references: [ID], onDelete: Restrict, onUpdate: Restrict, map: "ID_PROJETO")
+  pessoa_web_requisicao_ID_RESPONSAVELTopessoa pessoa?                    @relation("web_requisicao_ID_RESPONSAVELTopessoa", fields: [ID_RESPONSAVEL], references: [CODPESSOA], onDelete: Restrict, onUpdate: Restrict, map: "ID_RESPONSAVEL")
+  pessoa_web_requisicao_alterado_porTopessoa   pessoa?                    @relation("web_requisicao_alterado_porTopessoa", fields: [alterado_por], references: [CODPESSOA], onDelete: Restrict, onUpdate: Restrict, map: "alterado")
+  pessoa_web_requisicao_criado_porTopessoa     pessoa?                    @relation("web_requisicao_criado_porTopessoa", fields: [criado_por], references: [CODPESSOA], onDelete: Restrict, onUpdate: Restrict, map: "alterado por")
+  web_status_requisicao                        web_status_requisicao?     @relation(fields: [id_status_requisicao], references: [id_status_requisicao], onDelete: Restrict, onUpdate: Restrict, map: "id_status")
+  web_tipo_requisicao                          web_tipo_requisicao?       @relation(fields: [TIPO], references: [id_tipo_requisicao], onDelete: Restrict, onUpdate: Restrict, map: "id_tipo")
 
   @@index([ID_PROJETO], map: "ID_PROJETO_idx")
   @@index([ID_RESPONSAVEL], map: "ID_RESPONSAVEL_idx")
@@ -814,7 +815,7 @@ model web_requisicao_items {
   id_item_cotacao            Int?
   web_anexos_item_requisicao web_anexos_item_requisicao[]
   web_items_cotacao          web_items_cotacao[]
-  produtos                   produtos?                    @relation(fields: [id_produto], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "produtos")
+  produtos                   produtos?                    @relation(fields: [id_produto], references: [ID], onDelete: Restrict, onUpdate: Restrict, map: "produtos")
 
   @@index([id_produto], map: "ID_PRODUTO_idx")
   @@index([id_requisicao], map: "ID_REQUISICAO_idx")
@@ -825,7 +826,7 @@ model web_seguidores_projeto {
   id_projeto          Int
   codpessoa           Int
   ativo               Boolean  @default(true)
-  pessoa              pessoa   @relation(fields: [codpessoa], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "fk_seguidor_projeto_pessoa")
+  pessoa              pessoa   @relation(fields: [codpessoa], references: [CODPESSOA], onUpdate: Restrict, map: "fk_seguidor_projeto_pessoa")
   projetos            projetos @relation(fields: [id_projeto], references: [ID], onDelete: Cascade, map: "fk_seguidor_projeto_projeto")
 
   @@index([codpessoa], map: "fk_seguidor_projeto_pessoa")
@@ -952,7 +953,7 @@ model web_acessorio_patrimonio {
   nome                            String                            @db.Text
   id_patrimonio                   Int?
   descricao                       String?                           @db.Text
-  web_patrimonio                  web_patrimonio?                   @relation(fields: [id_patrimonio], references: [id_patrimonio], onDelete: NoAction, onUpdate: NoAction, map: "web_acessorio_patrimonio_ibfk_1")
+  web_patrimonio                  web_patrimonio?                   @relation(fields: [id_patrimonio], references: [id_patrimonio], onDelete: Restrict, onUpdate: Restrict, map: "web_acessorio_patrimonio_ibfk_1")
   web_anexos_acessorio_patrimonio web_anexos_acessorio_patrimonio[]
 
   @@index([id_patrimonio], map: "id_patrimonio")
@@ -969,9 +970,9 @@ model web_movimentacao_patrimonio {
   aceito                     Int?                         @default(0)
   web_anexos_movimentacao    web_anexos_movimentacao[]
   web_checklist_movimentacao web_checklist_movimentacao[]
-  projetos                   projetos?                    @relation(fields: [id_projeto], references: [ID], onDelete: Cascade, onUpdate: NoAction, map: "fk_projeto")
-  pessoa                     pessoa?                      @relation(fields: [id_responsavel], references: [CODPESSOA], onDelete: Cascade, onUpdate: NoAction, map: "fk_responsavel")
-  web_patrimonio             web_patrimonio?              @relation(fields: [id_patrimonio], references: [id_patrimonio], onDelete: Cascade, onUpdate: NoAction, map: "web_movimentacao_patrimonio_ibfk_1")
+  projetos                   projetos?                    @relation(fields: [id_projeto], references: [ID], onDelete: Cascade, onUpdate: Restrict, map: "fk_projeto")
+  pessoa                     pessoa?                      @relation(fields: [id_responsavel], references: [CODPESSOA], onDelete: Cascade, onUpdate: Restrict, map: "fk_responsavel")
+  web_patrimonio             web_patrimonio?              @relation(fields: [id_patrimonio], references: [id_patrimonio], onDelete: Cascade, onUpdate: Restrict, map: "web_movimentacao_patrimonio_ibfk_1")
 
   @@index([id_projeto], map: "fk_projeto")
   @@index([id_responsavel], map: "fk_responsavel")
@@ -983,7 +984,7 @@ model web_anexos_acessorio_patrimonio {
   id_acessorio_patrimonio       Int?
   nome                          String                    @db.VarChar(255)
   arquivo                       String                    @db.VarChar(255)
-  web_acessorio_patrimonio      web_acessorio_patrimonio? @relation(fields: [id_acessorio_patrimonio], references: [id_acessorio_patrimonio], onDelete: Cascade, onUpdate: NoAction, map: "web_anexos_acessorio_patrimonio_ibfk_1")
+  web_acessorio_patrimonio      web_acessorio_patrimonio? @relation(fields: [id_acessorio_patrimonio], references: [id_acessorio_patrimonio], onDelete: Cascade, onUpdate: Restrict, map: "web_anexos_acessorio_patrimonio_ibfk_1")
 
   @@index([id_acessorio_patrimonio], map: "anexo_acessorio_patrimonio_ibfk_1")
 }
@@ -993,7 +994,7 @@ model web_anexos_item_requisicao {
   arquivo              String?              @db.LongText
   id_item              Int
   nome_arquivo         String?              @db.LongText
-  web_requisicao_items web_requisicao_items @relation(fields: [id_item], references: [id_item_requisicao], onDelete: Cascade, onUpdate: NoAction, map: "id_item")
+  web_requisicao_items web_requisicao_items @relation(fields: [id_item], references: [id_item_requisicao], onDelete: Cascade, onUpdate: Restrict, map: "id_item")
 
   @@index([id_item], map: "id_item_idx")
 }
@@ -1003,7 +1004,7 @@ model web_anexos_movimentacao {
   arquivo                     String                       @db.Text
   nome_arquivo                String?                      @db.VarChar(255)
   id_movimentacao             Int?
-  web_movimentacao_patrimonio web_movimentacao_patrimonio? @relation(fields: [id_movimentacao], references: [id_movimentacao], onDelete: Cascade, onUpdate: NoAction, map: "web_anexos_movimentacao_ibfk_1")
+  web_movimentacao_patrimonio web_movimentacao_patrimonio? @relation(fields: [id_movimentacao], references: [id_movimentacao], onDelete: Cascade, onUpdate: Restrict, map: "web_anexos_movimentacao_ibfk_1")
 
   @@index([id_movimentacao], map: "anexo_movimentacao_ibfk_1")
 }
@@ -1013,7 +1014,7 @@ model web_anexos_patrimonio {
   arquivo             String          @db.Text
   nome_arquivo        String?         @db.VarChar(255)
   id_patrimonio       Int?
-  web_patrimonio      web_patrimonio? @relation(fields: [id_patrimonio], references: [id_patrimonio], onDelete: Cascade, onUpdate: NoAction, map: "web_anexos_patrimonio_ibfk_1")
+  web_patrimonio      web_patrimonio? @relation(fields: [id_patrimonio], references: [id_patrimonio], onDelete: Cascade, onUpdate: Restrict, map: "web_anexos_patrimonio_ibfk_1")
 
   @@index([id_patrimonio], map: "anexo_patrimonio_ibfk_1")
 }
@@ -1025,7 +1026,7 @@ model web_anexos_requisicao {
   id            Int       @id @default(autoincrement())
   criado_por    Int?
   criado_em     DateTime? @db.DateTime(0)
-  pessoa        pessoa?   @relation(fields: [criado_por], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "criado por")
+  pessoa        pessoa?   @relation(fields: [criado_por], references: [CODPESSOA], onDelete: Restrict, onUpdate: Restrict, map: "criado por")
 
   @@index([criado_por], map: "criado por_idx")
 }
@@ -1036,8 +1037,8 @@ model web_transicao_status {
   id_status_requisicao                                                                   Int
   nome_transicao                                                                         String                @db.VarChar(100)
   ativo                                                                                  Boolean?              @default(true)
-  web_status_requisicao_web_transicao_status_id_status_anteriorToweb_status_requisicao   web_status_requisicao @relation("web_transicao_status_id_status_anteriorToweb_status_requisicao", fields: [id_status_anterior], references: [id_status_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "web_transicao_status_ibfk_1")
-  web_status_requisicao_web_transicao_status_id_status_requisicaoToweb_status_requisicao web_status_requisicao @relation("web_transicao_status_id_status_requisicaoToweb_status_requisicao", fields: [id_status_requisicao], references: [id_status_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "web_transicao_status_ibfk_2")
+  web_status_requisicao_web_transicao_status_id_status_anteriorToweb_status_requisicao   web_status_requisicao @relation("web_transicao_status_id_status_anteriorToweb_status_requisicao", fields: [id_status_anterior], references: [id_status_requisicao], onUpdate: Restrict, map: "web_transicao_status_ibfk_1")
+  web_status_requisicao_web_transicao_status_id_status_requisicaoToweb_status_requisicao web_status_requisicao @relation("web_transicao_status_id_status_requisicaoToweb_status_requisicao", fields: [id_status_requisicao], references: [id_status_requisicao], onUpdate: Restrict, map: "web_transicao_status_ibfk_2")
 
   @@unique([id_status_anterior, id_status_requisicao], map: "id_status_anterior")
   @@index([id_status_requisicao], map: "id_status_requisicao")

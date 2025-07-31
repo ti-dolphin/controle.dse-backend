@@ -59,7 +59,7 @@ class QuoteItemController {
       }
       res.json(updatedItem);
     } catch (error) {
-      
+      console.error(error);
       res.status(400).json({ error: error.message });
     }
   }

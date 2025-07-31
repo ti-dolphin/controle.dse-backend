@@ -22,15 +22,15 @@ class QuoteItemService {
   }
 
   async update(id_item_cotacao, data) {
-    data.subtotal = this.calculateSubTotal(data);
-    await this.calculateTotal(id_item_cotacao, data);
+    data.subtotal = await this.calculateSubTotal(id_item_cotacao, data);
+    await this.calculateItemsTotal(id_item_cotacao, data);
     const updatedItem = await QuoteItemRepository.update(id_item_cotacao, data);
-
     return updatedItem;
   }
 
-  calculateSubTotal(data) {
+  async calculateSubTotal(id_item_cotacao, data) {
     if (data.indisponivel) {
+      await this.subtractQuoteItemFromRequisition(id_item_cotacao);
       return 0;
     }
     const precoUnitario = Number(data.preco_unitario);
@@ -41,19 +41,17 @@ class QuoteItemService {
     return subtotal.toFixed(2);
   }
   //calcula o novo total da cotação e da requisição de acordo com o item atualizado
-  async calculateTotal(id_item_cotacao, item) {
+  async calculateItemsTotal(id_item_cotacao, item) {
     try {
       // Validar entrada
       if (!id_item_cotacao || !item?.id_cotacao) {
         return;
       }
-      // Buscar itens da cotaç o
+      // Buscar cotação
+      const quote = await QuoteRepository.getById(item.id_cotacao);
       const quoteItems = await this.getMany({ id_cotacao: item.id_cotacao });
       // Calcular total antes da atualização
-      const totalBeforeUpdate = quoteItems.reduce(
-        (acc, curr) => acc + Number(curr.subtotal || 0),
-        0
-      );
+      const itemsTotalBefore = quote.valor_total_itens;
       // Atualizar item especifico
       const updatedItems = quoteItems.map((quoteItem) =>
         quoteItem.id_item_cotacao === Number(id_item_cotacao) ? item : quoteItem
@@ -63,46 +61,14 @@ class QuoteItemService {
         (acc, curr) => acc + Number(curr.subtotal || 0),
         0
       );
-      // Retornar se n o houver mudado o total
-      if (totalBeforeUpdate === newTotal) {
+      if (itemsTotalBefore === newTotal) {
         return;
       }
-      // Buscar cotação
-      const quote = await QuoteRepository.getById(item.id_cotacao);
-      const requsiton = await RequisitionRepository.findById(
-        Number(quote.id_requisicao)
-      );
-      const reqItem = await RequisitionItemRepository.getById(
-        Number(item.id_item_requisicao)
-      );
-
-      if (!quote) {
-        throw new Error(`Cotação não encontrada para id: ${item.id_cotacao}`);
-      }
-      // Calcular diferença
-      const difference = Math.abs(newTotal - totalBeforeUpdate);
-      const isIncreasing = newTotal > totalBeforeUpdate;
-
-      //se o item de cotação estiver no item de requisição, atualiza o custo total dos itens, se não apenas atualiza o total da cotação
-      if (Number(reqItem.id_item_cotacao) === Number(id_item_cotacao)) {
-        const newRequisitionTotal = isIncreasing
-          ? Number(requsiton.custo_total_itens) + difference
-          : Number(requsiton.custo_total_itens) - difference;
-        requsiton.custo_total_itens = newRequisitionTotal;
-        await RequisitionRepository.update(Number(requsiton.ID_REQUISICAO), {
-          custo_total_itens: newRequisitionTotal,
-        });
-      }
-      //calcula novo valor total da cotação
-      const newQuoteTotal = isIncreasing
-        ? Number(quote.valor_total) + difference
-        : Number(quote.valor_total) - difference;
-      // Atualizar cotação
-      await QuoteRepository.update(quote.id_cotacao, {
-        valor_total: newQuoteTotal,
+      const updatedQuote = await QuoteRepository.update(quote.id_cotacao, {
+        valor_total_itens: newTotal,
       });
 
-      return { success: true, newTotal: newQuoteTotal };
+      return { success: true, newTotal: updatedQuote };
     } catch (error) {
       console.error("Erro ao calcular total:", error.message);
       throw error;
@@ -110,44 +76,58 @@ class QuoteItemService {
   }
 
   async delete(id_item_cotacao) {
-    await this.subtractItemValueFromTotal(id_item_cotacao);
+    await this.subtractQuoteItemFromRequisition(id_item_cotacao);
     return QuoteItemRepository.delete(id_item_cotacao);
   }
 
-  async subtractItemValueFromTotal(id_item_cotacao) {
+  async subtractQuoteItemFromRequisition(id_item_cotacao) {
+    console.log("id_item_cotacao", id_item_cotacao);
     const item = await this.getById(id_item_cotacao);
     const quote = await QuoteRepository.getById(item.id_cotacao);
-    const newTotal = Number(quote.valor_total) - Number(item.subtotal);
-    const reqItemRelated = await RequisitionItemRepository.getById(Number(item.id_item_requisicao));
+    const newTotal = Number(quote.valor_total_itens) - Number(item.subtotal);
+    const reqItemRelated = await RequisitionItemRepository.getById(
+      Number(item.id_item_requisicao)
+    );
     const requisiton = await RequisitionRepository.findById(
       Number(quote.id_requisicao)
     );
-    const quoteItemIsSelected = Number(reqItemRelated.id_item_cotacao) === Number(item.id_item_cotacao)
+    const quoteItemIsSelected =
+      Number(reqItemRelated.id_item_cotacao) === Number(item.id_item_cotacao);
 
     if (requisiton.custo_total_itens > 0 && quoteItemIsSelected) {
-      requisiton.custo_total_itens = Number(requisiton.custo_total_itens) - Number(item.subtotal);
+      requisiton.custo_total_itens =
+        Number(requisiton.custo_total_itens) - Number(item.subtotal);
       await RequisitionRepository.update(Number(requisiton.ID_REQUISICAO), {
         custo_total_itens: Number(requisiton.custo_total_itens),
       });
+      //desmarcando item da cotação da seleção
+      await RequisitionItemRepository.update(
+        Number(reqItemRelated.id_item_requisicao),
+        {
+          id_item_cotacao: null,
+        }
+      );
     }
-    await QuoteRepository.update(quote.id_cotacao, { valor_total: newTotal });
+    await QuoteRepository.update(quote.id_cotacao, {
+      valor_total_itens: newTotal,
+    });
   }
 
   async addItemValueToTotal(id_item_cotacao) {
     const item = await this.getById(id_item_cotacao);
     const quote = await QuoteRepository.getById(item.id_cotacao);
     const newTotal = Number(quote.valor_total) + Number(item.subtotal);
-    ;
-    ;
     // await QuoteRepository.update(quote.id_cotacao, { valor_total: newTotal });
   }
 
-   calculateTotalFromSelectedQuoteItems(quoteItems){ 
-     if(!quoteItems.length > 0) { return 0; }
-     return quoteItems.reduce(
-       (acc, curr) => acc + Number(curr.subtotal || 0),
-       0
-     );
+  calculateTotalFromSelectedQuoteItems(quoteItems) {
+    if (!quoteItems.length > 0) {
+      return 0;
+    }
+    return quoteItems.reduce(
+      (acc, curr) => acc + Number(curr.subtotal || 0),
+      0
+    );
   }
 }
 

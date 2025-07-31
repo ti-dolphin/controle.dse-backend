@@ -49,7 +49,10 @@ var quoteRouter = require('./routes/quoteRouter');
 var quoteItemRouter = require("./routes/quoteItemRouter");
 var quoteFileRouter = require("./routes/quoteFIleRouter");
 // Middlewares e Schedulers
-const authorize = require('./middleware/authentication');
+
+const authorizationRouter = require('./routes/authorizationRouter.js');
+
+const {authorize} = require('./middleware/authentication.js');
 const PatrimonyScheduler  = require('./scheduledScripts/patrimonyScheduler');
 const OpportunityScheduler = require('./scheduledScripts/OpportunityScheduler');
 
@@ -107,7 +110,11 @@ app.use("/projetos",  authorize, projectRouter);
 
 // Rotas de Cotações
 app.use("/cotacoes",  authorize, quoteRouter);
-app.use('/item_cotacao', quoteItemRouter); // faltando update many, create many, delete many
+
+
+app.use("/authorization", authorizationRouter);
+
+app.use('/item_cotacao', authorize, quoteItemRouter); // faltando update many, create many, delete many
 
 // Rotas de Anexos da requisição
 app.use("/anexo_requisicao", authorize, requisitionFileRouter); // rota para anexos de requisição

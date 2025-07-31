@@ -29,6 +29,7 @@ class QuoteController {
     async getTaxClassifications(req, res) {
         try {
             const taxClassifications = await QuoteService.getTaxClassifications();
+            
             res.json(taxClassifications);
         } catch (err) {
             
@@ -39,6 +40,7 @@ class QuoteController {
      async getPaymentConditions(req, res) {
         try {
             const paymentConditions = await QuoteService.getPaymentConditions();
+            
             res.json(paymentConditions);
         } catch (err) {
             ;
@@ -48,8 +50,9 @@ class QuoteController {
 
     async getShipmentTypes(req, res) {
         try {
-            const shipmentTypes = await QuoteService.getShipmentTypes();
-            res.json(shipmentTypes);
+          const shipmentTypes = await QuoteService.getShipmentTypes();
+
+          res.json(shipmentTypes);
         } catch (err) {
             ;
             res.status(500).json({ error: "Erro interno do servidor." });
