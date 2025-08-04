@@ -86,6 +86,9 @@ class OpportunityRepository {
                 { pessoa: { NOME: { contains: searchTerm } } },
               ],
             },
+            { 
+              AND : filters.length > 0 ? filters : {}
+            }
           ],
         },
         include: this.include(),

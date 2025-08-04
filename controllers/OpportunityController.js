@@ -20,6 +20,7 @@ class OpportunityController {
           const opportunities = await OpportunityService.getMany(req.query);
           res.json(opportunities);
         } catch (error) {
+          console.error('Erro ao buscar oportunidades:', error);
           res.status(500).json({ message: error.message });
         }
       }
@@ -44,7 +45,6 @@ class OpportunityController {
           );
           res.status(201).json(opportunity);
         } catch (error) {
-          ;
           res.status(500).json({ message: error.message });
         }
       }
@@ -74,6 +74,7 @@ class OpportunityController {
           }
           res.json({ message: 'Opportunity deleted successfully' });
         } catch (error) {
+          console.log(error);
           res.status(500).json({ message: error.message });
         }
       }

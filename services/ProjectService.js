@@ -18,6 +18,10 @@ class ProjectService {
         return await ProjectRepository.deleteFollower(id_seguidor_projeto);
     }
 
+    async addFollower(projectData) {
+        return await ProjectRepository.addFollower(projectData);
+    }
+
     async create(projectData) {
         return await ProjectRepository.create(projectData);
     }

@@ -30,6 +30,15 @@ class ProjectRepository {
     async create(projectData) {
         const newProject =  await prisma.projetos.create({
             data: projectData,
+              include: { 
+                pessoa: {
+                    select: {
+                        CODPESSOA: true,
+                        NOME: true,
+                    }
+                }
+            }
+            
         });
         return newProject;
     }
@@ -44,6 +53,22 @@ class ProjectRepository {
     async deleteFollower(id_seguidor_projeto) {
         return await prisma.web_seguidores_projeto.delete({
             where: { id_seguidor_projeto: Number(id_seguidor_projeto) },
+        });
+    }
+    async addFollower(projectData) {
+        return await prisma.web_seguidores_projeto.create({
+          data: {
+            ativo: true,
+            ...projectData,
+          },
+          include: {
+            pessoa: {
+              select: {
+                CODPESSOA: true,
+                NOME: true,
+              },
+            },
+          },
         });
     }
 

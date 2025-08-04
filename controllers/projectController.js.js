@@ -40,7 +40,6 @@ class ProjectController {
     }
 
     async deleteFollower(req, res) {
-        
         try {
           const { id_seguidor_projeto } = req.params;
           const follower = await ProjectService.deleteFollower(
@@ -49,6 +48,19 @@ class ProjectController {
           res.json(follower);
         } catch (err) {
           res.status(500).json({ error: err.message });
+        }
+    }
+
+    async addFollower(req, res)  {
+        const {codpessoa, id_projeto } = req.body;
+        try {
+            const follower = await ProjectService.addFollower({ 
+                codpessoa: Number(codpessoa),
+                id_projeto: Number(id_projeto)
+            });
+            res.json(follower);
+        } catch (err) {
+            res.status(500).json({ error: err.message });
         }
     }
 

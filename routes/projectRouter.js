@@ -10,6 +10,8 @@ router.get("/:ID/seguidores", ProjectController.getFollowers);
 
 router.delete("/:ID/seguidores/:id_seguidor_projeto", ProjectController.deleteFollower);
 
+router.post("/:ID/seguidores", ProjectController.addFollower);
+
 router.post("/", ProjectController.create);
 
 router.put("/:ID", ProjectController.update);
