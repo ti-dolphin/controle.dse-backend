@@ -8,6 +8,7 @@ class MovementationController {
             const result = await MovementationService.create(payload);
             res.status(201).json(result);
         } catch (error) {
+            console.log("error: ", error);
             res.status(500).json({ erro: error.message });
         }
     }
@@ -17,6 +18,7 @@ class MovementationController {
             const result = await MovementationService.getMany(req.query);
             res.status(200).json(result);
         } catch (error) {
+            console.error(error);
             res.status(500).json({ erro: error.message });
         }
     }

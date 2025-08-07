@@ -9,6 +9,10 @@ class PatrimonyService {
     return await PatrimonyRepository.getMany(params);
   }
 
+  async getTypes() {
+    return await PatrimonyRepository.getTypes();
+  }
+
   async getById(id_patrimonio) {
     return await PatrimonyRepository.getById(id_patrimonio);
   }

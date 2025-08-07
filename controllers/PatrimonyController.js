@@ -7,6 +7,7 @@ class PatrimonyController {
       const patrimony = await PatrimonyService.create(payload);
       res.status(201).json(patrimony);
     } catch (error) {
+      console.log(error);
       res.status(500).json({ mensagem: "Erro ao criar patrimônio", erro: error.message });
     }
   }
@@ -33,6 +34,15 @@ class PatrimonyController {
     }
   }
 
+  async getTypes(req, res){
+    try {
+      const types = await PatrimonyService.getTypes();
+      res.status(200).json(types);
+    } catch (error) {
+      res.status(500).json({ mensagem: "Erro ao buscar tipos de patrimônios", erro: error.message });
+    }
+}
+
   async update(req, res) {
     try {
       const updated = await PatrimonyService.update(
@@ -44,6 +54,7 @@ class PatrimonyController {
       }
       res.status(200).json(updated);
     } catch (error) {
+      console.log(error);
       res.status(500).json({ mensagem: "Erro ao atualizar patrimônio", erro: error.message });
     }
   }

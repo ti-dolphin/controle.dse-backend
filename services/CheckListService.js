@@ -6,11 +6,34 @@ class CheckListService {
   }
 
   async getMany(params) {
-    return CheckListRepository.getMany(params);
+    const {searchTerm, id_patrimonio, filters, codpessoa} = params;
+    if (id_patrimonio) {
+      return CheckListRepository.getMany(
+        //buscar todos os que que pertencem ao patrimônio
+        {
+          movimentacao_patrimonio: {
+            web_patrimonio: { id_patrimonio: Number(params.id_patrimonio) },
+          },
+        },
+        filters,
+        searchTerm
+      );
+    }
+  }
+
+  async getManyByUser(params, codpessoa) {
+    const {searchTerm, filters, situacao} = params;
+    return CheckListRepository.getManyByUser(
+      codpessoa,
+      filters,
+      searchTerm,
+      situacao
+    );
   }
 
   async getById(id_checklist_movimentacao) {
-    return CheckListRepository.getById(id_checklist_movimentacao);
+    const checklist =  await CheckListRepository.getById(id_checklist_movimentacao);
+    return checklist;
   }
 
   async update(id_checklist_movimentacao, data) {

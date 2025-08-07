@@ -63,6 +63,9 @@ class RequisitionRepository {
           },
           web_status_requisicao: true,
         },
+        orderBy: {
+          ID_REQUISICAO: "desc",
+        },
       })
       .then((results) =>
         results.map((item) => {

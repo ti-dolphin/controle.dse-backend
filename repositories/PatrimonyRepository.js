@@ -12,11 +12,23 @@ class PatrimonyRepository {
       .then((result) => {
         const newResult = {
           ...result,
-          tipo: result.web_tipo_patrimonio,
+          tipo_patrimonio: result.web_tipo_patrimonio,
         };
         delete newResult.web_tipo_patrimonio;
         return newResult;
       });
+  }
+
+  async getTypesUserIsResponsableFor(codpessoa, idOnly) {
+    let typesUserIsResponsableFor = await prisma.web_tipo_patrimonio.findMany({
+      where: {
+        responsavel_tipo: Number(codpessoa),
+      },
+    });
+    if(idOnly){ 
+      return typesUserIsResponsableFor.map((type) => type.id_tipo_patrimonio);
+    }
+    return typesUserIsResponsableFor;
   }
 
   async getMany(params) {
@@ -31,7 +43,7 @@ class PatrimonyRepository {
         results.map((result) => {
           const newResult = {
             ...result,
-            tipo: result.web_tipo_patrimonio,
+            tipo_patrimonio: result.web_tipo_patrimonio,
           };
           delete newResult.web_tipo_patrimonio;
           return newResult;
@@ -50,11 +62,15 @@ class PatrimonyRepository {
       .then((result) => {
         const newResult = {
           ...result,
-          tipo: result.web_tipo_patrimonio,
+          tipo_patrimonio: result.web_tipo_patrimonio,
         };
         delete newResult.web_tipo_patrimonio;
         return newResult;
       });
+  }
+
+  async getTypes() {
+    return await prisma.web_tipo_patrimonio.findMany();
   }
 
   async update(id_patrimonio, payload) {
@@ -69,7 +85,7 @@ class PatrimonyRepository {
       .then((result) => {
         const newResult = {
           ...result,
-          tipo: result.web_tipo_patrimonio,
+          tipo_patrimonio: result.web_tipo_patrimonio,
         };
         delete newResult.web_tipo_patrimonio;
         return newResult;

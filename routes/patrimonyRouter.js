@@ -5,6 +5,7 @@ const router = express.Router();
 
 router.get("/", PatrimonyController.getMany)
 router.get("/:id_patrimonio", PatrimonyController.getById)
+router.get("/tipos/getAll", PatrimonyController.getTypes);
 router.put("/:id_patrimonio", PatrimonyController.update)
 router.post("/", PatrimonyController.create)
 router.delete("/:id_patrimonio", PatrimonyController.delete);
