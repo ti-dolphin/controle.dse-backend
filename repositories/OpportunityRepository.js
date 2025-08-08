@@ -1,7 +1,7 @@
 const { prisma } = require("../database");
 const ProjectRepository = require("./ProjectRepository");
 const UserService = require("../services/UserService");
-
+const { getNowISODate, formatToCurrency } = require("../utils");
 
 
 class OpportunityRepository {
@@ -16,6 +16,7 @@ class OpportunityRepository {
         select: {
           NOME: true,
           CODPESSOA: true,
+          EMAIL: true,
         },
       },
       adicionais: true,
@@ -31,6 +32,10 @@ class OpportunityRepository {
       gerente: opportunity.projetos.pessoa,
       responsavel: opportunity.pessoa,
       adicional: opportunity.adicionais,
+      situacao: this.getSituationByInteractionDate(opportunity.DATAINTERACAO),
+      VALORFATDOLPHIN_FORMATTED:  formatToCurrency(opportunity.VALORFATDOLPHIN),
+      VALORFATDIRETO_FORMATTED: formatToCurrency(opportunity.VALORFATDIRETO),
+      VALORTOTAL_FORMATTED: formatToCurrency(opportunity.VALOR_TOTAL),
     };
     delete formattedOpp.adicionais;
     delete formattedOpp.projetos;
@@ -55,8 +60,8 @@ class OpportunityRepository {
   }
 
   static async getMany(user, searchTerm, filters, finalizados) {
-    ;
-    let projectsFollowedByUser = await ProjectRepository.getProjectsFollowedByUser(user.CODPESSOA);
+    let projectsFollowedByUser =
+      await ProjectRepository.getProjectsFollowedByUser(user.CODPESSOA);
     projectsFollowedByUser = projectsFollowedByUser.map(
       (project) => project.ID
     );
@@ -86,9 +91,9 @@ class OpportunityRepository {
                 { pessoa: { NOME: { contains: searchTerm } } },
               ],
             },
-            { 
-              AND : filters.length > 0 ? filters : {}
-            }
+            {
+              AND: filters.length > 0 ? filters : {},
+            },
           ],
         },
         include: this.include(),
@@ -102,11 +107,12 @@ class OpportunityRepository {
     payload.CODTIPOOS = 21;
     payload.VALOR_COMISSAO = 0;
     payload.id_motivo_perdido = 1;
-    ;
-    return await prisma.ordemservico.create({
-      data: payload,
-      include: this.include(),
-    }).then((opportunity) => this.format(opportunity));
+    return await prisma.ordemservico
+      .create({
+        data: payload,
+        include: this.include(),
+      })
+      .then((opportunity) => this.format(opportunity));
   }
 
   static async update(CODOS, payload) {
@@ -123,6 +129,61 @@ class OpportunityRepository {
     return await prisma.ordemservico.delete({
       where: { CODOS },
     });
+  }
+
+  static async  getExpiredOpps(){ 
+      const now = getNowISODate();
+      const opps = await prisma.ordemservico.findMany({ 
+        where: { 
+          CODTIPOOS: 21,
+          status: {ACAO : 0},
+          DATAINTERACAO: {
+            lt: now
+          },
+          projetos: { 
+            ATIVO: 1
+          }
+        },
+        include: this.include()
+      }).then((opps) => opps.map((opportunity) => this.format(opportunity)));
+      return opps;
+  };
+
+
+  static getSituationByInteractionDate(date) {
+    const dateReceived = new Date(date);
+    const now = new Date();
+    const fiveDaysFromNow = new Date(
+          now.getTime() + 5 * 24 * 60 * 60 * 1000
+        );
+    const expired = dateReceived < now;
+    const toExpire = dateReceived > now && dateReceived < fiveDaysFromNow;
+    if(expired) return 'expirada';
+    if(toExpire) return 'expirando';
+    if(!expired && !toExpire) return 'ativa';
+  } 
+
+  static async getToExpireOpps( ){ 
+    //wil expire in the next 5 days
+    const now = new Date();
+    const fiveDaysFromNow = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
+    const opps = await prisma.ordemservico
+      .findMany({
+        where: {
+          CODTIPOOS: 21,
+          status: { ACAO: 0 },
+          DATAINTERACAO: {
+            gte: now.toISOString(),
+            lte: fiveDaysFromNow.toISOString(),
+          },
+          projetos: {
+            ATIVO: 1,
+          },
+        },
+        include: this.include(),
+      })
+      .then((opps) => opps.map((opportunity) => this.format(opportunity)));
+    return opps;
   }
 }
 

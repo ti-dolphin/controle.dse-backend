@@ -74,7 +74,6 @@ class OpportunityController {
           }
           res.json({ message: 'Opportunity deleted successfully' });
         } catch (error) {
-          console.log(error);
           res.status(500).json({ message: error.message });
         }
       }

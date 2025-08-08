@@ -427,9 +427,12 @@ model pessoa {
   pessoa_responsavel                                   pessoa_responsavel[]
   pessoa_tipo                                          pessoa_tipo[]
   projetos                                             projetos[]
+  projetos_projetos_ID_RESPONSAVELTopessoa             projetos[]                    @relation("projetos_ID_RESPONSAVELTopessoa")
   web_alteracao_req_status                             web_alteracao_req_status[]
   web_anexos_requisicao                                web_anexos_requisicao[]
+  web_comentarios_requsicao                            web_comentarios_requsicao[]
   web_cotacao                                          web_cotacao[]
+  web_email_logs                                       web_email_logs[]
   web_movimentacao_patrimonio                          web_movimentacao_patrimonio[]
   web_requisicao_web_requisicao_ID_RESPONSAVELTopessoa web_requisicao[]              @relation("web_requisicao_ID_RESPONSAVELTopessoa")
   web_requisicao_web_requisicao_alterado_porTopessoa   web_requisicao[]              @relation("web_requisicao_alterado_porTopessoa")
@@ -520,19 +523,21 @@ model produtos {
 }
 
 model projetos {
-  ID                          Int                           @id @default(autoincrement())
-  DESCRICAO                   String?                       @db.VarChar(250)
-  CODGERENTE                  Int?
-  ATIVO                       Int?                          @default(1)
-  ID_RESPONSAVEL              Int?
-  adicionais                  adicionais[]
-  ordemservico                ordemservico[]
-  pessoa                      pessoa?                       @relation(fields: [CODGERENTE], references: [CODGERENTE], onDelete: Restrict, onUpdate: Restrict, map: "gerente")
-  web_movimentacao_patrimonio web_movimentacao_patrimonio[]
-  web_requisicao              web_requisicao[]
-  web_seguidores_projeto      web_seguidores_projeto[]
+  ID                                     Int                           @id @default(autoincrement())
+  DESCRICAO                              String?                       @db.VarChar(250)
+  CODGERENTE                             Int?
+  ATIVO                                  Int?                          @default(1)
+  ID_RESPONSAVEL                         Int?
+  adicionais                             adicionais[]
+  ordemservico                           ordemservico[]
+  pessoa                                 pessoa?                       @relation(fields: [CODGERENTE], references: [CODGERENTE], onDelete: Restrict, onUpdate: Restrict, map: "gerente")
+  pessoa_projetos_ID_RESPONSAVELTopessoa pessoa?                       @relation("projetos_ID_RESPONSAVELTopessoa", fields: [ID_RESPONSAVEL], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "responsavel")
+  web_movimentacao_patrimonio            web_movimentacao_patrimonio[]
+  web_requisicao                         web_requisicao[]
+  web_seguidores_projeto                 web_seguidores_projeto[]
 
   @@index([CODGERENTE], map: "CODGERENTE_idx")
+  @@index([ID_RESPONSAVEL], map: "responsavel_projeto_idx")
 }
 
 model psituacao {
@@ -772,28 +777,29 @@ model web_patrimonio {
 }
 
 model web_requisicao {
-  ID_REQUISICAO                                Int                        @id @default(autoincrement())
-  DESCRIPTION                                  String?                    @db.VarChar(100)
+  ID_REQUISICAO                                Int                         @id @default(autoincrement())
+  DESCRIPTION                                  String?                     @db.VarChar(100)
   ID_PROJETO                                   Int?
   ID_RESPONSAVEL                               Int?
-  data_alteracao                               DateTime?                  @db.DateTime(0)
-  data_criacao                                 DateTime?                  @db.DateTime(0)
+  data_alteracao                               DateTime?                   @db.DateTime(0)
+  data_criacao                                 DateTime?                   @db.DateTime(0)
   id_status_requisicao                         Int?
-  OBSERVACAO                                   String?                    @db.Text
+  OBSERVACAO                                   String?                     @db.Text
   alterado_por                                 Int?
   TIPO                                         Int?
   criado_por                                   Int?
-  custo_total_frete                            Decimal?                   @default(0) @db.Decimal(10, 0)
-  custo_total_itens                            Decimal?                   @default(0) @db.Decimal(10, 0)
-  custo_total                                  Decimal?                   @db.Decimal(10, 0)
+  custo_total_frete                            Decimal?                    @default(0) @db.Decimal(10, 0)
+  custo_total_itens                            Decimal?                    @default(0) @db.Decimal(10, 0)
+  custo_total                                  Decimal?                    @db.Decimal(10, 0)
   web_alteracao_req_status                     web_alteracao_req_status[]
+  web_comentarios_requsicao                    web_comentarios_requsicao[]
   web_cotacao                                  web_cotacao[]
-  projetos                                     projetos?                  @relation(fields: [ID_PROJETO], references: [ID], onDelete: Restrict, onUpdate: Restrict, map: "ID_PROJETO")
-  pessoa_web_requisicao_ID_RESPONSAVELTopessoa pessoa?                    @relation("web_requisicao_ID_RESPONSAVELTopessoa", fields: [ID_RESPONSAVEL], references: [CODPESSOA], onDelete: Restrict, onUpdate: Restrict, map: "ID_RESPONSAVEL")
-  pessoa_web_requisicao_alterado_porTopessoa   pessoa?                    @relation("web_requisicao_alterado_porTopessoa", fields: [alterado_por], references: [CODPESSOA], onDelete: Restrict, onUpdate: Restrict, map: "alterado")
-  pessoa_web_requisicao_criado_porTopessoa     pessoa?                    @relation("web_requisicao_criado_porTopessoa", fields: [criado_por], references: [CODPESSOA], onDelete: Restrict, onUpdate: Restrict, map: "alterado por")
-  web_status_requisicao                        web_status_requisicao?     @relation(fields: [id_status_requisicao], references: [id_status_requisicao], onDelete: Restrict, onUpdate: Restrict, map: "id_status")
-  web_tipo_requisicao                          web_tipo_requisicao?       @relation(fields: [TIPO], references: [id_tipo_requisicao], onDelete: Restrict, onUpdate: Restrict, map: "id_tipo")
+  projetos                                     projetos?                   @relation(fields: [ID_PROJETO], references: [ID], onDelete: Restrict, onUpdate: Restrict, map: "ID_PROJETO")
+  pessoa_web_requisicao_ID_RESPONSAVELTopessoa pessoa?                     @relation("web_requisicao_ID_RESPONSAVELTopessoa", fields: [ID_RESPONSAVEL], references: [CODPESSOA], onDelete: Restrict, onUpdate: Restrict, map: "ID_RESPONSAVEL")
+  pessoa_web_requisicao_alterado_porTopessoa   pessoa?                     @relation("web_requisicao_alterado_porTopessoa", fields: [alterado_por], references: [CODPESSOA], onDelete: Restrict, onUpdate: Restrict, map: "alterado")
+  pessoa_web_requisicao_criado_porTopessoa     pessoa?                     @relation("web_requisicao_criado_porTopessoa", fields: [criado_por], references: [CODPESSOA], onDelete: Restrict, onUpdate: Restrict, map: "alterado por")
+  web_status_requisicao                        web_status_requisicao?      @relation(fields: [id_status_requisicao], references: [id_status_requisicao], onDelete: Restrict, onUpdate: Restrict, map: "id_status")
+  web_tipo_requisicao                          web_tipo_requisicao?        @relation(fields: [TIPO], references: [id_tipo_requisicao], onDelete: Restrict, onUpdate: Restrict, map: "id_tipo")
 
   @@index([ID_PROJETO], map: "ID_PROJETO_idx")
   @@index([ID_RESPONSAVEL], map: "ID_RESPONSAVEL_idx")
@@ -1042,4 +1048,38 @@ model web_transicao_status {
 
   @@unique([id_status_anterior, id_status_requisicao], map: "id_status_anterior")
   @@index([id_status_requisicao], map: "id_status_requisicao")
+}
+
+model web_email_logs {
+  id_log          Int     @id @default(autoincrement())
+  erro            Int?    @db.TinyInt
+  sucesso         Int?    @db.TinyInt
+  destinatario    String? @db.VarChar(50)
+  assunto         String? @db.Text
+  id_destinatario Int?
+  error_message   String? @db.Text
+  pessoa          pessoa? @relation(fields: [id_destinatario], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "destinatario")
+
+  @@index([id_destinatario], map: "destinatario_idx")
+}
+
+model web_verificao_ordemservico_logs {
+  id_verificacao   Int       @id @default(autoincrement())
+  sucesso          Int?      @db.TinyInt
+  erro             Int?      @db.TinyInt
+  data_verificacao DateTime? @db.DateTime(0)
+}
+
+model web_comentarios_requsicao {
+  id_comentario_requisicao Int            @id
+  id_requisicao            Int
+  criado_por               Int
+  data_criacao             DateTime?      @db.DateTime(0)
+  data_alteracao           DateTime?      @db.DateTime(0)
+  descricao                String?        @db.Text
+  pessoa                   pessoa         @relation(fields: [criado_por], references: [CODPESSOA], onUpdate: Restrict, map: "fk_criado_por")
+  web_requisicao           web_requisicao @relation(fields: [id_requisicao], references: [ID_REQUISICAO], onUpdate: Restrict, map: "fk_id_requisicao")
+
+  @@index([criado_por], map: "fk_criado_por")
+  @@index([id_requisicao], map: "fk_id_requisicao")
 }

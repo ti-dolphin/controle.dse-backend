@@ -68,17 +68,18 @@ class CheckListRepository {
   }
 
   async getManyByUser(codpessoa, filters, searchTerm, situacao) {
-    const searchFilter = searchTerm !== "" ? this.buildSearchFilters(searchTerm) : {};
+    const searchFilter =
+      searchTerm !== "" ? this.buildSearchFilters(searchTerm) : {};
     const extraFilters = this.buildFilters(filters);
-    const typesUserIsResponsableFor = await PatrimonyRepository.getTypesUserIsResponsableFor(codpessoa, true);
-    console.log("typesUserIsResponsableFor", typesUserIsResponsableFor);
-    
+    const typesUserIsResponsableFor =
+      await PatrimonyRepository.getTypesUserIsResponsableFor(codpessoa, true);
+
     const situationFilter = this.buildSituationFilters(
       situacao,
       typesUserIsResponsableFor,
       codpessoa
     );
-    
+
     return prisma.web_checklist_movimentacao
       .findMany({
         where: {

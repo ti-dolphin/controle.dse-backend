@@ -7,7 +7,7 @@ class PatrimonyController {
       const patrimony = await PatrimonyService.create(payload);
       res.status(201).json(patrimony);
     } catch (error) {
-      console.log(error);
+      
       res.status(500).json({ mensagem: "Erro ao criar patrimônio", erro: error.message });
     }
   }
@@ -54,7 +54,7 @@ class PatrimonyController {
       }
       res.status(200).json(updated);
     } catch (error) {
-      console.log(error);
+      
       res.status(500).json({ mensagem: "Erro ao atualizar patrimônio", erro: error.message });
     }
   }

@@ -48,6 +48,7 @@ var itemsChecklistMovimentacaoRouter = require('./routes/itemsCheckListMovimenta
 var quoteRouter = require('./routes/quoteRouter');
 var quoteItemRouter = require("./routes/quoteItemRouter");
 var quoteFileRouter = require("./routes/quoteFIleRouter");
+var requisitionCommentRouter = require("./routes/requisitionCommentRouter.js");
 // Middlewares e Schedulers
 
 const authorizationRouter = require('./routes/authorizationRouter.js');
@@ -118,6 +119,8 @@ app.use('/item_cotacao', authorize, quoteItemRouter); // faltando update many, c
 
 // Rotas de Anexos da requisição
 app.use("/anexo_requisicao", authorize, requisitionFileRouter); // rota para anexos de requisição
+//rotas de comentário da requisição
+app.use("/comentarios_requisicao", authorize, requisitionCommentRouter);
 app.use("/anexo_item_requisicao", authorize, reqItemFileRouter);
 //Rotas de Anexos do Patrimônio
 app.use("/anexo_patrimonio", authorize, patrimonyFileRouter); // rota para anexos de patrimônio
@@ -136,7 +139,7 @@ app.use(function(err, req, res, next) {
 });
 
 // Schedulers (descomentando ativa)
-// OpportunityScheduler.startExpiredOppsVerification();
+OpportunityScheduler.startOpportunitiesVerification();
 // PatrimonyScheduler.startEmailSchedule();
 // PatrimonyScheduler.startchecklistVerification();
 

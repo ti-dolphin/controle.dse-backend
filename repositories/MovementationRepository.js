@@ -47,7 +47,6 @@ class MovementationRepository {
       .then((movimentacoes) => movimentacoes.map(this._formatMovimentacao));
 
     if (from === "patrimonios") {
-      console.log("patrimonios");
       const mostRecenetMovByPatrimonyId = new Map();
       movs.forEach((mov) => {
         if (!mostRecenetMovByPatrimonyId.has(mov.id_patrimonio)) {

@@ -1,8 +1,9 @@
 const { prisma } = require("../database");
 const OpportunityRepository = require("../repositories/OpportunityRepository");
 const ProjectRepository = require("../repositories/ProjectRepository");
-
-
+const fs = require("fs");
+const Handlebars = require("handlebars");
+const EmailService = require("../services/EmailService");
 class OpportunityService {
   async getById(CODOS) {
     return await OpportunityRepository.getById(CODOS);
@@ -11,7 +12,7 @@ class OpportunityService {
   async getMany(params) {
     const { user, searchTerm, filters, finalizados } = params;
     const normalizedFilters = this.normalizeFilters(filters);
-    console.log(normalizedFilters);
+
     return await OpportunityRepository.getMany(
       user,
       searchTerm,
@@ -110,7 +111,7 @@ class OpportunityService {
 
   normalizeFilters(filtersArray) {
     if (filtersArray) {
-      const intFields = ["CODOS", "ID_PROJETO",  "VALOR_TOTAL"];
+      const intFields = ["CODOS", "ID_PROJETO", "VALOR_TOTAL"];
       return filtersArray.map((filter) => {
         // Só há uma chave por objeto
         const [field, value] = Object.entries(filter)[0];
@@ -133,10 +134,7 @@ class OpportunityService {
           if (typeof obj !== "object" || obj === null) return obj;
           const result = Array.isArray(obj) ? [] : {};
           for (const k in obj) {
-            if (
-              typeof obj[k] === "string" &&
-              !isNaN(obj[k])
-            ) {
+            if (typeof obj[k] === "string" && !isNaN(obj[k])) {
               result[k] = Number(obj[k]);
             } else if (typeof obj[k] === "object") {
               result[k] = deepNormalize(obj[k]);
@@ -151,6 +149,104 @@ class OpportunityService {
       });
     }
     return [];
+  }
+
+  async verifyOpps() {
+    try {
+      const oppsByResponsable = await this.getOppsByResponsable();
+      if (oppsByResponsable) {
+        const reportSent = await this.sendWeeklyReport(oppsByResponsable);
+        return reportSent;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async sendWeeklyReport(oppsByResponsable) {
+    try {
+      const templateSource = fs.readFileSync(
+        `./views/opportunityReport.handlebars`,
+        "utf8"
+      );
+      const template = Handlebars.compile(templateSource);
+      for (let CODPESSOA of oppsByResponsable.keys()) {
+        //expired and toExpire length
+        console.log(
+          "responsavel: ",
+          oppsByResponsable.get(CODPESSOA).responsavel.NOME
+        );
+
+        console.log(
+          "toExpire: ",
+          oppsByResponsable.get(CODPESSOA).toExpire.length
+        );
+        const html = template({
+          expired: oppsByResponsable.get(CODPESSOA).expired,
+          toExpire: oppsByResponsable.get(CODPESSOA).toExpire,
+          nome_responsavel: oppsByResponsable.get(CODPESSOA).responsavel.NOME,
+        });
+
+        const sent = await EmailService.sendEmail(
+          [oppsByResponsable.get(CODPESSOA).responsavel.EMAIL],
+          "Relatório Semanal de Oportunidades",
+          html
+        );
+
+        if (sent) {
+          const successEmailLog = await prisma.web_email_logs.create({
+            data: {
+              id_destinatario: parseInt(
+                oppsByResponsable.get(CODPESSOA).responsavel.CODPESSOA
+              ),
+              assunto: "Relatório Semanal de Oportunidades",
+              sucesso: 1,
+              erro: 0,
+            },
+          });
+        }
+      }
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async getOppsByResponsable() {
+    try {
+      const expiredOpps = await OpportunityRepository.getExpiredOpps();
+      const toExpireOpps = await OpportunityRepository.getToExpireOpps();
+      if (!(expiredOpps.length > 0) && !(toExpireOpps.length > 0)) return null;
+      const oppsByResponsable = new Map();
+      expiredOpps.forEach((opp) => {
+        if (oppsByResponsable.has(opp.responsavel.CODPESSOA)) {
+          oppsByResponsable.get(opp.responsavel.CODPESSOA).expired.push(opp);
+        } else {
+          oppsByResponsable.set(opp.responsavel.CODPESSOA, {
+            responsavel: opp.responsavel,
+            expired: [opp],
+            toExpire: [],
+          });
+        }
+      });
+
+      toExpireOpps.forEach((opp) => {
+        if (oppsByResponsable.has(opp.responsavel.CODPESSOA)) {
+          oppsByResponsable.get(opp.responsavel.CODPESSOA).toExpire.push(opp);
+        } else {
+          oppsByResponsable.set(opp.responsavel.CODPESSOA, {
+            responsavel: opp.responsavel,
+            expired: [],
+            toExpire: [opp],
+          });
+        }
+      });
+      return oppsByResponsable;
+    } catch (e) {
+      return null;
+    }
   }
 }
 

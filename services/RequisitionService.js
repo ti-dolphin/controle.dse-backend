@@ -5,7 +5,7 @@ const { getNowISODate } = require("../utils");
 class RequisitionService {
   async getMany(user, params) {
     const { id_kanban_requisicao, searchTerm, filters } = params;
-    const normalizedFilters = this.normalizeFilters(filters);
+    
     // Se não for o kanban "5", aplica regras de acesso e status
     if (Number(id_kanban_requisicao) !== 5) {
       // Busca os status do kanban selecionado
@@ -19,11 +19,11 @@ class RequisitionService {
       return await RequisitionRepository.findMany(
         { ID_REQUISICAO: { in: filteredReqsByKanban } },
         searchTerm,
-        normalizedFilters
+        filters
       );
     }
     // Se for o kanban "5", retorna todas as requisições com filtros aplicados
-    return await RequisitionRepository.findMany({}, searchTerm, normalizedFilters);
+    return await RequisitionRepository.findMany({}, searchTerm, filters);
   }
 
   async getReqsBykanban(user, kanbanStatusList) {
@@ -71,8 +71,14 @@ class RequisitionService {
     normalizedData.data_alteracao = now.toISOString();
     normalizedData.criado_por = data.ID_RESPONSAVEL;
     normalizedData.alterado_por = data.ID_RESPONSAVEL;
-
-    return await RequisitionRepository.create(normalizedData);
+    const newReq =  await RequisitionRepository.create(normalizedData);
+    await this.processStatusChange(
+      newReq.ID_REQUISICAO,
+      newReq.criado_por.CODPESSOA,
+      1,
+      newReq.id_status_requisicao
+    );
+    return newReq;
   }
 
   async update(id_requisicao, data) {
@@ -90,8 +96,14 @@ class RequisitionService {
     return await RequisitionRepository.update(id_requisicao, data);
   }
 
-  async processStatusChange(id_requisicao, alterado_por, oldStatusId, newStatusId) {
+  async cancel(id_requisicao) {
+    return await RequisitionRepository.cancel(id_requisicao);
+  }
 
+  async activate(id_requisicao) {
+    return await RequisitionRepository.activate(id_requisicao);
+  }
+  async processStatusChange(id_requisicao, alterado_por, oldStatusId, newStatusId) {
     const newStatusChange = await prisma.web_alteracao_req_status.create({
       data: {
         id_status_anterior: Number(oldStatusId),

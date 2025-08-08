@@ -15,7 +15,7 @@ class CheckListController {
       const checklists = await CheckListService.getMany(req.query);
       res.json(checklists);
     } catch (error) {
-      console.log(error);
+      
       res.status(400).json({ error: error.message });
     }
   }
@@ -26,7 +26,7 @@ class CheckListController {
       const checklists = await CheckListService.getManyByUser(req.query, codpessoa);
       res.json(checklists);
     } catch (error) {
-      console.log(error);
+      
       res.status(400).json({ error: error.message });
     }
   }
@@ -36,10 +36,10 @@ class CheckListController {
       const checklist = await CheckListService.getById(
         Number(req.params.id_checklist)
       );
-      if (!checklist){ 
-         return res.status(404).json({ error: "Checklist não encontrado" });
+      if (!checklist) {
+        return res.status(404).json({ error: "Checklist não encontrado" });
       }
-      console.log("retornando checklist: ");
+
       res.json(checklist);
     } catch (error) {
       res.status(400).json({ error: error.message });

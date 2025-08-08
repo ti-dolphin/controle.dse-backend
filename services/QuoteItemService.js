@@ -81,7 +81,6 @@ class QuoteItemService {
   }
 
   async subtractQuoteItemFromRequisition(id_item_cotacao) {
-    console.log("id_item_cotacao", id_item_cotacao);
     const item = await this.getById(id_item_cotacao);
     const quote = await QuoteRepository.getById(item.id_cotacao);
     const newTotal = Number(quote.valor_total_itens) - Number(item.subtotal);

@@ -59,6 +59,15 @@ function buildWhere(params, numericFields = []) {
   }
   return where;
 }
+function formatToCurrency(value) {
+ const formattedValue = value
+   ? Number(value).toLocaleString("pt-BR", {
+       style: "currency",
+       currency: "BRL",
+     })
+   : "";
+        return formattedValue;
+}
 const utils = {
   removeFile: (filePath) => {
     fs.unlink(filePath, (err) => {
@@ -67,6 +76,7 @@ const utils = {
   },
   buildWhere,
   getSystemProfileList,
-  getNowISODate
+  getNowISODate,
+  formatToCurrency
 };
 module.exports = utils;

@@ -55,6 +55,32 @@ class RequisitionController {
     }
   }
 
+  async cancel(req, res){ 
+    try {
+      const updated = await RequisitionService.cancel(Number(req.params.id_requisicao));
+      if (!updated) {
+        return res.status(404).json({ error: "Requisição não encontrada" });
+      }
+      res.status(200).json(updated);
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async activate(req, res){ 
+    try {
+      const updated = await RequisitionService.activate(Number(req.params.id_requisicao));
+      if (!updated) {
+        return res.status(404).json({ error: "Requisição não encontrada" });
+      }
+      res.status(200).json(updated);
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async delete(req, res) {
     try {
       const deleted = await RequisitionService.delete(
