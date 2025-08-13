@@ -151,11 +151,13 @@ class OpportunityService {
     return [];
   }
 
+
   async verifyOpps() {
     try {
       const oppsByResponsable = await this.getOppsByResponsable();
       if (oppsByResponsable) {
         const reportSent = await this.sendWeeklyReport(oppsByResponsable);
+        console.log("reportSent: ", reportSent);
         return reportSent;
       }
       return false;
@@ -165,6 +167,9 @@ class OpportunityService {
   }
 
   async sendWeeklyReport(oppsByResponsable) {
+
+    let succesfullEmails = 0
+    let failedEmails = 0
     try {
       const templateSource = fs.readFileSync(
         `./views/opportunityReport.handlebars`,
@@ -172,16 +177,7 @@ class OpportunityService {
       );
       const template = Handlebars.compile(templateSource);
       for (let CODPESSOA of oppsByResponsable.keys()) {
-        //expired and toExpire length
-        console.log(
-          "responsavel: ",
-          oppsByResponsable.get(CODPESSOA).responsavel.NOME
-        );
-
-        console.log(
-          "toExpire: ",
-          oppsByResponsable.get(CODPESSOA).toExpire.length
-        );
+        //expired and toExpire lengt
         const html = template({
           expired: oppsByResponsable.get(CODPESSOA).expired,
           toExpire: oppsByResponsable.get(CODPESSOA).toExpire,
@@ -195,6 +191,7 @@ class OpportunityService {
         );
 
         if (sent) {
+          succesfullEmails += 1;
           const successEmailLog = await prisma.web_email_logs.create({
             data: {
               id_destinatario: parseInt(
@@ -205,10 +202,22 @@ class OpportunityService {
               erro: 0,
             },
           });
+        }else {
+          failedEmails += 1;
+           const successEmailLog = await prisma.web_email_logs.create({
+             data: {
+               id_destinatario: parseInt(
+                 oppsByResponsable.get(CODPESSOA).responsavel.CODPESSOA
+               ),
+               assunto: "Relatório Semanal de Oportunidades",
+               sucesso: 0,
+               erro: 1,
+             },
+           });
         }
       }
 
-      return true;
+      return {succesfullEmails, failedEmails};
     } catch (e) {
       return false;
     }

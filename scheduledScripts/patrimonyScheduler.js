@@ -7,7 +7,7 @@ class PatrimonyScheduler {
       const interval = 24 * oneHourInMilliseconds;
      setInterval(() => {
        try {
-         ChecklistService.verifyAndCreateChecklists();
+         ChecklistService.verifyChecklistItems();
        } catch (e) {
          console.error("Error during checklist verification:", e);
        }

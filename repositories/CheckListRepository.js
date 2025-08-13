@@ -1,5 +1,4 @@
 const { prisma } = require("../database");
-const { buildWhere } = require("../utils");
 const PatrimonyRepository = require("./PatrimonyRepository");
 
 const filterFieldMap = {
@@ -20,26 +19,36 @@ class CheckListRepository {
           select: {
             CODPESSOA: true,
             NOME: true,
+            EMAIL: true
           },
         },
-        web_patrimonio: { 
-          include : {
-            web_tipo_patrimonio : true
-          }
+        web_patrimonio: {
+          include: {
+            web_tipo_patrimonio: { 
+              include : { 
+                web_items_checklist_tipo: true
+              }
+            },
+          },
         },
       },
     },
+    web_items_checklist_movimentacao: true,
   };
   format = (result) => {
     const formatted = {
       ...result,
       responsavel: result.movimentacao_patrimonio?.pessoa || null,
       patrimonio: result.movimentacao_patrimonio?.web_patrimonio || null,
-      patrimonio_nome: result.movimentacao_patrimonio?.web_patrimonio.nome || null,
+      patrimonio_nome:
+        result.movimentacao_patrimonio?.web_patrimonio.nome || null,
       responsavel_nome: result.movimentacao_patrimonio?.pessoa.NOME || null,
-      items : result.web_items_checklist_movimentacao ?  result.web_items_checklist_movimentacao : []
+      items: result.web_items_checklist_movimentacao
+        ? result.web_items_checklist_movimentacao
+        : [],
     };
-    formatted.patrimonio.tipo_patrimonio = formatted.patrimonio.web_tipo_patrimonio;
+    formatted.patrimonio.tipo_patrimonio =
+      formatted.patrimonio.web_tipo_patrimonio;
     delete formatted.movimentacao_patrimonio.pessoa;
     delete formatted.movimentacao_patrimonio.web_patrimonio;
     delete formatted.movimentacao_patrimonio;
@@ -48,12 +57,13 @@ class CheckListRepository {
 
   async create(data) {
     return prisma.web_checklist_movimentacao
-      .create({ data })
+      .create({ data, include: this.include })
       .then((result) => (result ? this.format(result) : null));
   }
 
   async getMany(params, filters, searchTerm) {
-    const searchFilter = searchTerm !== "" ? this.buildSearchFilters(searchTerm) : {};
+    const searchFilter =
+      searchTerm !== "" ? this.buildSearchFilters(searchTerm) : {};
     const extraFilters = this.buildFilters(filters);
 
     return prisma.web_checklist_movimentacao
@@ -68,17 +78,17 @@ class CheckListRepository {
   }
 
   async getManyByUser(codpessoa, filters, searchTerm, situacao) {
-    const searchFilter =
-      searchTerm !== "" ? this.buildSearchFilters(searchTerm) : {};
+    const searchFilter = searchTerm !== "" ? this.buildSearchFilters(searchTerm) : {};
     const extraFilters = this.buildFilters(filters);
-    const typesUserIsResponsableFor =
-      await PatrimonyRepository.getTypesUserIsResponsableFor(codpessoa, true);
+    const typesUserIsResponsableFor = await PatrimonyRepository.getTypesUserIsResponsableFor(codpessoa, true);
 
     const situationFilter = this.buildSituationFilters(
       situacao,
       typesUserIsResponsableFor,
       codpessoa
     );
+
+    console.log("situationFilter", situationFilter);
 
     return prisma.web_checklist_movimentacao
       .findMany({
@@ -92,7 +102,7 @@ class CheckListRepository {
   }
 
   async getById(id_checklist_movimentacao) {
-    const checklist =  await prisma.web_checklist_movimentacao
+    const checklist = await prisma.web_checklist_movimentacao
       .findUnique({
         where: { id_checklist_movimentacao },
         include: {
@@ -102,7 +112,67 @@ class CheckListRepository {
       })
       .then((result) => (result ? this.format(result) : null));
 
-    return checklist
+    return checklist;
+  }
+
+  async getFinishedExpiredChecklists() {
+      const patrimonies = await prisma.web_patrimonio.findMany({
+        where: { ativo: 1 }, // Opcional: apenas ativos
+        include: {
+          web_tipo_patrimonio: true,
+          web_movimentacao_patrimonio: {
+            orderBy: { id_movimentacao: "desc" }, // Última movimentação primeiro
+            include: {
+              web_checklist_movimentacao: {
+                orderBy: { id_checklist_movimentacao: "desc" }, // Último checklist primeiro
+              },
+            },
+          },
+        },
+      });
+// Processa para extrair apenas o último de cada
+      const checklists = patrimonies.map((patrimonio) => {
+          const lastMov = patrimonio.web_movimentacao_patrimonio[0]; // Primeiro é o último (devido orderBy desc)
+          if (!lastMov) {
+            return {
+              id_patrimonio: patrimonio.id_patrimonio,
+              nome: patrimonio.nome,
+              lastChecklist: null,
+            };
+          }
+        const lastChecklist = lastMov.web_checklist_movimentacao[0]; // Similar
+        return { 
+          ...lastChecklist,
+          periodicidade: patrimonio.web_tipo_patrimonio.periodicidade
+        };
+    });
+
+    const expireds = checklists.filter((checklist) => this.isExpired(checklist, checklist.periodicidade));
+    return expireds;
+  }
+
+  async getChecklistsWithoutItems(){ 
+    const checklists  = await prisma.web_checklist_movimentacao
+      .findMany({
+        where: {
+          realizado: false,
+          aprovado: false
+        },
+        include: this.include
+      })
+      .then((results) => results.map(this.format));
+    return checklists.filter((checklist) => !(checklist.items.length > 0));
+  }
+
+  async getUndoneChecklists(){ 
+    const checklists = await prisma.web_checklist_movimentacao.findMany({ 
+      where: {
+        realizado: false,
+        aprovado: false
+      },
+      include: this.include
+    }).then((results) => results.map(this.format));
+    return checklists;
   }
 
   async update(id_checklist_movimentacao, data) {
@@ -113,6 +183,25 @@ class CheckListRepository {
         include: this.include,
       })
       .then((result) => (result ? this.format(result) : null));
+  }
+
+  isExpired(checklist, periodicidade){ 
+    const now = new Date();
+       if(checklist.realizado && checklist.aprovado) {
+         // Assumindo que 'now' está definido como new Date();
+         const approvalDate = new Date(checklist.data_aprovado); // Converte a data de aprovação para Date
+         // Calcula a diferença em milissegundos entre agora e a data de aprovação
+         const differenceInMilliseconds = now - approvalDate;
+         // Converte para dias (arredondando para baixo)
+         const differenceInDays = Math.floor(
+           differenceInMilliseconds / (1000 * 60 * 60 * 24)
+         );
+         // Verifica se a diferença é MAIOR que a periodicidade (expirado)
+         if (differenceInDays > periodicidade) {
+           return true;
+         }
+       }
+       return false
   }
 
   async delete(id_checklist_movimentacao) {
@@ -183,8 +272,16 @@ class CheckListRepository {
   buildSearchFilters(searchTerm) {
     return {
       OR: [
-        { movimentacao_patrimonio: { web_patrimonio: { nome: { contains: searchTerm } } } },
-        { movimentacao_patrimonio: { pessoa: { NOME: { contains: searchTerm } } } },
+        {
+          movimentacao_patrimonio: {
+            web_patrimonio: { nome: { contains: searchTerm } },
+          },
+        },
+        {
+          movimentacao_patrimonio: {
+            pessoa: { NOME: { contains: searchTerm } },
+          },
+        },
       ],
     };
   }
@@ -204,6 +301,9 @@ class CheckListRepository {
         aprovado: false,
         realizado: false,
         movimentacao_patrimonio: {
+          id_responsavel: {
+            not: Number(codpessoa),
+          },
           web_patrimonio: {
             tipo: { in: typesUserIsResponsableFor },
           },
@@ -216,6 +316,17 @@ class CheckListRepository {
           id_responsavel: Number(codpessoa),
         },
       },
+      todas :  { 
+        OR: [
+          {aprovado: false},
+          {realizado: false}
+        ],
+        movimentacao_patrimonio: {
+          web_patrimonio: {
+            tipo: { in: typesUserIsResponsableFor },
+          },
+        },
+      }
     };
     const situationFilter = situationFilters[situacao] ?? {};
     return situationFilter;

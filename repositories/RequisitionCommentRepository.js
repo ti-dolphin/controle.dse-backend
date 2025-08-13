@@ -3,23 +3,57 @@ const { prisma } = require("../database");
 
 class RequisitionCommentRepository {
   async create(data) {
-    return prisma.web_comentarios_requsicao.create({ data });
+    return prisma.web_comentarios_requsicao.create({ data,
+      include: this.include(),
+     }).then((comment) => this.format(comment));
+  }
+
+  include(){ 
+    return {
+      pessoa: {
+        select: {
+          CODPESSOA: true,
+          NOME: true
+        },
+      },
+      web_requisicao: true,
+    };
+  }
+
+  format(comment){ 
+    return {
+      id_comentario_requisicao: comment.id_comentario_requisicao,
+      id_requisicao: comment.id_requisicao,
+      criado_por: comment.criado_por,
+      data_criacao: comment.data_criacao,
+      data_alteracao: comment.data_alteracao,
+      descricao: comment.descricao,
+      pessoa_criado_por: comment.pessoa,
+      requisicao: comment.web_requisicao,
+    };
   }
 
   async getMany(params) {
-    return prisma.web_comentarios_requsicao.findMany(params);
+    params.id_requisicao = parseInt(params.id_requisicao);
+    return prisma.web_comentarios_requsicao.findMany({ 
+      where  : params,
+      include:  this.include(),
+      orderBy: { id_comentario_requisicao: "desc" },
+    }).then((comments) => { 
+      return comments.map((comment) => this.format(comment));
+    });
   }
 
   async getById(id) {
-    return prisma.web_comentarios_requsicao.findUnique({ where: { id } });
+    return prisma.web_comentarios_requsicao.findUnique({ where: { id }, include: this.include() }).then((comment) => this.format(comment));
   }
 
-  async update(id, data) {
-    return prisma.web_comentarios_requsicao.update({ where: { id }, data });
+  async update(id_comentario_requisicao, data) {
+    return prisma.web_comentarios_requsicao.update({ where: { id_comentario_requisicao }, data, include: this.include() }).then((comment) => this.format(comment));
   }
 
   async delete(id) {
-    return prisma.web_comentarios_requsicao.delete({ where: { id } });
+    return prisma.web_comentarios_requsicao.delete({ where: { id_comentario_requisicao: id } });
   }
 }
 

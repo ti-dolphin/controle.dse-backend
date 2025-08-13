@@ -35,6 +35,17 @@ class OpportunityController {
         }
       }
 
+      async getReportInfo(req, res){ 
+        console.log("getReportInfo");
+        try {
+          const reportInfo = await OpportunityService.verifyOpps();
+          res.json(reportInfo);
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: error.message });
+        }
+      }
+
        async create(req, res) {
         try {
           const {isAdicional} = req.query;

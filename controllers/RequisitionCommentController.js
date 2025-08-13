@@ -8,9 +8,10 @@ class RequisitionCommentController {
       const result = await RequisitionCommentService.create(data);
       res.status(201).json(result);
     } catch (error) {
+      console.log(error);
       res
         .status(500)
-        .json({ message: "Error creating web comentarios requsicao" });
+        .json({ message: "Erro ao criar comentário de requisição" });
     }
   }
 
@@ -20,9 +21,10 @@ class RequisitionCommentController {
       const result = await RequisitionCommentService.getMany(params);
       res.json(result);
     } catch (error) {
+      console.log(error);
       res
         .status(500)
-        .json({ message: "Error getting web comentarios requsicao" });
+        .json({ message: "Erro ao buscar comentários de requisição" });
     }
   }
 
@@ -32,9 +34,10 @@ class RequisitionCommentController {
       const result = await RequisitionCommentService.getById(id);
       res.json(result);
     } catch (error) {
+      console.log(error);
       res
         .status(500)
-        .json({ message: "Error getting web comentarios requsicao by id" });
+        .json({ message: "Erro ao buscar comentário de requisição por id" });
     }
   }
 
@@ -45,9 +48,10 @@ class RequisitionCommentController {
       const result = await RequisitionCommentService.update(id, data);
       res.json(result);
     } catch (error) {
+      console.log(error);
       res
         .status(500)
-        .json({ message: "Error updating web comentarios requsicao" });
+        .json({ message: "Erro ao atualizar comentário de requisição" });
     }
   }
 
@@ -57,11 +61,13 @@ class RequisitionCommentController {
       const result = await RequisitionCommentService.delete(id);
       res.json(result);
     } catch (error) {
+      console.log(error);
       res
         .status(500)
-        .json({ message: "Error deleting web comentarios requsicao" });
+        .json({ message: "Erro ao deletar comentário de requisição" });
     }
   }
 }
 
-module.exports = new  RequisitionCommentController();
+module.exports = new RequisitionCommentController();
+

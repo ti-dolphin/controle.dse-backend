@@ -139,7 +139,7 @@ app.use(function(err, req, res, next) {
 });
 
 // Schedulers (descomentando ativa)
-OpportunityScheduler.startOpportunitiesVerification();
+// OpportunityScheduler.startOpportunitiesVerification();
 // PatrimonyScheduler.startEmailSchedule();
 // PatrimonyScheduler.startchecklistVerification();
 

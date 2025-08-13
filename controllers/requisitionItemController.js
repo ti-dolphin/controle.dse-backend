@@ -107,6 +107,7 @@ class RequisitionItemController {
       }
       res.json(updatedItem);
     } catch (err) {
+      console.log(err);
       res.status(400).json({ error: "Erro ao atualizar item: " + err.message });
     }
   };

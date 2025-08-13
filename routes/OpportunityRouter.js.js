@@ -11,6 +11,8 @@ router.get('/', OpportunityController.getMany);
 
 router.get("/status/status_oportunidade", OpportunityController.getStatuses);
 
+router.get('/relatorio/verificar_relatorio_semanal', OpportunityController.getReportInfo);
+
 //criar nova oportunidade
 router.post('/', OpportunityController.create);
 

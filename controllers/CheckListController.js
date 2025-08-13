@@ -26,7 +26,7 @@ class CheckListController {
       const checklists = await CheckListService.getManyByUser(req.query, codpessoa);
       res.json(checklists);
     } catch (error) {
-      
+      console.log(error);
       res.status(400).json({ error: error.message });
     }
   }
@@ -45,6 +45,38 @@ class CheckListController {
       res.status(400).json({ error: error.message });
     }
   }
+
+  async verifyChecklistCreation(req, res) {
+    try {
+      const checklistCreationInfo = await CheckListService.verifyChecklistCreation();
+      res.json(checklistCreationInfo);
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+   async verifyChecklistItems(req, res){ 
+    try {
+      const checklistWithItemsInserted = await CheckListService.verifyChecklistItems();
+      res.json({ checklistWithItemsInserted });
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async sendChecklistEmails(req, res){ 
+    try {
+      const emailsSent = await CheckListService.sendChecklistEmails();
+      res.json({ emailsSent });
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+
 
   async update(req, res) {
     try {

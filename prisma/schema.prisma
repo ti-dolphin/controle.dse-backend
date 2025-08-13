@@ -1071,7 +1071,7 @@ model web_verificao_ordemservico_logs {
 }
 
 model web_comentarios_requsicao {
-  id_comentario_requisicao Int            @id
+  id_comentario_requisicao Int            @id @default(autoincrement())
   id_requisicao            Int
   criado_por               Int
   data_criacao             DateTime?      @db.DateTime(0)

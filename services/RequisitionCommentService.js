@@ -3,23 +3,23 @@ const RequisitionCommentRepository = require("../repositories/RequisitionComment
 
 class RequisitionCommentService {
   async create(data) {
-    return WebComentariosRequsicaoRepository.create(data);
+    return RequisitionCommentRepository.create(data);
   }
 
   async getMany(params) {
-    return WebComentariosRequsicaoRepository.getMany(params);
+    return RequisitionCommentRepository.getMany(params);
   }
 
   async getById(id) {
-    return WebComentariosRequsicaoRepository.getById(id);
+    return RequisitionCommentRepository.getById(id);
   }
 
   async update(id, data) {
-    return WebComentariosRequsicaoRepository.update(id, data);
+    return RequisitionCommentRepository.update(parseInt(id), data);
   }
 
   async delete(id) {
-    return WebComentariosRequsicaoRepository.delete(id);
+    return RequisitionCommentRepository.delete(parseInt(id));
   }
 }
 

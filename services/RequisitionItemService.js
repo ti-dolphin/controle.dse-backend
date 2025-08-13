@@ -40,6 +40,7 @@ class RequisitionItemService {
   }
 
   async update(id_item_requisicao, data) {
+    data.oc = Number(data.oc);
     return await RequisitionItemRepository.update(id_item_requisicao, data);
   }
 
