@@ -80,21 +80,20 @@ class QuoteController {
             }
             res.json(updatedQuote);
         } catch (err) {
-            ;
             res.status(400).json({ error: "Erro ao atualizar cotação: " + err.message });
         }
     }
 
      async delete(req, res) {
         try {
-            const deleted = await QuoteService.delete(
-              Number(req.params.id_cotacao)
-            );
+            console.log("delete");
+            const deleted = await QuoteService.delete(Number(req.params.id_cotacao));
             if (!deleted) {
                 return res.status(404).json({ error: "Cotação não encontrada." });
             }
             res.json({ message: "Cotação excluída com sucesso." });
         } catch (err) {
+            console.error(err);
           res
             .status(500)
             .json({ error: "Erro interno do servidor: " + err.message });

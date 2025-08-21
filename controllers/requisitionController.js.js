@@ -39,6 +39,18 @@ class RequisitionController {
     }
   }
 
+  async createFromOther(req, res) {
+    console.log("createFromOther");
+    try {
+      const  {id_requisicao, items} = req.body;
+      const requisition = await RequisitionService.createFromOther(id_requisicao, items);
+      res.status(201).json(requisition);
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async update(req, res) {
     try {
       const updated = await RequisitionService.update(

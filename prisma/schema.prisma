@@ -746,7 +746,7 @@ model web_items_cotacao {
   id_produto            Int?
   indisponivel          Int?                  @db.TinyInt
   produtos              produtos?             @relation(fields: [id_produto], references: [ID], onDelete: Restrict, onUpdate: Restrict, map: "id_produto")
-  web_requisicao_items  web_requisicao_items? @relation(fields: [id_item_requisicao], references: [id_item_requisicao], onDelete: Restrict, onUpdate: Restrict, map: "id_requisicao")
+  web_requisicao_items  web_requisicao_items? @relation(fields: [id_item_requisicao], references: [id_item_requisicao], onDelete: Cascade, map: "id_requisicao")
   web_cotacao           web_cotacao           @relation(fields: [id_cotacao], references: [id_cotacao], onDelete: Cascade, map: "web_items_cotacao_ibfk_1")
 
   @@index([id_cotacao], map: "id_cotacao")
@@ -800,6 +800,7 @@ model web_requisicao {
   pessoa_web_requisicao_criado_porTopessoa     pessoa?                     @relation("web_requisicao_criado_porTopessoa", fields: [criado_por], references: [CODPESSOA], onDelete: Restrict, onUpdate: Restrict, map: "alterado por")
   web_status_requisicao                        web_status_requisicao?      @relation(fields: [id_status_requisicao], references: [id_status_requisicao], onDelete: Restrict, onUpdate: Restrict, map: "id_status")
   web_tipo_requisicao                          web_tipo_requisicao?        @relation(fields: [TIPO], references: [id_tipo_requisicao], onDelete: Restrict, onUpdate: Restrict, map: "id_tipo")
+  web_requisicao_items                         web_requisicao_items[]
 
   @@index([ID_PROJETO], map: "ID_PROJETO_idx")
   @@index([ID_RESPONSAVEL], map: "ID_RESPONSAVEL_idx")
@@ -810,21 +811,21 @@ model web_requisicao {
 }
 
 model web_requisicao_items {
-  id_item_requisicao         Int                          @id @unique(map: "ID_UNIQUE") @default(autoincrement())
-  quantidade                 Int?
-  id_requisicao              Int
-  id_produto                 Int?
-  observacao                 String?                      @db.Text
-  ativo                      Int                          @default(1) @db.TinyInt
-  oc                         Int?
-  data_entrega               DateTime?                    @db.DateTime(0)
-  id_item_cotacao            Int?
-  web_anexos_item_requisicao web_anexos_item_requisicao[]
-  web_items_cotacao          web_items_cotacao[]
-  produtos                   produtos?                    @relation(fields: [id_produto], references: [ID], onDelete: Restrict, onUpdate: Restrict, map: "produtos")
+  id_item_requisicao Int                 @id @unique(map: "ID_UNIQUE") @default(autoincrement())
+  quantidade         Int?
+  id_requisicao      Int
+  id_produto         Int?
+  observacao         String?             @db.Text
+  ativo              Int                 @default(1) @db.TinyInt
+  oc                 Int?
+  data_entrega       DateTime?           @db.DateTime(0)
+  id_item_cotacao    Int?
+  web_items_cotacao  web_items_cotacao[]
+  web_requisicao     web_requisicao      @relation(fields: [id_requisicao], references: [ID_REQUISICAO], onDelete: Cascade, map: "fk_item_requisicao_requisicao")
+  produtos           produtos?           @relation(fields: [id_produto], references: [ID], onDelete: Restrict, onUpdate: Restrict, map: "produtos")
 
   @@index([id_produto], map: "ID_PRODUTO_idx")
-  @@index([id_requisicao], map: "ID_REQUISICAO_idx")
+  @@index([id_requisicao], map: "fk_item_requisicao_requisicao")
 }
 
 model web_seguidores_projeto {
@@ -996,11 +997,10 @@ model web_anexos_acessorio_patrimonio {
 }
 
 model web_anexos_item_requisicao {
-  id                   Int                  @id @default(autoincrement())
-  arquivo              String?              @db.LongText
-  id_item              Int
-  nome_arquivo         String?              @db.LongText
-  web_requisicao_items web_requisicao_items @relation(fields: [id_item], references: [id_item_requisicao], onDelete: Cascade, onUpdate: Restrict, map: "id_item")
+  id           Int     @id @default(autoincrement())
+  arquivo      String? @db.LongText
+  id_item      Int
+  nome_arquivo String? @db.LongText
 
   @@index([id_item], map: "id_item_idx")
 }
@@ -1078,7 +1078,7 @@ model web_comentarios_requsicao {
   data_alteracao           DateTime?      @db.DateTime(0)
   descricao                String?        @db.Text
   pessoa                   pessoa         @relation(fields: [criado_por], references: [CODPESSOA], onUpdate: Restrict, map: "fk_criado_por")
-  web_requisicao           web_requisicao @relation(fields: [id_requisicao], references: [ID_REQUISICAO], onUpdate: Restrict, map: "fk_id_requisicao")
+  web_requisicao           web_requisicao @relation(fields: [id_requisicao], references: [ID_REQUISICAO], onDelete: Cascade, map: "fk_id_requisicao")
 
   @@index([criado_por], map: "fk_criado_por")
   @@index([id_requisicao], map: "fk_id_requisicao")

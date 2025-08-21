@@ -144,8 +144,8 @@ class RequisitionItemController {
           quoteItemsSelectedMap
         );
       res.json({ updatedItems, updatedRequisition });
-      // res.json(updatedItems);
     } catch (err) {
+      console.log(err);
       res.status(400).json({ error: "Erro ao preencher oc's: " + err.message });
     }
   };

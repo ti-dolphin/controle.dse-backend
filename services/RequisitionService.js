@@ -2,14 +2,22 @@ const KanbanStatusRequisitionRepository = require("../repositories/KanbanStatusR
 const RequisitionRepository = require("../repositories/RequisitionRepository");
 const {prisma } = require('../database');
 const { getNowISODate } = require("../utils");
+const QuoteService = require("./QuoteService");
+const RequisitionItemService = require("./RequisitionItemService");
+const RequisitionCommentService = require("./RequisitionCommentService");
+const RequisitionStatusService = require("./RequisitionStatusService");
+const RequisitionAttachmentService = require("./RequisitionAttachmentService");
+const QuoteItemService = require("./QuoteItemService");
 class RequisitionService {
   async getMany(user, params) {
     const { id_kanban_requisicao, searchTerm, filters } = params;
-    
+
     // Se não for o kanban "5", aplica regras de acesso e status
     if (Number(id_kanban_requisicao) !== 5) {
       // Busca os status do kanban selecionado
-      const kanbanStatusList = await KanbanStatusRequisitionRepository.getMany({id_kanban_requisicao: Number(id_kanban_requisicao)});
+      const kanbanStatusList = await KanbanStatusRequisitionRepository.getMany({
+        id_kanban_requisicao: Number(id_kanban_requisicao),
+      });
       // Filtra as requisições permitidas para o usuário
       const filteredReqsByKanban = await this.getReqsBykanban(
         user,
@@ -71,7 +79,7 @@ class RequisitionService {
     normalizedData.data_alteracao = now.toISOString();
     normalizedData.criado_por = data.ID_RESPONSAVEL;
     normalizedData.alterado_por = data.ID_RESPONSAVEL;
-    const newReq =  await RequisitionRepository.create(normalizedData);
+    const newReq = await RequisitionRepository.create(normalizedData);
     await this.processStatusChange(
       newReq.ID_REQUISICAO,
       newReq.criado_por.CODPESSOA,
@@ -81,9 +89,131 @@ class RequisitionService {
     return newReq;
   }
 
+  async validateCreateCopy(id_requisicao, items, tx, originalItems) {
+    const req = await this.getById(id_requisicao);
+    if (!req) {
+      throw new Error(`Requisição original não encontrada: ${id_requisicao}`);
+    }
+    const itemMap = new Map(
+      originalItems.map((item) => [item.id_item_requisicao, item])
+    );
+
+    for (const childItem of items) {
+      const origItem = itemMap.get(childItem.id_item_requisicao);
+      if (!origItem) {
+        throw new Error(
+          `Item não encontrado na original: ${childItem.id_item_requisicao}`
+        );
+      }
+      const newQty = Number(origItem.quantidade) - Number(childItem.quantidade);
+      if (newQty < 0) {
+        throw new Error(
+          `Quantidade excede a original para item ${childItem.id_item_requisicao}: ${childItem.quantidade} > ${origItem.quantidade}`
+        );
+      }
+    }
+  }
+
+  async createCopy(req, tx) {
+    return await tx.web_requisicao.create({
+      data: {
+        ID_RESPONSAVEL: req.ID_RESPONSAVEL,
+        id_status_requisicao: req.id_status_requisicao,
+        DESCRIPTION: req.DESCRIPTION,
+        TIPO: req.TIPO,
+        ID_PROJETO: req.ID_PROJETO,
+        data_criacao: getNowISODate(),
+        data_alteracao: getNowISODate(),
+      },
+    });
+  }
+
+  async createFromOther(id_requisicao, items) {
+    return prisma.$transaction(async (tx) => {
+      // Validação de quantidades
+      const originalItems = await tx.web_requisicao_items.findMany({
+        where: { id_requisicao: Number(id_requisicao) },
+      });
+      await this.validateCreateCopy(id_requisicao, items, tx, originalItems);
+      // Pegando requisição original
+      const req = await this.getById(id_requisicao);
+      // Criando nova requisição
+      const newReq = await this.createCopy(req, tx);
+      // Clonando cotações
+      const { newQuoteByOldQuoteId, quoteItems } = await QuoteService.cloneQuotes(
+          req.ID_REQUISICAO,
+          newReq.ID_REQUISICAO,
+          tx
+        );
+
+      // Atualizando ou excluindo itens da requisição original
+      const updatedOriginalItems = await RequisitionItemService.distributeQuantities(
+          originalItems,
+          items,
+          tx
+        );
+      // 4. Criando novos itens na requisição filha e mapeando IDs
+      const { oldReqItemToNewId, newReqItems } =
+        await RequisitionItemService.createChildItems(
+          items,
+          newReq.ID_REQUISICAO,
+          tx
+        );
+      // 5. Comentários
+      await RequisitionCommentService.cloneComments(
+        req,
+        newReq.ID_REQUISICAO,
+        tx
+      );
+      // 6. Alterações de status
+      await RequisitionStatusService.cloneStatusChanges(
+        req.ID_REQUISICAO,
+        newReq.ID_REQUISICAO,
+        tx
+      );
+      // 7. Anexos
+      await RequisitionAttachmentService.cloneAttachments(
+        req.ID_REQUISICAO,
+        newReq.ID_REQUISICAO,
+        tx
+      );
+      // 8. Clonear itens de cotação
+      const { oldQuoteItemToNewId } = await QuoteItemService.cloneQuoteItems(
+          quoteItems,
+          newQuoteByOldQuoteId,
+          oldReqItemToNewId,
+          tx
+        );
+      // 9. Atualizar id_item_cotacao nos novos itens de requisição
+      const newItemsUpdated = await RequisitionItemService.updateQuoteItemIds(
+        newReqItems,
+        oldQuoteItemToNewId,
+        tx
+      );
+
+      // Step 10: atualiza novas cotações e nova requisição com novos totais 
+      console.log("atualizando total novo")
+      await RequisitionItemService.updateRequisitionWithNewTotals(
+        newReq.ID_REQUISICAO,
+        newItemsUpdated,
+        tx
+      );
+      // Step 11: atualiza cotação e requisição original com novos totais
+      console.log("atualizando total original")
+      await RequisitionItemService.updateRequisitionWithNewTotals(
+        req.ID_REQUISICAO,
+        updatedOriginalItems,
+        tx
+      );
+      return newReq;
+    });
+  }
+
+
+
   async update(id_requisicao, data) {
     const req = await this.getById(id_requisicao);
-    const statusChange = req.id_status_requisicao !== data.id_status_requisicao
+    const statusChange = req.id_status_requisicao !== data.id_status_requisicao;
     if (statusChange && data.id_status_requisicao) {
       await this.processStatusChange(
         id_requisicao,
@@ -103,7 +233,12 @@ class RequisitionService {
   async activate(id_requisicao) {
     return await RequisitionRepository.activate(id_requisicao);
   }
-  async processStatusChange(id_requisicao, alterado_por, oldStatusId, newStatusId) {
+  async processStatusChange(
+    id_requisicao,
+    alterado_por,
+    oldStatusId,
+    newStatusId
+  ) {
     const newStatusChange = await prisma.web_alteracao_req_status.create({
       data: {
         id_status_anterior: Number(oldStatusId),
@@ -129,7 +264,7 @@ class RequisitionService {
         check: () => Number(user.PERM_ADMINISTRADOR) === 1,
         statusList: () => null, // ignora status
         match: () => true,
-        profileId: 1
+        profileId: 1,
       },
       {
         // Comprador
@@ -142,7 +277,7 @@ class RequisitionService {
         },
         match: (req, user, statusList) =>
           statusList && statusList.includes(Number(req.id_status_requisicao)),
-        profileId: 6
+        profileId: 6,
       },
       {
         // Diretor
@@ -155,7 +290,7 @@ class RequisitionService {
         },
         match: (req, user, statusList) =>
           statusList && statusList.includes(Number(req.id_status_requisicao)),
-        profileId: 5
+        profileId: 5,
       },
       {
         // Gerente do projeto
@@ -171,7 +306,7 @@ class RequisitionService {
           Number(req.gerente.CODPESSOA) === Number(user.CODPESSOA) &&
           statusList &&
           statusList.includes(Number(req.id_status_requisicao)),
-          profileId: 4
+        profileId: 4,
       },
       {
         // Coordenador do projeto
@@ -187,7 +322,7 @@ class RequisitionService {
           Number(req.projeto.ID_RESPONSAVEL) === Number(user.CODPESSOA) &&
           statusList &&
           statusList.includes(Number(req.id_status_requisicao)),
-          profileId: 3
+        profileId: 3,
       },
       {
         // Requisitante
@@ -203,13 +338,13 @@ class RequisitionService {
           Number(req.responsavel.CODPESSOA) === Number(user.CODPESSOA) &&
           statusList &&
           statusList.includes(Number(req.id_status_requisicao)),
-          profileId: 2
+        profileId: 2,
       },
     ];
   }
 
-   normalizeFilters(filtersArray) {
-    if(filtersArray){ 
+  normalizeFilters(filtersArray) {
+    if (filtersArray) {
       const intFields = ["ID_REQUISICAO"];
       return filtersArray.map((filter) => {
         // Só há uma chave por objeto
@@ -253,7 +388,6 @@ class RequisitionService {
     }
     return [];
   }
-  
 }
 
 module.exports = new RequisitionService();

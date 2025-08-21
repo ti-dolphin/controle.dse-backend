@@ -21,6 +21,6 @@ const authorize = (req, res, next) => {
 };
 
 const getToken = () => {
-  return jwt.sign({}, process.env.JWT_SECRET, { expiresIn: "24h" });
+  return jwt.sign({}, process.env.JWT_SECRET, { expiresIn: "168h" });
 };
 module.exports = { authorize, getToken };

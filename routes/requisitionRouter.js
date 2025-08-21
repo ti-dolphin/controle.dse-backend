@@ -6,6 +6,7 @@ var router = express.Router();
 router.get("/", RequisitionController.getMany);
 router.get("/:id_requisicao", RequisitionController.getById);
 router.post("/", RequisitionController.create);
+router.post('/parcial/create', RequisitionController.createFromOther);
 router.put("/:id_requisicao", RequisitionController.update);
 router.put("/:id_requisicao/cancelar", RequisitionController.cancel);
 router.put("/:id_requisicao/ativar", RequisitionController.activate);

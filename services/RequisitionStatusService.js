@@ -71,6 +71,22 @@ class RequisitionStatusService {
   async delete(id_status_requisicao) {
     return RequisitionStatusRepository.delete(id_status_requisicao);
   }
+
+  async cloneStatusChanges(originalRequisitionId, newRequisitionId, tx) {
+    const statusChanges = await tx.web_alteracao_req_status.findMany({
+      where: { id_requisicao: originalRequisitionId },
+    });
+
+    if (statusChanges.length) {
+      await tx.web_alteracao_req_status.createMany({
+        data: statusChanges.map(({ id_alteracao, ...rest }) => ({
+          ...rest,
+          id_requisicao: newRequisitionId,
+        })),
+      });
+    }
+   
+  }
 }
 
 module.exports = new RequisitionStatusService();

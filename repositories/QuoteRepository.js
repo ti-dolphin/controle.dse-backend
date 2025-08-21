@@ -14,12 +14,14 @@ class QuoteRepository {
         include: {
           web_classificacao_fiscal: true,
           web_tipo_frete: true,
+          web_items_cotacao: true
         },
       })
       .then((result) => ({
         ...result,
         classificacao_fiscal: result.web_classificacao_fiscal,
         tipo_frete: result.web_tipo_frete,
+        items: result.web_items_cotacao,
       }));
 
     if (!result) return null;

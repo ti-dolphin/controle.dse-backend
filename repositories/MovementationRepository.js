@@ -115,7 +115,7 @@ class MovementationRepository {
       ...movimentacao,
       responsavel: movimentacao.pessoa,
       projeto: movimentacao.projetos,
-
+      projeto_descricao : movimentacao.projetos.DESCRICAO,
       patrimonio: movimentacao.web_patrimonio,
       patrimonio_tipo: movimentacao.web_patrimonio.web_tipo_patrimonio,
       patrimonio_nserie: movimentacao.web_patrimonio.nserie,

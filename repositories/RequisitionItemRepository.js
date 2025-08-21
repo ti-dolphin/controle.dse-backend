@@ -15,44 +15,21 @@ class RequistionItemRepository {
           }
         : {};
 
-    const items = await prisma.web_requisicao_items
-      .findMany({
-        where: {
-          ...params,
-          ...generalFilters,
-        },
-        include: {
-          produtos: true,
-          web_items_cotacao: true
-        },
-      })
-      .then((items) =>
-        items.map((item) => {
-          if(!item.produtos){ 
-            return item;
-          }
-          const formattedItem = {
-            ...item,
-            produto: item.produtos,
-            produto_descricao: item.produtos.descricao,
-            produto_codigo: item.produtos.codigo,
-            produto_unidade: item.produtos.unidade,
-            produto_quantidade_estoque: item.produtos.quantidade_estoque,
-            items_cotacao: item.web_items_cotacao
-          };
-          delete formattedItem.web_items_cotacao;
-          delete formattedItem.produtos;
-          return formattedItem;
-        })
-      );
-
-      return items;
+    const items = await prisma.web_requisicao_items.findMany({
+      where: {
+        ...params,
+        ...generalFilters,
+      },
+      include: this.include(),
+    });
+    return items.map(this.format);
   }
 
   async getById(id_item_requisicao) {
     return prisma.web_requisicao_items.findUnique({
       where: { id_item_requisicao },
-    });
+      include: this.include(),
+    }).then(this.format);
   }
 
   async create(data) {
@@ -71,81 +48,37 @@ class RequistionItemRepository {
         ativo: 1,
         quantidade: 0,
         observacao: "",
-      }
+      };
     });
 
     await prisma.web_requisicao_items.createMany({
-      data: items
+      data: items,
     });
-    
-    return await prisma.web_requisicao_items
-      .findMany({
-        where: {
-          id_requisicao,
-          id_produto: {
-            in: productIds,
-          },
-        },
-        include: {
-          produtos: true,
-          web_items_cotacao: true
-        },
-      })
-      .then((items) =>
-        items.map((item) => {
-          const formattedItem = {
-            ...item,
-            produto: item.produtos,
-            produto_descricao: item.produtos.descricao,
-            produto_codigo: item.produtos.codigo,
-            produto_unidade: item.produtos.unidade,
-            produto_quantidade_estoque: item.produtos.quantidade_estoque,
-            items_cotacao: item.web_items_cotacao,
-          };
-          delete formattedItem.web_items_cotacao;
-          delete formattedItem.produtos;
-          return formattedItem;
-        })
-      );
-    
+
+    return await this.getMany({ id_requisicao, id_produto: { in: productIds } });
   }
 
   async update(id_item_requisicao, data) {
     return prisma.web_requisicao_items.update({
       where: { id_item_requisicao },
       data,
-      include: {
-        produtos: true,
-        web_items_cotacao: true,
-      },
-    }).then((item) => { 
-       const formattedItem = {
-         ...item,
-         produto: item.produtos,
-         produto_descricao: item.produtos.descricao,
-         produto_codigo: item.produtos.codigo,
-         produto_unidade: item.produtos.unidade,
-         produto_quantidade_estoque: item.produtos.quantidade_estoque,
-         items_cotacao: item.web_items_cotacao,
-       };
-       delete formattedItem.web_items_cotacao;
-       delete formattedItem.produtos;
-       return formattedItem;
-    });
+      include: this.include(),
+    }).then(this.format);
   }
 
   async updateShippingDate(ids, date) {
-     await prisma.web_requisicao_items.updateMany({
+    await prisma.web_requisicao_items.updateMany({
       where: { id_item_requisicao: { in: ids } },
-      data: { data_entrega: date }
+      data: { data_entrega: date },
     });
+
     return await this.getMany({ id_item_requisicao: { in: ids } });
   }
 
   async updateOCS(ids, oc) {
     await prisma.web_requisicao_items.updateMany({
       where: { id_item_requisicao: { in: ids } },
-      data: { oc: oc },
+      data: { oc },
     });
 
     return await this.getMany({ id_item_requisicao: { in: ids } });
@@ -156,5 +89,29 @@ class RequistionItemRepository {
       where: { id_item_requisicao },
     });
   }
+
+  include() {
+    return {
+      produtos: true,
+      web_items_cotacao: true,
+    };
+  }
+
+  format(item) {
+    const formattedItem = {
+      ...item,
+      produto: item.produtos,
+      produto_descricao: item.produtos.descricao,
+      produto_codigo: item.produtos.codigo,
+      produto_unidade: item.produtos.unidade,
+      produto_quantidade_estoque: item.produtos.quantidade_estoque,
+      items_cotacao: item.web_items_cotacao,
+    };
+    delete formattedItem.web_items_cotacao;
+    delete formattedItem.produtos;
+    return formattedItem;
+  }
 }
+
 module.exports = new RequistionItemRepository();
+
