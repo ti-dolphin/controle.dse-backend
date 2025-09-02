@@ -164,7 +164,7 @@ class QuoteRepository {
         nome_fantasia, //descricao_item
       } = item;
       values.push(
-        `(${quoteId}, ${ID}, ${QUANTIDADE}, ${QUANTIDADE}, '${nome_fantasia}')`
+        `"(${quoteId}, ${ID}, ${QUANTIDADE}, ${QUANTIDADE}, '${nome_fantasia}')"`
       );
     }
     query += values.join(", ");
