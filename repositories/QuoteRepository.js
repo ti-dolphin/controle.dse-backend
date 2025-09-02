@@ -155,7 +155,7 @@ class QuoteRepository {
   };
 
   static createQuoteItems = (items, quoteId) => {
-    let query = `INSERT INTO web_items_cotacao (id_cotacao ,id_item_requisicao, quantidade_solicitada, quantidade_cotada,  descricao_item) VALUES`;
+    let query = `"INSERT INTO web_items_cotacao (id_cotacao ,id_item_requisicao, quantidade_solicitada, quantidade_cotada,  descricao_item) VALUES`;
     const values = [];
     for (let item of items) {
       const {
@@ -164,7 +164,7 @@ class QuoteRepository {
         nome_fantasia, //descricao_item
       } = item;
       values.push(
-        `"(${quoteId}, ${ID}, ${QUANTIDADE}, ${QUANTIDADE}, '${nome_fantasia}')"`
+        `(${quoteId}, ${ID}, ${QUANTIDADE}, ${QUANTIDADE}, '${nome_fantasia}')"`
       );
     }
     query += values.join(", ");
