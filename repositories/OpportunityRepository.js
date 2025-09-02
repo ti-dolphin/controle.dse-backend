@@ -33,7 +33,7 @@ class OpportunityRepository {
       responsavel: opportunity.pessoa,
       adicional: opportunity.adicionais,
       situacao: this.getSituationByInteractionDate(opportunity.DATAINTERACAO),
-      VALORFATDOLPHIN_FORMATTED:  formatToCurrency(opportunity.VALORFATDOLPHIN),
+      VALORFATDOLPHIN_FORMATTED: formatToCurrency(opportunity.VALORFATDOLPHIN),
       VALORFATDIRETO_FORMATTED: formatToCurrency(opportunity.VALORFATDIRETO),
       VALORTOTAL_FORMATTED: formatToCurrency(opportunity.VALOR_TOTAL),
     };
@@ -65,6 +65,11 @@ class OpportunityRepository {
     projectsFollowedByUser = projectsFollowedByUser.map(
       (project) => project.ID
     );
+    const searchFilter = searchTerm && searchTerm.trim() !== "" ? this.buildSearchFilters(searchTerm) : {};
+    const composedFilters = this.buildFilters(filters);
+    let total = 0;
+    let totalFatDolphin = 0;
+    let totalFatDireto = 0;
     const opps = await prisma.ordemservico
       .findMany({
         where: {
@@ -78,29 +83,26 @@ class OpportunityRepository {
                   : { in: projectsFollowedByUser },
               },
             },
-            { status: { ACAO: finalizados ? 0 : 1 } },
-            {
-              OR: [
-                { projetos: { DESCRICAO: { contains: searchTerm } } },
-                {
-                  projetos: { pessoa: { NOME: { contains: searchTerm } } },
-                },
-                { status: { NOME: { contains: searchTerm } } },
-                { cliente: { NOMEFANTASIA: { contains: searchTerm } } },
-                { NOME: { contains: searchTerm } },
-                { pessoa: { NOME: { contains: searchTerm } } },
-              ],
-            },
-            {
-              AND: filters.length > 0 ? filters : {},
-            },
+            { status: { ACAO: finalizados ? 1 : 0 } },
+            searchFilter,
+            composedFilters,
           ],
         },
         include: this.include(),
       })
-      .then((opps) => opps.map((opportunity) => this.format(opportunity)));
+      .then((opps) => opps.map((opportunity) => { 
+        total += Number(opportunity.VALOR_TOTAL);
+        totalFatDolphin += Number(opportunity.VALORFATDOLPHIN);
+        totalFatDireto += Number(opportunity.VALORFATDIRETO);
+        return  this.format(opportunity);
+      }));
 
-    return opps;
+    return {
+      opps,
+      total,
+      totalFatDolphin,
+      totalFatDireto,
+    };
   }
 
   static async create(payload) {
@@ -131,39 +133,38 @@ class OpportunityRepository {
     });
   }
 
-  static async  getExpiredOpps(){ 
-      const now = getNowISODate();
-      const opps = await prisma.ordemservico.findMany({ 
-        where: { 
+  static async getExpiredOpps() {
+    const now = getNowISODate();
+    const opps = await prisma.ordemservico
+      .findMany({
+        where: {
           CODTIPOOS: 21,
-          status: {ACAO : 0},
+          status: { ACAO: 0 },
           DATAINTERACAO: {
-            lt: now
+            lt: now,
           },
-          projetos: { 
-            ATIVO: 1
-          }
+          projetos: {
+            ATIVO: 1,
+          },
         },
-        include: this.include()
-      }).then((opps) => opps.map((opportunity) => this.format(opportunity)));
-      return opps;
-  };
-
+        include: this.include(),
+      })
+      .then((opps) => opps.map((opportunity) => this.format(opportunity)));
+    return opps;
+  }
 
   static getSituationByInteractionDate(date) {
     const dateReceived = new Date(date);
     const now = new Date();
-    const fiveDaysFromNow = new Date(
-          now.getTime() + 5 * 24 * 60 * 60 * 1000
-        );
+    const fiveDaysFromNow = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
     const expired = dateReceived < now;
     const toExpire = dateReceived > now && dateReceived < fiveDaysFromNow;
-    if(expired) return 'expirada';
-    if(toExpire) return 'expirando';
-    if(!expired && !toExpire) return 'ativa';
-  } 
+    if (expired) return "expirada";
+    if (toExpire) return "expirando";
+    if (!expired && !toExpire) return "ativa";
+  }
 
-  static async getToExpireOpps( ){ 
+  static async getToExpireOpps() {
     //wil expire in the next 5 days
     const now = new Date();
     const fiveDaysFromNow = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
@@ -184,6 +185,147 @@ class OpportunityRepository {
       })
       .then((opps) => opps.map((opportunity) => this.format(opportunity)));
     return opps;
+  }
+
+  static buildSearchFilters(searchTerm) {
+    const searchFilters = [
+      { projetos: { DESCRICAO: { contains: searchTerm } } },
+      { projetos: { pessoa: { NOME: { contains: searchTerm } } } },
+      { status: { NOME: { contains: searchTerm } } },
+      { cliente: { NOMEFANTASIA: { contains: searchTerm } } },
+      { NOME: { contains: searchTerm } },
+      { pessoa: { NOME: { contains: searchTerm } } },
+    ];
+
+    return {
+      OR: searchFilters,
+    };
+  }
+
+  static buildFilters(filters) {
+    if (!filters) return {};
+
+    const filterMap = {
+      CODOS: (value) => {
+        return value !== null
+          ? {
+              CODOS: {
+                equals: Number(value),
+              },
+            }
+          : {};
+      },
+      ID_PROJETO: (value) => {
+        console.log(value);
+        return value !== null && value !== '0' && value !== ''
+          ? {
+              projetos: {
+                ID: {
+                  equals: Number(value),
+                },
+              },
+            }
+          : {};
+      },
+      NOME: (value) => (value ? { NOME: { contains: value } } : {}),
+      cliente: (value) => (value ? { cliente: { NOMEFANTASIA: { contains: value } } } : {}),
+      projeto: (value) => (value ? { projetos: { DESCRICAO: { contains: value } } } : {}),
+      status: (value) => (value ? { status: { NOME: { contains: value } } } : {}),
+      responsavel: (value) => (value ? { pessoa: { NOME: { contains: value } } } : {}),
+      DATASOLICITACAO_FROM: (value) => {
+        return value
+          ? {
+              DATASOLICITACAO: {
+                gte:value,
+              },
+            }
+          : {};
+      },
+      DATASOLICITACAO_TO: (value) => {
+        return value
+          ? {
+              DATASOLICITACAO: {
+                lte: value,
+              },
+            }
+          : {};
+      },
+      DATAINICIO_FROM: (value) => {
+        return value
+          ? {
+              DATAINICIO: {
+                gte:value,
+              },
+            }
+          : {};
+      },
+      DATAINICIO_TO: (value) => {
+        return value
+          ? {
+              DATAINICIO: {
+                lte:value,
+              },
+            }
+          : {};
+      },
+      DATAENTREGA_FROM: (value) => {
+        return value
+          ? {
+              DATAENTREGA: {
+                gte:value,
+              },
+            }
+          : {};
+      },
+      DATAENTREGA_TO: (value) => {
+        return value
+          ? {
+              DATAENTREGA: {
+                lte:value,
+              },
+            }
+          : {};
+      },
+      VALOR_TOTAL_gte: (value) => {
+        return value !== null
+          ? {
+              VALOR_TOTAL: {
+                gte: Number(value),
+              },
+            }
+          : {};
+      },
+      VALOR_TOTAL_lte: (value) => {
+        return value !== null
+          ? {
+              VALOR_TOTAL: {
+                lte: Number(value),
+              },
+            }
+          : {};
+      },
+      adicional: (value) => {
+        return value !== null && value !== '' && value !== '0'
+          ? {
+              adicionais: {
+                NUMERO: {
+                  equals: Number(value),
+                },
+              },
+            }
+          : {};
+      },
+    };
+    const array = {};
+    array.AND = []
+    const prismaFilters =  Object.entries(filters).reduce((acc, [key, value]) => {
+      if (filterMap[key]) {
+        array.AND.push(filterMap[key](value));
+        return { ...acc, ...filterMap[key](value) };
+      }
+      return acc;
+    }, {});
+        return array;
   }
 }
 

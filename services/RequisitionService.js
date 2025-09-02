@@ -8,6 +8,7 @@ const RequisitionCommentService = require("./RequisitionCommentService");
 const RequisitionStatusService = require("./RequisitionStatusService");
 const RequisitionAttachmentService = require("./RequisitionAttachmentService");
 const QuoteItemService = require("./QuoteItemService");
+const RequisitionTrigger = require("../triggers/RequisitionTrigger");
 class RequisitionService {
   async getMany(user, params) {
     const { id_kanban_requisicao, searchTerm, filters } = params;
@@ -73,19 +74,22 @@ class RequisitionService {
 
   async create(data) {
     let normalizedData = { ...data };
-    const now = new Date();
-    now.setHours(now.getHours() - 3);
-    normalizedData.data_criacao = now.toISOString();
-    normalizedData.data_alteracao = now.toISOString();
+
+    normalizedData.data_criacao = getNowISODate();
+    normalizedData.data_alteracao = getNowISODate();
     normalizedData.criado_por = data.ID_RESPONSAVEL;
     normalizedData.alterado_por = data.ID_RESPONSAVEL;
+    normalizedData.id_escopo_requisicao = 2;
     const newReq = await RequisitionRepository.create(normalizedData);
-    await this.processStatusChange(
-      newReq.ID_REQUISICAO,
-      newReq.criado_por.CODPESSOA,
-      1,
-      newReq.id_status_requisicao
-    );
+    await prisma.web_alteracao_req_status.create({
+      data: { 
+        id_requisicao: newReq.ID_REQUISICAO,
+        id_status_requisicao: newReq.id_status_requisicao,
+        id_status_anterior: newReq.id_status_requisicao,
+        data_alteracao: getNowISODate(),
+        alterado_por: newReq.ID_RESPONSAVEL,
+      }
+    })
     return newReq;
   }
 
@@ -140,14 +144,16 @@ class RequisitionService {
       // Criando nova requisição
       const newReq = await this.createCopy(req, tx);
       // Clonando cotações
-      const { newQuoteByOldQuoteId, quoteItems } = await QuoteService.cloneQuotes(
+      const { newQuoteByOldQuoteId, quoteItems } =
+        await QuoteService.cloneQuotes(
           req.ID_REQUISICAO,
           newReq.ID_REQUISICAO,
           tx
         );
 
       // Atualizando ou excluindo itens da requisição original
-      const updatedOriginalItems = await RequisitionItemService.distributeQuantities(
+      const updatedOriginalItems =
+        await RequisitionItemService.distributeQuantities(
           originalItems,
           items,
           tx
@@ -179,11 +185,11 @@ class RequisitionService {
       );
       // 8. Clonear itens de cotação
       const { oldQuoteItemToNewId } = await QuoteItemService.cloneQuoteItems(
-          quoteItems,
-          newQuoteByOldQuoteId,
-          oldReqItemToNewId,
-          tx
-        );
+        quoteItems,
+        newQuoteByOldQuoteId,
+        oldReqItemToNewId,
+        tx
+      );
       // 9. Atualizar id_item_cotacao nos novos itens de requisição
       const newItemsUpdated = await RequisitionItemService.updateQuoteItemIds(
         newReqItems,
@@ -191,15 +197,15 @@ class RequisitionService {
         tx
       );
 
-      // Step 10: atualiza novas cotações e nova requisição com novos totais 
-      console.log("atualizando total novo")
+      // Step 10: atualiza novas cotações e nova requisição com novos totais
+      console.log("atualizando total novo");
       await RequisitionItemService.updateRequisitionWithNewTotals(
         newReq.ID_REQUISICAO,
         newItemsUpdated,
         tx
       );
       // Step 11: atualiza cotação e requisição original com novos totais
-      console.log("atualizando total original")
+      console.log("atualizando total original");
       await RequisitionItemService.updateRequisitionWithNewTotals(
         req.ID_REQUISICAO,
         updatedOriginalItems,
@@ -209,20 +215,7 @@ class RequisitionService {
     });
   }
 
-
-
   async update(id_requisicao, data) {
-    const req = await this.getById(id_requisicao);
-    const statusChange = req.id_status_requisicao !== data.id_status_requisicao;
-    if (statusChange && data.id_status_requisicao) {
-      await this.processStatusChange(
-        id_requisicao,
-        data.alterado_por,
-        req.id_status_requisicao,
-        data.id_status_requisicao
-      );
-    }
-    data.data_alteracao = getNowISODate();
     return await RequisitionRepository.update(id_requisicao, data);
   }
 
@@ -233,22 +226,44 @@ class RequisitionService {
   async activate(id_requisicao) {
     return await RequisitionRepository.activate(id_requisicao);
   }
-  async processStatusChange(
-    id_requisicao,
-    alterado_por,
-    oldStatusId,
-    newStatusId
-  ) {
-    const newStatusChange = await prisma.web_alteracao_req_status.create({
-      data: {
-        id_status_anterior: Number(oldStatusId),
-        id_status_requisicao: Number(newStatusId),
-        id_requisicao: Number(id_requisicao),
-        alterado_por: Number(alterado_por),
-        data_alteracao: getNowISODate(),
-      },
+
+  async changeStatus(id_requisicao, newStatusId, alterado_por) {
+    return await prisma.$transaction(async (tx) => {
+      const req = await tx.web_requisicao.findFirst({
+        where: { ID_REQUISICAO: id_requisicao },
+      });
+      let updatedReq = await RequisitionTrigger.beforeUpdateStatus(
+        req,
+        newStatusId,
+        alterado_por,
+        tx
+      );
+      if(updatedReq){
+        return updatedReq;
+      }
+      //não é status de verificação de estoque
+
+       updatedReq = await tx.web_requisicao.update({
+        where: { ID_REQUISICAO: id_requisicao },
+        data: {
+          id_status_requisicao: newStatusId,
+          alterado_por: alterado_por,
+        },
+        include: RequisitionRepository.buildInclude()
+      }).then((result) => RequisitionRepository.formatRequisition(result));
+       await tx.web_alteracao_req_status.create({
+         data: {
+           id_status_anterior: req.id_status_requisicao,
+           id_status_requisicao: newStatusId,
+           id_requisicao: id_requisicao,
+           alterado_por: alterado_por,
+           data_alteracao: getNowISODate(),
+         },
+       });
+      // cria histórico
+      return updatedReq;
+    
     });
-    return;
   }
 
   async delete(id_requisicao) {
@@ -390,4 +405,5 @@ class RequisitionService {
   }
 }
 
+module.exports = new RequisitionService();
 module.exports = new RequisitionService();

@@ -15,6 +15,7 @@ class RequisitionStatusController {
       const statuses = await RequisitionStatusService.getMany(req.query);
       res.json(statuses);
     } catch (error) {
+      console.error(error);
       res.status(400).json({ error: error.message });
     }
   }

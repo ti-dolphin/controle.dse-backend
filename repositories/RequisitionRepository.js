@@ -179,7 +179,6 @@ class RequisitionRepository {
         { projetos: { pessoa: { NOME: { contains: searchTerm } } } },
         { web_status_requisicao: { nome: { contains: searchTerm } } },
         { web_tipo_requisicao: { nome_tipo: { contains: searchTerm } } },
-        { pessoa_projetos_ID_RESPONSAVELTopessoa: { NOME: { contains: searchTerm } } },
       ],
     };
   }

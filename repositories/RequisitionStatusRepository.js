@@ -6,7 +6,21 @@ class RequisitionStatusRepository {
   }
 
   async getMany(params) {
-    return prisma.web_status_requisicao.findMany({ where: params });
+    const {id_requisicao} = params;
+    const req = await prisma.web_requisicao.findFirst({
+      where: { ID_REQUISICAO: Number(id_requisicao) },
+    });
+
+    const scope = await prisma.web_escopo_requisicao.findFirst({
+      where : { 
+        id_escopo_requisicao : req.id_escopo_requisicao
+      }
+    });
+   
+    params.id_escopo_requisicao = Number(scope.id_escopo_requisicao);
+    return await prisma.web_status_requisicao.findMany({ where: { 
+      id_escopo_requisicao : params.id_escopo_requisicao
+    }});
   }
 
   async getStatusAlteration(id_requisicao){

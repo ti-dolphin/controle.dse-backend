@@ -17,8 +17,13 @@ class OpportunityController {
 
        async getMany(req, res) {
         try {
-          const opportunities = await OpportunityService.getMany(req.query);
-          res.json(opportunities);
+          const { opps, total, totalFatDolphin, totalFatDireto } = await OpportunityService.getMany(req.query);
+          console.log({ 
+            total,
+            totalFatDolphin,
+            totalFatDireto
+          })
+          res.json({ opps, total, totalFatDolphin, totalFatDireto });
         } catch (error) {
           console.error('Erro ao buscar oportunidades:', error);
           res.status(500).json({ message: error.message });

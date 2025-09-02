@@ -11,14 +11,18 @@ class OpportunityService {
 
   async getMany(params) {
     const { user, searchTerm, filters, finalizados } = params;
-    const normalizedFilters = this.normalizeFilters(filters);
-
-    return await OpportunityRepository.getMany(
+    const {
+      opps,
+      total,
+      totalFatDolphin,
+      totalFatDireto,
+    } = await OpportunityRepository.getMany(
       user,
       searchTerm,
-      normalizedFilters,
-      finalizados
+      filters,
+      finalizados === 'true' ? true : false
     );
+    return { opps, total, totalFatDolphin, totalFatDireto };
   }
 
   async getStatuses() {

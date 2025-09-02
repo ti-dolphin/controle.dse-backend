@@ -503,23 +503,26 @@ model pfuncao {
 }
 
 model produtos {
-  ID                   Int                    @id
-  cod_coligada         Int                    @db.SmallInt
-  codigo               String?                @db.VarChar(30)
-  nome_fantasia        String?                @db.VarChar(120)
-  descricao            String?                @db.VarChar(240)
-  inativo              Int?                   @db.SmallInt
-  criado_por           String?                @db.VarChar(50)
-  data_criacao         DateTime?              @db.DateTime(0)
-  modificado_por       String?                @db.VarChar(50)
-  data_modificacao     DateTime?              @db.DateTime(0)
-  ultimo_nivel         Int                    @default(0) @db.SmallInt
-  unidade              String?                @db.VarChar(10)
-  familia              String?                @db.VarChar(9)
-  quantidade_estoque   Int?
-  web_items_cotacao    web_items_cotacao[]
-  web_patrimonio       web_patrimonio[]
-  web_requisicao_items web_requisicao_items[]
+  ID                    Int                    @id
+  cod_coligada          Int                    @db.SmallInt
+  codigo                String?                @db.VarChar(30)
+  nome_fantasia         String?                @db.VarChar(120)
+  descricao             String?                @db.VarChar(240)
+  inativo               Int?                   @db.SmallInt
+  criado_por            String?                @db.VarChar(50)
+  data_criacao          DateTime?              @db.DateTime(0)
+  modificado_por        String?                @db.VarChar(50)
+  data_modificacao      DateTime?              @db.DateTime(0)
+  ultimo_nivel          Int                    @default(0) @db.SmallInt
+  unidade               String?                @db.VarChar(10)
+  familia               String?                @db.VarChar(9)
+  quantidade_estoque    Int?                   @default(0)
+  quantidade_reservada  Int?                   @default(0)
+  quantidade_disponivel Int?
+  web_anexos_produto    web_anexos_produto[]
+  web_items_cotacao     web_items_cotacao[]
+  web_patrimonio        web_patrimonio[]
+  web_requisicao_items  web_requisicao_items[]
 }
 
 model projetos {
@@ -791,6 +794,7 @@ model web_requisicao {
   custo_total_frete                            Decimal?                    @default(0) @db.Decimal(10, 0)
   custo_total_itens                            Decimal?                    @default(0) @db.Decimal(10, 0)
   custo_total                                  Decimal?                    @db.Decimal(10, 0)
+  id_escopo_requisicao                         Int?
   web_alteracao_req_status                     web_alteracao_req_status[]
   web_comentarios_requsicao                    web_comentarios_requsicao[]
   web_cotacao                                  web_cotacao[]
@@ -800,6 +804,7 @@ model web_requisicao {
   pessoa_web_requisicao_criado_porTopessoa     pessoa?                     @relation("web_requisicao_criado_porTopessoa", fields: [criado_por], references: [CODPESSOA], onDelete: Restrict, onUpdate: Restrict, map: "alterado por")
   web_status_requisicao                        web_status_requisicao?      @relation(fields: [id_status_requisicao], references: [id_status_requisicao], onDelete: Restrict, onUpdate: Restrict, map: "id_status")
   web_tipo_requisicao                          web_tipo_requisicao?        @relation(fields: [TIPO], references: [id_tipo_requisicao], onDelete: Restrict, onUpdate: Restrict, map: "id_tipo")
+  web_escopo_requisicao                        web_escopo_requisicao?      @relation(fields: [id_escopo_requisicao], references: [id_escopo_requisicao], onDelete: Restrict, onUpdate: Restrict, map: "web_requisicao_ibfk_1")
   web_requisicao_items                         web_requisicao_items[]
 
   @@index([ID_PROJETO], map: "ID_PROJETO_idx")
@@ -808,6 +813,7 @@ model web_requisicao {
   @@index([id_status_requisicao], map: "status_idx")
   @@index([alterado_por], map: "alterado_idx")
   @@index([criado_por], map: "criado_por_idx")
+  @@index([id_escopo_requisicao], map: "id_escopo_requisicao")
 }
 
 model web_requisicao_items {
@@ -947,12 +953,15 @@ model web_status_requisicao {
   acao_posterior                                                                        String                     @db.Text
   etapa                                                                                 Int?
   acao_anterior                                                                         String?                    @db.Text
+  id_escopo_requisicao                                                                  Int?
   web_alteracao_req_status                                                              web_alteracao_req_status[]
   web_requisicao                                                                        web_requisicao[]
+  web_escopo_requisicao                                                                 web_escopo_requisicao?     @relation(fields: [id_escopo_requisicao], references: [id_escopo_requisicao], onDelete: Restrict, onUpdate: Restrict, map: "web_status_requisicao_ibfk_1")
   web_transicao_status_web_transicao_status_id_status_anteriorToweb_status_requisicao   web_transicao_status[]     @relation("web_transicao_status_id_status_anteriorToweb_status_requisicao")
   web_transicao_status_web_transicao_status_id_status_requisicaoToweb_status_requisicao web_transicao_status[]     @relation("web_transicao_status_id_status_requisicaoToweb_status_requisicao")
 
   @@index([acao_posterior(length: 255)], map: "idx_web_status_acao")
+  @@index([id_escopo_requisicao], map: "id_escopo_requisicao")
 }
 
 model web_acessorio_patrimonio {
@@ -1082,4 +1091,21 @@ model web_comentarios_requsicao {
 
   @@index([criado_por], map: "fk_criado_por")
   @@index([id_requisicao], map: "fk_id_requisicao")
+}
+
+model web_escopo_requisicao {
+  id_escopo_requisicao  Int                     @id @default(autoincrement())
+  nome                  String                  @db.VarChar(50)
+  descricao             String?                 @db.VarChar(255)
+  web_requisicao        web_requisicao[]
+  web_status_requisicao web_status_requisicao[]
+}
+
+model web_anexos_produto {
+  id_anexo_produto Int       @id
+  arquivo          String?   @db.Text
+  id_produto       Int?
+  produtos         produtos? @relation(fields: [id_produto], references: [ID], onDelete: Cascade, map: "web_anexos_produto_ibfk_1")
+
+  @@index([id_produto], map: "id_produto")
 }

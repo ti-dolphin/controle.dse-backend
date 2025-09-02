@@ -33,7 +33,7 @@ var movementationRouter = require('./routes/movementationRouter');
 var patrimonyFileRouter = require('./routes/patrimonyFileRouter');
 // Entidade: Produtos
 var productsRouter = require('./routes/productsRouter');
-
+var productAttachmentRouter = require('./routes/productAttachmentRouter');
 // Entidade: Projetos
 var projectRouter = require('./routes/projectRouter');
 
@@ -91,6 +91,8 @@ app.use("/acessorio_patrimonio", authorize, patrimonyAccessoryRouter);
 
 // Rotas de Produtos
 app.use('/produtos',  authorize, productsRouter);
+//Anexos produtos
+app.use("/anexos_produtos", authorize, productAttachmentRouter);
 
 //projetos
 app.use('/projetos',  authorize, projectRouter);
