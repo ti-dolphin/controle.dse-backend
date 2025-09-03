@@ -92,7 +92,7 @@ app.use("/acessorio_patrimonio", authorize, patrimonyAccessoryRouter);
 // Rotas de Produtos
 app.use('/produtos',  authorize, productsRouter);
 //Anexos produtos
-app.use("/anexos_produtos", authorize, productAttachmentRouter);
+app.use("/anexos_produto", authorize, productAttachmentRouter);
 
 //projetos
 app.use('/projetos',  authorize, projectRouter);

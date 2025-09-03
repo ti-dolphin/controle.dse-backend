@@ -1,9 +1,13 @@
 const ProductAttachmentService = require("../services/ProductAttachmentService");
 
 class ProductAttachmentController {
-  static async getAll(req, res) {
+  static async getByProduct(req, res) {
+    console.log("getByProduct");
     try {
-      const attachments = await ProductAttachmentService.getAll();
+      const { id_produto } = req.query;
+      const attachments = await ProductAttachmentService.getByProduct(
+        id_produto
+      );
       res.json(attachments);
     } catch (error) {
       console.error("Erro ao buscar anexos de produtos:", error);
@@ -12,7 +16,7 @@ class ProductAttachmentController {
   }
 
   static async getById(req, res) {
-    const { id } = req.params;
+    const { id_anexo_produto } = req.params;
     try {
       const attachment = await ProductAttachmentService.getById(id);
       if (!attachment) {
@@ -28,7 +32,10 @@ class ProductAttachmentController {
   static async create(req, res) {
     const { arquivo, id_produto } = req.body;
     try {
-      const newAttachment = await ProductAttachmentService.create({ arquivo, id_produto });
+      const newAttachment = await ProductAttachmentService.create({
+        arquivo,
+        id_produto,
+      });
       res.status(201).json(newAttachment);
     } catch (error) {
       console.error("Erro ao criar anexo de produto:", error);
@@ -37,10 +44,13 @@ class ProductAttachmentController {
   }
 
   static async update(req, res) {
-    const { id } = req.params;
+    const { id_anexo_produto } = req.params;
     const { arquivo, id_produto } = req.body;
     try {
-      const updatedAttachment = await ProductAttachmentService.update(id, { arquivo, id_produto });
+      const updatedAttachment = await ProductAttachmentService.update(id, {
+        arquivo,
+        id_produto,
+      });
       res.json(updatedAttachment);
     } catch (error) {
       console.error("Erro ao atualizar anexo de produto:", error);
@@ -49,9 +59,9 @@ class ProductAttachmentController {
   }
 
   static async delete(req, res) {
-    const { id } = req.params;
+    const { id_anexo_produto } = req.params;
     try {
-      await ProductAttachmentService.delete(id);
+      await ProductAttachmentService.delete(id_anexo_produto);
       res.status(204).send();
     } catch (error) {
       console.error("Erro ao deletar anexo de produto:", error);

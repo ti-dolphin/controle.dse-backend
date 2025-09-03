@@ -2,7 +2,7 @@ const { prisma } = require("../database");
 
 
 class ProductAttachmentService {
-  static async getAll() {
+  static async getByProduct() {
     return await prisma.web_anexos_produto.findMany();
   }
 

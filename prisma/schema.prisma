@@ -1102,7 +1102,7 @@ model web_escopo_requisicao {
 }
 
 model web_anexos_produto {
-  id_anexo_produto Int       @id
+  id_anexo_produto Int       @id @default(autoincrement())
   arquivo          String?   @db.Text
   id_produto       Int?
   produtos         produtos? @relation(fields: [id_produto], references: [ID], onDelete: Cascade, map: "web_anexos_produto_ibfk_1")
