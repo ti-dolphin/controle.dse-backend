@@ -132,8 +132,7 @@ class RequisitionTrigger {
               product.quantidade_estoque > 0 &&
               product.quantidade_reservada <= product.quantidade_estoque;
             if (productHasStock) {
-              const availableQuantity =
-                product.quantidade_estoque - product.quantidade_reservada;
+              const availableQuantity = product.quantidade_estoque - product.quantidade_reservada;
               const item = productIdToItem.get(product.ID);
               const tottalyAvalable = availableQuantity >= item.quantidade;
               const parciallyAvalable = availableQuantity < item.quantidade;
@@ -144,7 +143,7 @@ class RequisitionTrigger {
                 belongsToNewRequisition: tottalyAvalable,
                 quantityInOldRequisition: parciallyAvalable ? difference : 0,
                 quantityInNewRequisition: parciallyAvalable
-                  ? product.quantidade_estoque
+                  ? availableQuantity
                   : tottalyAvalable
                   ? item.quantidade
                   : 0,
@@ -230,6 +229,7 @@ class RequisitionTrigger {
               .then((result) =>
                 RequisitionRepository.formatRequisition(result)
               );
+              
             return updetedReq;
           }
           //atualiza a req original para o novo status desejado havendo items
@@ -243,6 +243,10 @@ class RequisitionTrigger {
               include: RequisitionRepository.buildInclude(),
             })
             .then((result) => RequisitionRepository.formatRequisition(result));
+
+            console.log("original", originalReqItemsUpdated);
+            console.log("novos", newReqItems);
+            
           return updetedReq;
         }
       }
