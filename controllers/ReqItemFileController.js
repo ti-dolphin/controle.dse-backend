@@ -1,10 +1,12 @@
 const ReqItemFileService = require("../services/ReqItemFileService");
 
 class ReqItemFileController {
-     async getMany(req, res) {
+     async getByRequisitionItem(req, res) {
         try {
-            const params = req.query;
-            const files = await ReqItemFileService.getMany(params);
+            const {id_item_requisicao} = req.params;
+            const files = await ReqItemFileService.getByRequisitionItem(
+              id_item_requisicao
+            );
             res.json(files);
         } catch (err) {
             res.status(500).json({ error: err.message });
@@ -31,6 +33,7 @@ class ReqItemFileController {
             const newFile = await ReqItemFileService.create(payload);
             res.status(201).json(newFile);
         } catch (err) {
+            console.log("Error creating file:", err);
             res.status(400).json({ error: err.message });
         }
     }
@@ -54,7 +57,7 @@ class ReqItemFileController {
      async delete(req, res) {
         try {
             const deleted = await ReqItemFileService.delete(
-              Number(req.params.id)
+              Number(req.params.id_anexo_item_requisicao)
             );
             if (!deleted) {
                 return res.status(404).json({ error: "File not found" });

@@ -71,7 +71,7 @@ class RequisitionItemService {
                 .update({
                   where: { id_item_requisicao: reqItem.id_item_requisicao },
                   data: { id_item_cotacao },
-                  include: RequisitionItemRepository.include(),
+                  include: RequisitionItemRepository.include()
                 })
                 .then((result) => RequisitionItemRepository.format(result));
               updatedItems.push(updatedItem);
@@ -90,6 +90,7 @@ class RequisitionItemService {
             return { updatedItems, updatedRequisition };
           }
         );
+        console.log("updatedItems", updatedItems);
         return { updatedItems, updatedRequisition };
     }catch(e){ 
       console.log(e);
@@ -219,6 +220,10 @@ class RequisitionItemService {
     return updatedOriginalItems;
   }
 
+  async crateAttachment(data){ 
+     return prisma.web_anexos_item_requisicao.create({data});
+  }
+
   async createChildItems(items, newRequisitionId, tx) {
     const oldReqItemToNewId = new Map();
     const newReqItems = [];
@@ -232,6 +237,7 @@ class RequisitionItemService {
         produto_unidade,
         produto_quantidade_estoque,
         items_cotacao,
+        anexos,
         ...rest
       } = item;
 

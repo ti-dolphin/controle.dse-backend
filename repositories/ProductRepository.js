@@ -19,7 +19,13 @@ class ProductRepository {
         ...params, 
         ...generalFilter
       },
-    });
+      include: { 
+        web_anexos_produto: true
+      }
+    }).then((produtos) => (produtos.map((produto) => ({
+      ...produto,
+      anexos: produto.web_anexos_produto || []
+    }))));
   }
 
   async getById(ID) {

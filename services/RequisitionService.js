@@ -123,9 +123,10 @@ class RequisitionService {
       data: {
         ID_RESPONSAVEL: req.ID_RESPONSAVEL,
         id_status_requisicao: req.id_status_requisicao,
-        DESCRIPTION: req.DESCRIPTION,
+        DESCRIPTION: `${req.DESCRIPTION} - parcial`,
         TIPO: req.TIPO,
         ID_PROJETO: req.ID_PROJETO,
+        id_escopo_requisicao: 2,
         data_criacao: getNowISODate(),
         data_alteracao: getNowISODate(),
       },
@@ -196,7 +197,6 @@ class RequisitionService {
         oldQuoteItemToNewId,
         tx
       );
-
       // Step 10: atualiza novas cotações e nova requisição com novos totais
       console.log("atualizando total novo");
       await RequisitionItemService.updateRequisitionWithNewTotals(
@@ -211,6 +211,11 @@ class RequisitionService {
         updatedOriginalItems,
         tx
       );
+      //atualizar nova requisição com id da requisição original
+        await tx.web_requisicao.update({
+        where: { ID_REQUISICAO: newReq.ID_REQUISICAO },
+        data: { id_req_original: req.ID_REQUISICAO },
+      });
       return newReq;
     });
   }
@@ -267,6 +272,7 @@ class RequisitionService {
   }
 
   async delete(id_requisicao) {
+    await RequisitionTrigger.beforeDelete(id_requisicao);
     return await RequisitionRepository.delete(id_requisicao);
   }
   async getAccessRulesByKanban(user, kanbanStatusList) {

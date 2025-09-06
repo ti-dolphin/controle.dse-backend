@@ -1,3 +1,4 @@
+const { prisma } = require("../database");
 const RequisitionRepository = require("../repositories/RequisitionRepository");
 const { getNowISODate } = require("../utils");
 
@@ -18,8 +19,17 @@ class RequisitionTrigger {
 
   static async afterCreate(requisition) {
     try {
-      // Logic to execute after creating a requisition
-      console.log("After create trigger executed", requisition);
+      const {ID_REQUISICAO} = requisition;
+      return prisma.$transaction(async (tx) => {
+        const updatedReq = await tx.web_requisicao.update({
+          where: { ID_REQUISICAO },
+          data : {
+            id_req_original: ID_REQUISICAO
+          }
+        });
+        console.log("After create trigger executed", updatedReq);
+        return updatedReq;
+      })
     } catch (error) {
       console.error("Error in afterCreate trigger", error);
       throw error;
@@ -61,7 +71,6 @@ class RequisitionTrigger {
       });
       //se o novo status for da etapa 2, ou seja, validação (verifica estoque dos itens solicitados, se houver, gera uma outra requisição com aqueles itens e manda a original para a próxima etapa)
       if (secondPhaseStatuses.includes(newStatusId)) {
-        
         const itemIdToItem = new Map();
         items.forEach((item) => {
           itemIdToItem.set(item.id_item_requisicao, item);
@@ -132,7 +141,8 @@ class RequisitionTrigger {
               product.quantidade_estoque > 0 &&
               product.quantidade_reservada <= product.quantidade_estoque;
             if (productHasStock) {
-              const availableQuantity = product.quantidade_estoque - product.quantidade_reservada;
+              const availableQuantity =
+                product.quantidade_estoque - product.quantidade_reservada;
               const item = productIdToItem.get(product.ID);
               const tottalyAvalable = availableQuantity >= item.quantidade;
               const parciallyAvalable = availableQuantity < item.quantidade;
@@ -229,7 +239,7 @@ class RequisitionTrigger {
               .then((result) =>
                 RequisitionRepository.formatRequisition(result)
               );
-              
+
             return updetedReq;
           }
           //atualiza a req original para o novo status desejado havendo items
@@ -244,47 +254,55 @@ class RequisitionTrigger {
             })
             .then((result) => RequisitionRepository.formatRequisition(result));
 
-            console.log("original", originalReqItemsUpdated);
-            console.log("novos", newReqItems);
-            
+          console.log("original", originalReqItemsUpdated);
+          console.log("novos", newReqItems);
+
           return updetedReq;
         }
       }
       //se o novo status for o ultimo estados do escopo estoque, precisamos fazer a baixa no estoque
       if (newStatusId === finalStockstatus.id_status_requisicao) {
-           const productIdToItem = new Map();
-           const productIdToProduct = new Map();
-           const itemIdToItem = new Map();
-           items.forEach((item) => {productIdToItem.set(item.id_produto, item);});
-           products.forEach((product) => { productIdToProduct.set(product.ID, product)});
-           items.forEach((item) => {itemIdToItem.set(item.id_item_requisicao, item)});
-            const updatedProducts = [];
-            for(const product of products){ 
-                 const newAvailableQuantity = product.quantidade_estoque - product.quantidade_reservada;
-                 const newReservedQuantity = product.quantidade_reservada - product.quantidade_reservada;
-                 product.quantidade_estoque = newAvailableQuantity;
-                 product.quantidade_reservada = newReservedQuantity;
-                 const updatedProd = await tx.produtos.update({
-                   where: { ID: product.ID },
-                   data: {
-                     quantidade_estoque: newAvailableQuantity,
-                     quantidade_reservada: newReservedQuantity,
-                   },
-                 });
-                 updatedProducts.push(updatedProd);
-            }
+        const productIdToItem = new Map();
+        const productIdToProduct = new Map();
+        const itemIdToItem = new Map();
+        items.forEach((item) => {
+          productIdToItem.set(item.id_produto, item);
+        });
+        products.forEach((product) => {
+          productIdToProduct.set(product.ID, product);
+        });
+        items.forEach((item) => {
+          itemIdToItem.set(item.id_item_requisicao, item);
+        });
+        const updatedProducts = [];
+        for (const product of products) {
+          const newAvailableQuantity =
+            product.quantidade_estoque - product.quantidade_reservada;
+          const newReservedQuantity =
+            product.quantidade_reservada - product.quantidade_reservada;
+          product.quantidade_estoque = newAvailableQuantity;
+          product.quantidade_reservada = newReservedQuantity;
+          const updatedProd = await tx.produtos.update({
+            where: { ID: product.ID },
+            data: {
+              quantidade_estoque: newAvailableQuantity,
+              quantidade_reservada: newReservedQuantity,
+            },
+          });
+          updatedProducts.push(updatedProd);
+        }
 
-            const updetedReq = await tx.web_requisicao
-            .update({
-              where: { ID_REQUISICAO: req.ID_REQUISICAO },
-              data: {
-                id_status_requisicao: newStatusId,
-                alterado_por: alterado_por,
-              },
-              include: RequisitionRepository.buildInclude(),
-            })
-            .then((result) => RequisitionRepository.formatRequisition(result));
-            return updetedReq;
+        const updetedReq = await tx.web_requisicao
+          .update({
+            where: { ID_REQUISICAO: req.ID_REQUISICAO },
+            data: {
+              id_status_requisicao: newStatusId,
+              alterado_por: alterado_por,
+            },
+            include: RequisitionRepository.buildInclude(),
+          })
+          .then((result) => RequisitionRepository.formatRequisition(result));
+        return updetedReq;
       }
 
       // Logic to execute before updating a requisition
@@ -306,14 +324,71 @@ class RequisitionTrigger {
     }
   }
 
-  static async beforeDelete(requisition) {
+  static async beforeDelete(id_requisicao) {
     try {
+      await prisma.$transaction(async (tx) => {
+        const reqBelongsToStock = await this.reqInStockScope(id_requisicao, tx);
+        if (reqBelongsToStock) {
+          await this.subtractDeletedReqItemsQuantityFromReserves(
+            id_requisicao,
+            tx
+          );
+        }
+        return;
+      });
       // Logic to execute before deleting a requisition
-      console.log("Before delete trigger executed", requisition);
     } catch (error) {
       console.error("Error in beforeDelete trigger", error);
       throw error;
     }
+  }
+
+  static async reqInStockScope(id_requisicao, tx) {
+    const reqsInStockScope = await tx.web_requisicao
+      .findMany({
+        where: {
+          id_escopo_requisicao: 1,
+        },
+      })
+      .then((result) => result.map((req) => req.ID_REQUISICAO));
+    return reqsInStockScope.includes(id_requisicao);
+  }
+
+  static async subtractDeletedReqItemsQuantityFromReserves(id_requisicao, tx) {
+    const items = await tx.web_requisicao_items
+      .findMany({
+        where: { id_requisicao: id_requisicao },
+        include: {
+          produtos: true,
+        },
+      })
+      .then((result) =>
+        result.map((item) => {
+          return {
+            ...item,
+            produto: item.produtos,
+          };
+        })
+      );
+    const itemIdToProduct = new Map();
+    items.forEach((item) => {
+      itemIdToProduct.set(item.id_item_requisicao, item.produto);
+    });
+    const updatedProducts = [];
+    for (const item of items) {
+      const { quantidade_reservada } = itemIdToProduct.get(
+        item.id_item_requisicao
+      );
+      const newReservedQuantity = quantidade_reservada - item.quantidade;
+      const updatedProduct = await tx.produtos.update({
+        where: { ID: item.id_produto },
+        data: {
+          quantidade_reservada: newReservedQuantity,
+        },
+      });
+      updatedProducts.push(updatedProduct);
+    }
+    return;
   }
 
   static async afterDelete(requisition) {

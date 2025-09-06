@@ -1,25 +1,29 @@
 const ReqItemFileRepository = require('../repositories/ReqItemFileRepository');
 
-class ReqItemFileService  {
-    async getMany(params) {
-        return ReqItemFileRepository.getMany(params);
-    }
+class ReqItemFileService {
+  async getByRequisitionItem(id_item_requisicao) {
+    return ReqItemFileRepository.getByRequisitionItem(
+      Number(id_item_requisicao)
+    );
+  }
 
-    async getById(id) {
-        return ReqItemFileRepository.getById(id);
-    }
+  async getById(id) {
+    return ReqItemFileRepository.getById(id);
+  }
 
-    async create(payload) {
-        return ReqItemFileRepository.create(payload);
-    }
+  async create(payload) {
+    const newFile = await ReqItemFileRepository.create(payload);
+    console.log("newFile", newFile);
+    return newFile;
+  }
 
-    async update(id, payload) {
-        return ReqItemFileRepository.update(id, payload);
-    }
+  async update(id, payload) {
+    return ReqItemFileRepository.update(id, payload);
+  }
 
-    async delete(id) {
-        return ReqItemFileRepository.delete(id);
-    }
+  async delete(id_anexo_item_requisicao) {
+    return ReqItemFileRepository.delete(id_anexo_item_requisicao);
+  }
 };
 
 module.exports = new ReqItemFileService();

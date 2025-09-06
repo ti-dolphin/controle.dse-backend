@@ -20,7 +20,10 @@ class RequistionItemRepository {
         ...params,
         ...generalFilters,
       },
-      include: this.include(),
+      include: {
+        ...this.include(),
+        web_anexos_item_requisicao: true,
+      },
     });
     return items.map(this.format);
   }
@@ -56,6 +59,10 @@ class RequistionItemRepository {
     });
 
     return await this.getMany({ id_requisicao, id_produto: { in: productIds } });
+  }
+
+  async crateAttachment(data){ 
+     return prisma.web_anexos_item_requisicao.create({data});
   }
 
   async update(id_item_requisicao, data) {
@@ -106,7 +113,9 @@ class RequistionItemRepository {
       produto_unidade: item.produtos.unidade,
       produto_quantidade_estoque: item.produtos.quantidade_estoque,
       items_cotacao: item.web_items_cotacao,
+      anexos: item.web_anexos_item_requisicao || []
     };
+    delete formattedItem.web_anexos_item_requisicao;
     delete formattedItem.web_items_cotacao;
     delete formattedItem.produtos;
     return formattedItem;

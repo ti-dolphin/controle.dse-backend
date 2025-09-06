@@ -1,11 +1,11 @@
 const { prisma } = require("../database");
 
 class RequisitionRepository {
-  async findMany(kanbanFilters, searchTerm, extraFilters) {
+  findMany = (kanbanFilters, searchTerm, extraFilters) => {
     const searchFilter = searchTerm && searchTerm.trim() !== "" ? this.buildSearchFilter(searchTerm) : {};
     const filters = this.buildFilters(extraFilters);
 
-    const requisitions = await prisma.web_requisicao
+    return prisma.web_requisicao
       .findMany({
         where: {
           AND: [{ ...kanbanFilters }, searchFilter, filters],
@@ -16,75 +16,65 @@ class RequisitionRepository {
         },
       })
       .then((results) => results.map((item) => this.formatRequisition(item)));
-    return requisitions;
-  }
+  };
 
-  async findById(ID_REQUISICAO) {
-    const requisicao = await prisma.web_requisicao
+  findById = (ID_REQUISICAO) => {
+    return prisma.web_requisicao
       .findUnique({
         where: { ID_REQUISICAO: parseInt(ID_REQUISICAO) },
         include: this.buildInclude(),
       })
       .then((result) => this.formatRequisition(result));
+  };
 
-    return requisicao;
-  }
-
-  async create(data) {
-    const requisicao = await prisma.web_requisicao
+  create = (data) => {
+    return prisma.web_requisicao
       .create({
         data: data,
         include: this.buildInclude(),
       })
       .then((result) => this.formatRequisition(result));
+  };
 
-    return requisicao;
-  }
-
-  async cancel(ID_REQUISICAO) {
-    const cancelledStatus = await prisma.web_status_requisicao.findFirst({
+  cancel = (ID_REQUISICAO) => {
+    const cancelledStatus = prisma.web_status_requisicao.findFirst({
       where: { nome: "Cancelado" },
     });
-    const updatedReq = await prisma.web_requisicao
+    return prisma.web_requisicao
       .update({
         where: { ID_REQUISICAO: parseInt(ID_REQUISICAO) },
         include: this.buildInclude(),
         data: { id_status_requisicao: cancelledStatus.id_status_requisicao },
       })
       .then((result) => this.formatRequisition(result));
+  };
 
-    return updatedReq;
-  }
-
-  async activate(ID_REQUISICAO) {
-    const alteration = await prisma.web_alteracao_req_status.findFirst({
+  activate = (ID_REQUISICAO) => {
+    const alteration = prisma.web_alteracao_req_status.findFirst({
       where: { id_requisicao: parseInt(ID_REQUISICAO) },
       orderBy: { data_alteracao: "desc" },
     });
     const previousStatusId = alteration.id_status_requisicao;
-    const updatedReq = await prisma.web_requisicao
+    return prisma.web_requisicao
       .update({
         where: { ID_REQUISICAO: parseInt(ID_REQUISICAO) },
         data: { id_status_requisicao: previousStatusId },
         include: this.buildInclude(),
       })
       .then((result) => this.formatRequisition(result));
+  };
 
-    return updatedReq;
-  }
-
-  async update(ID_REQUISICAO, data) {
-    return await prisma.web_requisicao
+  update = (ID_REQUISICAO, data) => {
+    return prisma.web_requisicao
       .update({
         where: { ID_REQUISICAO: parseInt(ID_REQUISICAO) },
         data: data,
         include: this.buildInclude(),
       })
       .then((result) => this.formatRequisition(result));
-  }
+  };
 
-  buildInclude() {
-   
+  buildInclude = () => {
     return {
       web_tipo_requisicao: true,
       projetos: {
@@ -97,12 +87,12 @@ class RequisitionRepository {
             },
           },
           //responsável projeto
-           pessoa_projetos_ID_RESPONSAVELTopessoa:{ 
+          pessoa_projetos_ID_RESPONSAVELTopessoa: {
             select: {
               NOME: true,
               CODPESSOA: true,
-            }
-           }
+            },
+          },
         },
       },
       //responsável requisição
@@ -128,9 +118,9 @@ class RequisitionRepository {
       },
       web_status_requisicao: true,
     };
-  }
+  };
 
-  formatRequisition(item) {
+  formatRequisition = (item) => {
     const requisition = {
       ...item,
       tipo_requisicao: item.web_tipo_requisicao,
@@ -142,20 +132,20 @@ class RequisitionRepository {
       alterado_por: item.pessoa_web_requisicao_alterado_porTopessoa,
       criado_por: item.pessoa_web_requisicao_criado_porTopessoa,
     };
-    delete requisition.web_tipo_requisicao;
-    if (requisition.projeto){ 
+    if (requisition.projeto) {
       delete requisition.projeto.pessoa;
       delete requisition.projeto.pessoa_projetos_ID_RESPONSAVELTopessoa;
     }
+    delete requisition.web_tipo_requisicao;
     delete requisition.projetos;
     delete requisition.pessoa_web_requisicao_ID_RESPONSAVELTopessoa;
     delete requisition.web_status_requisicao;
     delete requisition.pessoa_web_requisicao_alterado_porTopessoa;
     delete requisition.pessoa_web_requisicao_criado_porTopessoa;
     return requisition;
-  }
+  };
 
-  buildSearchFilter(searchTerm) {
+  buildSearchFilter = (searchTerm) => {
     return {
       OR: [
         { DESCRIPTION: { contains: searchTerm } },
@@ -181,9 +171,9 @@ class RequisitionRepository {
         { web_tipo_requisicao: { nome_tipo: { contains: searchTerm } } },
       ],
     };
-  }
+  };
 
-  buildFilters(filters) {
+  buildFilters = (filters) => {
     if (!filters) return {};
 
     const filterMap = {
@@ -218,7 +208,7 @@ class RequisitionRepository {
           : {};
       },
       responsavel_projeto: (value) => ({
-       projetos : { pessoa_projetos_ID_RESPONSAVELTopessoa: { NOME: { contains: value } } },
+        projetos: { pessoa_projetos_ID_RESPONSAVELTopessoa: { NOME: { contains: value } } },
       }),
     };
 
@@ -230,15 +220,15 @@ class RequisitionRepository {
     });
 
     return { AND: prismaFilters };
-  }
+  };
 
-  async delete(ID_REQUISICAO) {
-    return await prisma.web_requisicao.delete({
+  delete = (ID_REQUISICAO) => {
+    return prisma.web_requisicao.delete({
       where: {
         ID_REQUISICAO: parseInt(ID_REQUISICAO),
       },
     });
-  }
+  };
 }
 
 module.exports = new RequisitionRepository();

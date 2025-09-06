@@ -14,7 +14,6 @@ class RequisitionItemController {
       );
       res.json(items);
     } catch (err) {
-      ;
       res
         .status(500)
         .json({ error: "Erro interno do servidor: " + err.message });
@@ -45,7 +44,6 @@ class RequisitionItemController {
       );
       res.json(columns);
     } catch (err) {
-      ;
       res
         .status(500)
         .json({ error: "Erro interno do servidor: " + err.message });
@@ -134,6 +132,18 @@ class RequisitionItemController {
     }
   };
 
+  crateAttachment = async (req, res) => {
+    try {
+      const payload = req.body;
+      const newAttachment = await RequisitionItemService.crateAttachment(payload);
+      res.status(201).json(newAttachment);
+    } catch (err) {
+      res
+        .status(400)
+        .json({ error: "Erro ao criar anexo: " + err.message });
+    }
+  };
+
   updateQuoteItemsSelected = async (req, res) => {
     try {
       const quoteItemsSelectedMap = req.body;
@@ -160,7 +170,6 @@ class RequisitionItemController {
       }
       res.json({ message: "Item excluído com sucesso" });
     } catch (err) {
-      ;
       res
         .status(500)
         .json({ error: "Erro interno do servidor: " + err.message });
