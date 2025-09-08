@@ -32,7 +32,7 @@ class OpportunityRepository {
       gerente: opportunity.projetos.pessoa,
       responsavel: opportunity.pessoa,
       adicional: opportunity.adicionais,
-      situacao: this.getSituationByInteractionDate(opportunity.DATAINTERACAO),
+      situacao: this.getSituationByInteractionDate(opportunity ,opportunity.DATAINTERACAO),
       VALORFATDOLPHIN_FORMATTED: formatToCurrency(opportunity.VALORFATDOLPHIN),
       VALORFATDIRETO_FORMATTED: formatToCurrency(opportunity.VALORFATDIRETO),
       VALORTOTAL_FORMATTED: formatToCurrency(opportunity.VALOR_TOTAL),
@@ -153,12 +153,14 @@ class OpportunityRepository {
     return opps;
   }
 
-  static getSituationByInteractionDate(date) {
+  static getSituationByInteractionDate(opp, date) {
     const dateReceived = new Date(date);
     const now = new Date();
     const fiveDaysFromNow = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
     const expired = dateReceived < now;
     const toExpire = dateReceived > now && dateReceived < fiveDaysFromNow;
+    const closed = opp.status.ACAO === 1;
+    if(closed) return "fechada";
     if (expired) return "expirada";
     if (toExpire) return "expirando";
     if (!expired && !toExpire) return "ativa";

@@ -748,7 +748,7 @@ model web_items_cotacao {
   quantidade_cotada     Int?
   id_produto            Int?
   indisponivel          Int?                  @db.TinyInt
-  produtos              produtos?             @relation(fields: [id_produto], references: [ID], onDelete: Restrict, onUpdate: Restrict, map: "id_produto")
+  produtos              produtos?             @relation(fields: [id_produto], references: [ID], onDelete: Cascade, map: "id_produto")
   web_requisicao_items  web_requisicao_items? @relation(fields: [id_item_requisicao], references: [id_item_requisicao], onDelete: Cascade, map: "id_requisicao")
   web_cotacao           web_cotacao           @relation(fields: [id_cotacao], references: [id_cotacao], onDelete: Cascade, map: "web_items_cotacao_ibfk_1")
 
@@ -1013,7 +1013,7 @@ model web_anexos_item_requisicao {
   arquivo                  String?              @db.LongText
   id_item_requisicao       Int
   nome_arquivo             String?              @db.LongText
-  web_requisicao_items     web_requisicao_items @relation(fields: [id_item_requisicao], references: [id_item_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "id_item_requisicao")
+  web_requisicao_items     web_requisicao_items @relation(fields: [id_item_requisicao], references: [id_item_requisicao], onDelete: Cascade, map: "id_item_requisicao")
 
   @@index([id_item_requisicao], map: "id_item_idx")
 }
