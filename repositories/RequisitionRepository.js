@@ -36,8 +36,8 @@ class RequisitionRepository {
       .then((result) => this.formatRequisition(result));
   };
 
-  cancel = (ID_REQUISICAO) => {
-    const cancelledStatus = prisma.web_status_requisicao.findFirst({
+  cancel = async (ID_REQUISICAO) => {
+    const cancelledStatus = await prisma.web_status_requisicao.findFirst({
       where: { nome: "Cancelado" },
     });
     return prisma.web_requisicao
@@ -49,8 +49,8 @@ class RequisitionRepository {
       .then((result) => this.formatRequisition(result));
   };
 
-  activate = (ID_REQUISICAO) => {
-    const alteration = prisma.web_alteracao_req_status.findFirst({
+  activate = async (ID_REQUISICAO) => {
+    const alteration = await prisma.web_alteracao_req_status.findFirst({
       where: { id_requisicao: parseInt(ID_REQUISICAO) },
       orderBy: { data_alteracao: "desc" },
     });
