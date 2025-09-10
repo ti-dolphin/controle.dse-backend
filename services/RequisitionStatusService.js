@@ -15,9 +15,9 @@ class RequisitionStatusService {
   async getById(id_status_requisicao) {
     return RequisitionStatusRepository.getById(id_status_requisicao);
   }
-  async getStatusPermission(user, requisition){
+  async getStatusPermission(user, requisition) {
     let permissionToChangeStatus;
-    
+
     if (Number(user.PERM_ADMINISTRADOR) === 1) {
       //Se o usuário for administrador, ele tem permissão
       permissionToChangeStatus = true;
@@ -28,7 +28,7 @@ class RequisitionStatusService {
       id_status_requisicao: Number(requisition.id_status_requisicao),
     });
     //baseado no quadro kanban, pega as regras de acesso para o usuário
-    const accessRules = await RequisitionService.getAccessRulesByKanban(
+    const accessRules = await this.getAccessRulesByKanban(
       user,
       kanbanStatusList
     );
@@ -56,16 +56,117 @@ class RequisitionStatusService {
     return { permissionToChangeStatus };
   }
 
-  async getStatusAlteration(id_requisicao){
+  async getStatusAlteration(id_requisicao) {
     return RequisitionStatusRepository.getStatusAlteration(id_requisicao);
   }
 
+  async getAccessRulesByKanban(user, kanbanStatusList) {
+    const profiles = await prisma.web_perfil_usuario.findMany();
+    const statusByProfile = this.getStatusListByProfile(kanbanStatusList);
+
+    return [
+      {
+        // Administrador: acesso total
+        check: () => Number(user.PERM_ADMINISTRADOR) === 1,
+        statusList: () => null, // ignora status
+        match: () => true,
+        profileId: 1,
+      },
+      {
+        // Comprador
+        check: () => Number(user.PERM_COMPRADOR) === 1,
+        statusList: () => {
+          const profileId = profiles.find(
+            (p) => p.nome === "Comprador"
+          ).id_perfil_usuario;
+          return statusByProfile[profileId];
+        },
+        match: (req, user, statusList) =>
+          statusList && statusList.includes(Number(req.id_status_requisicao)),
+        profileId: 6,
+      },
+      {
+        // Diretor
+        check: () => Number(user.PERM_DIRETOR) === 1,
+        statusList: () => {
+          const profileId = profiles.find(
+            (p) => p.nome === "Diretor"
+          ).id_perfil_usuario;
+          return statusByProfile[profileId];
+        },
+        match: (req, user, statusList) =>
+          statusList && statusList.includes(Number(req.id_status_requisicao)),
+        profileId: 5,
+      },
+      {
+        // Gerente do projeto
+        check: () => true,
+        statusList: () => {
+          const profileId = profiles.find(
+            (p) => p.nome === "Gerente"
+          ).id_perfil_usuario;
+          return statusByProfile[profileId];
+        },
+        match: (req, user, statusList) =>
+          req.gerente &&
+          Number(req.gerente.CODPESSOA) === Number(user.CODPESSOA) &&
+          statusList &&
+          statusList.includes(Number(req.id_status_requisicao)),
+        profileId: 4,
+      },
+      {
+        // Coordenador do projeto
+        check: () => true,
+        statusList: () => {
+          const profileId = profiles.find(
+            (p) => p.nome === "Coordenador"
+          ).id_perfil_usuario;
+          return statusByProfile[profileId];
+        },
+        match: (req, user, statusList) =>
+          req.projeto &&
+          Number(req.projeto.ID_RESPONSAVEL) === Number(user.CODPESSOA) &&
+          statusList &&
+          statusList.includes(Number(req.id_status_requisicao)),
+        profileId: 3,
+      },
+      {
+        // Requisitante
+        check: () => true,
+        statusList: () => {
+          const profileId = profiles.find(
+            (p) => p.nome === "Requisitante"
+          ).id_perfil_usuario;
+          return statusByProfile[profileId];
+        },
+        match: (req, user, statusList) =>
+          req.responsavel &&
+          Number(req.responsavel.CODPESSOA) === Number(user.CODPESSOA) &&
+          statusList &&
+          statusList.includes(Number(req.id_status_requisicao)),
+        profileId: 2,
+      },
+    ];
+  }
+
+  getStatusListByProfile(kanban_status_list) {
+    return kanban_status_list.reduce((acc, item) => {
+      if (!acc[item.perfil]) {
+        acc[item.perfil] = [];
+      }
+      acc[item.perfil].push(item.id_status_requisicao);
+      return acc;
+    }, {});
+  }
 
   async update(id_status_requisicao, data) {
     return RequisitionStatusRepository.update(id_status_requisicao, data);
   }
   async updateRequisitionStatus(id_status_requisicao, id_requisicao) {
-    return RequisitionStatusRepository.updateRequisitionStatus(id_status_requisicao, id_requisicao);
+    return RequisitionStatusRepository.updateRequisitionStatus(
+      id_status_requisicao,
+      id_requisicao
+    );
   }
 
   async delete(id_status_requisicao) {
@@ -85,7 +186,6 @@ class RequisitionStatusService {
         })),
       });
     }
-   
   }
 }
 
