@@ -61,6 +61,7 @@ class OpportunityController {
           );
           res.status(201).json(opportunity);
         } catch (error) {
+          console.error(error);
           res.status(500).json({ message: error.message });
         }
       }
@@ -77,6 +78,7 @@ class OpportunityController {
           }
           res.json(updatedOpportunity);
         } catch (error) {
+          console.error(error);
           res.status(500).json({ message: error.message });
         }
       }
@@ -90,6 +92,7 @@ class OpportunityController {
           }
           res.json({ message: 'Opportunity deleted successfully' });
         } catch (error) {
+          console.error(error);
           res.status(500).json({ message: error.message });
         }
       }

@@ -4,6 +4,7 @@ const ProjectRepository = require("../repositories/ProjectRepository");
 const fs = require("fs");
 const Handlebars = require("handlebars");
 const EmailService = require("../services/EmailService");
+const OpportunityTrigger = require("../triggers/OpportunityTrigger");
 class OpportunityService {
   async getById(CODOS) {
     return await OpportunityRepository.getById(CODOS);
@@ -30,52 +31,14 @@ class OpportunityService {
   }
 
   async create(data, isAdicional) {
-    if (isAdicional) {
-      const newAdicional = await this.createAdicional(Number(data.ID_PROJETO));
-      data.ID_ADICIONAL = newAdicional.ID;
-      return await OpportunityRepository.create(data);
-    }
-    let newProject = {
-      CODGERENTE: 9999,
-      DESCRICAO: data.DESCRICAO,
-      ATIVO: 1,
-    };
-    newProject = await ProjectRepository.create(newProject);
-    const newAdicional = await this.createAdicional(Number(newProject.ID));
-
-    data.ID_PROJETO = newProject.ID;
-    data.ID_ADICIONAL = newAdicional.ID;
-
-    return await OpportunityRepository.create(data);
+    data.FK_CODCLIENTE = String(data.FK_CODCLIENTE);
+    return await prisma.$transaction(async (tx) => {
+      const processedData = await OpportunityTrigger.beforeCreate(data, tx, isAdicional);
+      return await OpportunityRepository.create(processedData, tx);
+    });
   }
 
-  async createAdicional(ID_PROJETO) {
-    const lastAdicional = await prisma.adicionais.findFirst({
-      where: {
-        ID: ID_PROJETO,
-      },
-      orderBy: {
-        ID: "desc",
-      },
-    });
-    if (lastAdicional) {
-      const { NUMERO } = lastAdicional;
-      const newAdicional = await prisma.adicionais.create({
-        data: {
-          ID_PROJETO,
-          NUMERO: NUMERO + 1,
-        },
-      });
-      return newAdicional;
-    }
-    const newAdicional = await prisma.adicionais.create({
-      data: {
-        ID_PROJETO,
-        NUMERO: 0,
-      },
-    });
-    return newAdicional;
-  }
+  
 
   async update(CODOS, data) {
     // if (data.VALORFATDOLPHIN && data.VALORFATDIRETO && data.VALOR_COMISSAO){
@@ -88,29 +51,16 @@ class OpportunityService {
   }
 
   async delete(CODOS) {
-    const opp = await OpportunityRepository.getById(CODOS);
-    const { ID_PROJETO } = opp;
-    const adicional = await prisma.adicionais.findUnique({
-      where: {
-        ID: opp.ID_ADICIONAL,
-      },
+    return await prisma.$transaction(async (tx) => {
+      const opp = await tx.ordemservico.findUnique({
+        where: {
+          CODOS,
+        },
+      })
+      await OpportunityRepository.delete(CODOS, tx);
+      await OpportunityTrigger.afterDelete(opp.ID_ADICIONAL, tx);
+      return true;
     });
-    await OpportunityRepository.delete(CODOS);
-    if (adicional) {
-      await prisma.adicionais.delete({
-        where: {
-          ID: adicional.ID,
-        },
-      });
-    }
-    if (adicional.NUMERO === 0) {
-      await prisma.projetos.delete({
-        where: {
-          ID: ID_PROJETO,
-        },
-      });
-    }
-    return true;
   }
 
   normalizeFilters(filtersArray) {

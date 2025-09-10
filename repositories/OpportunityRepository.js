@@ -105,13 +105,27 @@ class OpportunityRepository {
     };
   }
 
-  static async create(payload) {
+  static async create(payload, tx) {
     payload.CODTIPOOS = 21;
     payload.VALOR_COMISSAO = 0;
     payload.id_motivo_perdido = 1;
-    return await prisma.ordemservico
+    console.log('payload', payload);
+    const customer = await tx.cliente.findFirst({
+      where: {
+        CODCLIENTE: payload.FK_CODCLIENTE,
+      },
+      select: {
+        CODCOLIGADA: true,
+      },
+    });
+    console.log("customer", customer);
+
+    return await tx.ordemservico
       .create({
-        data: payload,
+        data: {
+          ...payload,
+          FK_CODCOLIGADA: customer.CODCOLIGADA,
+        },
         include: this.include(),
       })
       .then((opportunity) => this.format(opportunity));
@@ -127,8 +141,8 @@ class OpportunityRepository {
       .then((opportunity) => this.format(opportunity));
   }
 
-  static async delete(CODOS) {
-    return await prisma.ordemservico.delete({
+  static async delete(CODOS, tx) {
+    return await tx.ordemservico.delete({
       where: { CODOS },
     });
   }
