@@ -7,7 +7,10 @@ const fs = require("fs");
 
 class CheckListService {
   async create(data) {
-    return CheckListRepository.create(data);
+    return prisma.$transaction(async (tx) => {
+      const checklist = await CheckListRepository.create(data, tx);
+      return checklist;
+    });
   }
 
   async getMany(params) {

@@ -2,11 +2,11 @@ const { prisma } = require("../database");
 const {getNowISODate} = require('../utils');
 
 class MovementationRepository {
-  async create(payload) {
+  async create(payload, tx) {
     payload.data = getNowISODate();
-    return await prisma.web_movimentacao_patrimonio.create({ data: payload, 
-      include: this._includeObject(),
-     }).then((movimentation) => this._formatMovimentacao(movimentation));
+    return await tx.web_movimentacao_patrimonio
+      .create({ data: payload, include: this._includeObject() })
+      .then((movimentation) => this._formatMovimentacao(movimentation));
   }
 
   async getMany(search, filters, id_patrimonio, from) {

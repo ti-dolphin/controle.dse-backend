@@ -1,8 +1,10 @@
 // controle.dse-backend/repositories/webComentariosRequsicaoRepository.js
 const { prisma } = require("../database");
-
+const {getNowISODate} = require('../utils')
 class RequisitionCommentRepository {
   async create(data) {
+    data.data_criacao = getNowISODate();
+    data.data_alteracao = getNowISODate();
     return prisma.web_comentarios_requsicao.create({ data,
       include: this.include(),
      }).then((comment) => this.format(comment));
@@ -49,6 +51,8 @@ class RequisitionCommentRepository {
   }
 
   async update(id_comentario_requisicao, data) {
+    data.data_criacao = getNowISODate();
+    data.data_alteracao = getNowISODate();
     return prisma.web_comentarios_requsicao.update({ where: { id_comentario_requisicao }, data, include: this.include() }).then((comment) => this.format(comment));
   }
 

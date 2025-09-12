@@ -1,4 +1,6 @@
 const { prisma } = require("../database");
+const { getNowISODate } = require("../utils");
+const ChecklistMovementationItemRepository = require("./ChecklistMovementationItemRepository");
 const PatrimonyRepository = require("./PatrimonyRepository");
 
 const filterFieldMap = {
@@ -55,10 +57,27 @@ class CheckListRepository {
     return formatted;
   };
 
-  async create(data) {
-    return prisma.web_checklist_movimentacao
-      .create({ data, include: this.include })
-      .then((result) => (result ? this.format(result) : null));
+  async create(id_movimentacao, tx) {
+    const checklist = await tx.web_checklist_movimentacao
+    .create({ data : { 
+      id_movimentacao,
+      data_criacao: getNowISODate(),
+      aprovado: false,
+      realizado: false
+    }, include: this.include }).then((result) => (result ? this.format(result) : null));
+    const items = await ChecklistMovementationItemRepository.getItemsFromTypeOfPatrimony(checklist.id_movimentacao, tx);
+
+    const createdChecklistItems = [];
+    for(const item of items) {
+      const { nome_item_checklist } = item;
+      const itemCreated = await tx.web_items_checklist_movimentacao.create({ data: { 
+        id_checklist_movimentacao: checklist.id_checklist_movimentacao,
+        nome_item_checklist
+      } });
+      createdChecklistItems.push(itemCreated);
+    }
+
+    return checklist;
   }
 
   async getMany(params, filters, searchTerm) {
@@ -72,6 +91,7 @@ class CheckListRepository {
           ...params,
           AND: [searchFilter, extraFilters],
         },
+        orderBy: {id_checklist_movimentacao: "desc"},
         include: this.include,
       })
       .then((results) => results.map(this.format));

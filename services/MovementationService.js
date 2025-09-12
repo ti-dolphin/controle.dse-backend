@@ -1,9 +1,15 @@
+const { prisma } = require("../database");
 const MovementationRepository = require("../repositories/MovementationRepository");
+const MovementationTrigger = require("../triggers/MovementationTrigger");
 
 
 class MovementationService {
   async create(payload) {
-    return await MovementationRepository.create(payload);
+    return await prisma.$transaction(async (tx) => {
+      const mov = await MovementationRepository.create(payload, tx);
+      const checklist = await MovementationTrigger.afterCreate(mov, tx);
+      return { mov, checklist };
+    });
   }
 
   async getMany(params) {
