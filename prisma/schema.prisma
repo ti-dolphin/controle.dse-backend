@@ -420,6 +420,7 @@ model pessoa {
   PERM_COMERCIAL                                       Int?                          @default(0) @db.TinyInt
   PERM_DIRETOR                                         Int?                          @default(0) @db.TinyInt
   PERM_EDITAR_PRODUTOS                                 Int?                          @db.TinyInt
+  PERM_ESTOQUE                                         Int?                          @db.TinyInt
   cliente                                              cliente[]
   historicostatus                                      historicostatus[]
   ordemservico                                         ordemservico[]

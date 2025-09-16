@@ -51,6 +51,17 @@ class RequisitionController {
     }
   }
 
+  async attend(req, res){ 
+    try{ 
+      const {estoque, compras} = await RequisitionService.attend(Number(req.params.id_requisicao), req.body.items);
+
+      res.status(200).json({estoque, compras});
+    }catch(e){ 
+      console.error(e);
+      res.status(400).json({ error: e.message });
+    }
+  }
+
   async update(req, res) {
     try {
       const updated = await RequisitionService.update(

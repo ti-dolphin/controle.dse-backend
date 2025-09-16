@@ -82,14 +82,14 @@ class RequisitionService {
     normalizedData.id_escopo_requisicao = 2;
     const newReq = await RequisitionRepository.create(normalizedData);
     await prisma.web_alteracao_req_status.create({
-      data: { 
+      data: {
         id_requisicao: newReq.ID_REQUISICAO,
         id_status_requisicao: newReq.id_status_requisicao,
         id_status_anterior: newReq.id_status_requisicao,
         data_alteracao: getNowISODate(),
         alterado_por: newReq.ID_RESPONSAVEL,
-      }
-    })
+      },
+    });
     return newReq;
   }
 
@@ -212,7 +212,7 @@ class RequisitionService {
         tx
       );
       //atualizar nova requisição com id da requisição original
-        await tx.web_requisicao.update({
+      await tx.web_requisicao.update({
         where: { ID_REQUISICAO: newReq.ID_REQUISICAO },
         data: { id_req_original: req.ID_REQUISICAO },
       });
@@ -232,6 +232,432 @@ class RequisitionService {
     return await RequisitionRepository.activate(id_requisicao);
   }
 
+  oneAttendedItem(items) {
+    return items.some((item) => item.quantidade_atendida > 0);
+  }
+
+  allItemsAttended(items) {
+    console.log(
+      "allItemsAttended",
+      items.every((item) => {
+        return (
+          item.quantidade_atendida > 0 &&
+          item.quantidade_atendida === item.quantidade
+        );
+      })
+    );
+    return items.every(
+      (item) =>
+        item.quantidade_atendida > 0 &&
+        item.quantidade_atendida === item.quantidade
+    );
+  }
+
+  // async attend(id, items) {
+
+  //    //os items irão chegar com o campo quantidade_atendida preenchido
+  //   return await prisma.$transaction(async (tx) => {
+  //        const req = await tx.web_requisicao.findFirst({
+  //          where: { ID_REQUISICAO: Number(id) },
+  //        });
+  //        //pega status 'requisitado'
+  //           const requisitadoStatus = await tx.web_status_requisicao.findFirst(
+  //          {
+  //            where: {
+  //              nome: "Requisitado",
+  //            },
+  //          }
+  //        );
+  //        const comprasItems = [];
+  //        const stockItems = [];
+  //        if (await this.oneAttendedItem(items)) {
+  //          if (this.allItemsAttended(items)) {
+  //           //se todos items atendidos
+  //            const separacaoStatus =
+  //              await tx.web_status_requisicao.findFirst({
+  //                where: {
+  //                  nome: "Em Separação",
+  //                },
+  //              });
+  //            const updatedReq = await tx.web_requisicao
+  //              .update({
+  //                where: { ID_REQUISICAO: id },
+  //                data: {
+  //                  id_status_requisicao: separacaoStatus.id_status_requisicao,
+  //                },
+  //                include: RequisitionRepository.buildInclude(),
+  //              }).then((result) => RequisitionRepository.formatRequisition(result));
+  //              //caso todos os items tenha sido atendidos, a requisição original é atualizada para estoque e não criamos uma de compras pois não será preciso comprar
+  //              throw new Error('todos itens atendidos')
+  //            return {
+  //             estoque: updatedReq,
+  //             compras: null
+  //            };
+  //          }
+  //          //se alguns items atendidos e alguns não atendidos
+  //          //separar não atendidos em nova requisição do escopo compras e atendidos mantém na original
+  //          const {
+  //            ID_REQUISICAO,
+  //            id_escopo_requisicao,
+  //            id_status_requisicao,
+  //            custo_total,
+  //            ...rest
+  //          } = req;
+  //          //criando nova requsiição de comprar e clonando registros filhos
+  //          const newComprasReq = await tx.web_requisicao.create({
+  //            data: {
+  //              ...rest,
+  //              id_escopo_requisicao: 2,
+  //              id_status_requisicao: requisitadoStatus.id_status_requisicao
+  //            },
+  //          });
+  //          await RequisitionCommentService.cloneComments(req, newComprasReq.ID_REQUISICAO, tx);
+  //          await RequisitionAttachmentService.cloneAttachments(req.ID_REQUISICAO, newComprasReq.ID_REQUISICAO, tx);
+  //          await RequisitionStatusService.cloneStatusChanges(req.ID_REQUISICAO, newComprasReq.ID_REQUISICAO, tx);
+  //          //separando os items para cada requisição (compras ou estoque)
+  //          for (let item of items) {
+  //           //item totalmente atendido
+  //            if (item.quantidade_atendida === item.quantidade) {
+  //              stockItems.push(item);
+  //              continue;
+  //            }
+  //            //item não atendido
+  //            if (!item.quantidade_atendida) {
+  //              const newComprasReqItem = await this.cloneSingleItem(
+  //                newComprasReq.ID_REQUISICAO,
+  //                item,
+  //                tx
+  //              );
+  //              await tx.web_requisicao_items.delete({  where: { id_item_requisicao: item.id_item_requisicao }});
+  //              comprasItems.push(newComprasReqItem);
+  //              continue;
+  //            }
+  //            //atendido parcialmente
+  //            item.quantidade = item.quantidade - item.quantidade_atendida;
+  //            const newComprasReqItem = await this.cloneSingleItem(
+  //              newComprasReq.ID_REQUISICAO,
+  //              item,
+  //              tx
+  //            );
+  //            comprasItems.push(newComprasReqItem);
+  //            const updatedStockItem = await tx.web_requisicao_items.update({
+  //              where: { id_item_requisicao: item.id_item_requisicao },
+  //              data: { quantidade: item.quantidade_atendida },
+  //            });
+  //            stockItems.push(updatedStockItem);
+  //          }
+  //          const separacaoStatus = await tx.web_status_requisicao.findFirst(
+  //            {
+  //              where: {
+  //                nome: "Em Separação",
+  //              },
+  //            }
+  //          );
+  //          const updatedReq = await tx.web_requisicao
+  //            .update({
+  //              where: { ID_REQUISICAO: id },
+  //              data: {
+  //                id_status_requisicao: separacaoStatus.id_status_requisicao,
+  //              },
+  //              include: RequisitionRepository.buildInclude(),
+  //            })
+  //            .then((result) => RequisitionRepository.formatRequisition(result));
+  //            //retornar as duas requisições, a original em estoque e a nova requisição de compras
+
+  //          throw new Error("retornar as duas requisições, a original em estoque e a nova requisição de compras");
+  //          return {
+  //            estoque: updatedReq,
+  //            compras: newComprasReq
+  //           };
+  //        }
+  //        //nenhum item atendido --> retornar requisição original com escopo de compras
+  //        const updatedReq = await tx.web_requisicao
+  //          .update({
+  //            where: { ID_REQUISICAO: id },
+  //            data: {
+  //              id_status_requisicao: requisitadoStatus.id_status_requisicao,
+  //              id_escopo_requisicao: 2
+  //            },
+  //            include: RequisitionRepository.buildInclude(),
+  //          })
+  //          .then((result) => RequisitionRepository.formatRequisition(result));
+
+  //       throw new Error("retornar a requisição original com escopo de compras");
+  //        return {
+  //          compras: updatedReq,
+  //          estoque: null
+  //        };
+  //   })
+  // }
+
+  async attend(id, items) {
+    console.log(
+      `Starting attend process for requisition ID: ${id}, with ${items.length} items`
+    );
+
+    return await prisma.$transaction(async (tx) => {
+      console.log("Transaction started");
+
+      const req = await tx.web_requisicao.findFirst({
+        where: { ID_REQUISICAO: Number(id) },
+      });
+      console.log(
+        `Fetched requisition: ${req ? `ID ${req.ID_REQUISICAO}` : "Not found"}`
+      );
+      if (!req) {
+        console.error("Requisition not found");
+        throw new Error("Requisition not found");
+      }
+
+      const requisitadoStatus = await tx.web_status_requisicao.findFirst({
+        where: { nome: "Requisitado" },
+      });
+      console.log(
+        `Fetched 'Requisitado' status: ${
+          requisitadoStatus
+            ? `ID ${requisitadoStatus.id_status_requisicao}`
+            : "Not found"
+        }`
+      );
+      if (!requisitadoStatus) {
+        console.error("Requisitado status not found");
+        throw new Error("Requisitado status not found");
+      }
+
+      const comprasItems = [];
+      const stockItems = [];
+      console.log("Checking if at least one item is attended");
+      if (await this.oneAttendedItem(items)) {
+        console.log("At least one item is attended");
+        if (this.allItemsAttended(items)) {
+          console.log("All items are fully attended");
+          const separacaoStatus = await tx.web_status_requisicao.findFirst({
+            where: { nome: "Em Separação" },
+          });
+          console.log(
+            `Fetched 'Em Separação' status: ${
+              separacaoStatus
+                ? `ID ${separacaoStatus.id_status_requisicao}`
+                : "Not found"
+            }`
+          );
+          if (!separacaoStatus) {
+            console.error("Em Separação status not found");
+            throw new Error("Em Separação status not found");
+          }
+
+          const updatedReq = await tx.web_requisicao
+            .update({
+              where: { ID_REQUISICAO: id },
+              data: {
+                id_status_requisicao: separacaoStatus.id_status_requisicao,
+              },
+              include: RequisitionRepository.buildInclude(),
+            })
+            .then((result) => {
+              console.log(`Updated requisition ${id} to 'Em Separação' status`);
+              return RequisitionRepository.formatRequisition(result);
+            });
+
+          console.log("Throwing error: All items attended");
+          // throw new Error("todos itens atendidos");
+          return {
+            estoque: updatedReq,
+            compras: null,
+          };
+        }
+
+        console.log("Some items are attended, splitting requisitions");
+        const {
+          ID_REQUISICAO,
+          id_escopo_requisicao,
+          id_status_requisicao,
+          custo_total,
+          ...rest
+        } = req;
+        const newComprasReq = await tx.web_requisicao.create({
+          data: {
+            ...rest,
+            id_escopo_requisicao: 2,
+            id_status_requisicao: requisitadoStatus.id_status_requisicao,
+          },
+        });
+        console.log(
+          `Created new compras requisition: ID ${newComprasReq.ID_REQUISICAO}`
+        );
+
+        console.log("Cloning comments, attachments, and status changes");
+        await RequisitionCommentService.cloneComments(
+          req,
+          newComprasReq.ID_REQUISICAO,
+          tx
+        );
+        console.log("Comments cloned successfully");
+        await RequisitionAttachmentService.cloneAttachments(
+          req.ID_REQUISICAO,
+          newComprasReq.ID_REQUISICAO,
+          tx
+        );
+        console.log("Attachments cloned successfully");
+        await RequisitionStatusService.cloneStatusChanges(
+          req.ID_REQUISICAO,
+          newComprasReq.ID_REQUISICAO,
+          tx
+        );
+        console.log("Status changes cloned successfully");
+
+        console.log("Processing items for stock and compras requisitions");
+        for (let item of items) {
+          if (item.quantidade_atendida === item.quantidade) {
+            console.log(
+              `Item ${item.id_item_requisicao} fully attended, adding to stock`
+            );
+            stockItems.push(item);
+            continue;
+          }
+          if (!item.quantidade_atendida) {
+            console.log(
+              `Item ${item.id_item_requisicao} not attended, moving to compras`
+            );
+            const newComprasReqItem = await this.cloneSingleItem(
+              newComprasReq.ID_REQUISICAO,
+              item,
+              tx
+            );
+            await tx.web_requisicao_items.delete({
+              where: { id_item_requisicao: item.id_item_requisicao },
+            });
+            comprasItems.push(newComprasReqItem);
+            console.log(
+              `Item ${item.id_item_requisicao} moved to compras requisition`
+            );
+            continue;
+          }
+          console.log(`Item ${item.id_item_requisicao} partially attended`);
+          item.quantidade = item.quantidade - item.quantidade_atendida;
+          const newComprasReqItem = await this.cloneSingleItem(
+            newComprasReq.ID_REQUISICAO,
+            item,
+            tx
+          );
+          comprasItems.push(newComprasReqItem);
+          console.log(
+            `Cloned item ${item.id_item_requisicao} to compras requisition`
+          );
+          const updatedStockItem = await tx.web_requisicao_items.update({
+            where: { id_item_requisicao: item.id_item_requisicao },
+            data: { quantidade: item.quantidade_atendida },
+          });
+          stockItems.push(updatedStockItem);
+          console.log(
+            `Updated item ${item.id_item_requisicao} in stock requisition`
+          );
+        }
+
+        const separacaoStatus = await tx.web_status_requisicao.findFirst({
+          where: { nome: "Em Separação" },
+        });
+        console.log(
+          `Fetched 'Em Separação' status: ${
+            separacaoStatus
+              ? `ID ${separacaoStatus.id_status_requisicao}`
+              : "Not found"
+          }`
+        );
+        if (!separacaoStatus) {
+          console.error("Em Separação status not found");
+          throw new Error("Em Separação status not found");
+        }
+
+        const updatedReq = await tx.web_requisicao
+          .update({
+            where: { ID_REQUISICAO: id },
+            data: {
+              id_status_requisicao: separacaoStatus.id_status_requisicao,
+            },
+            include: RequisitionRepository.buildInclude(),
+          })
+          .then((result) => {
+            console.log(
+              `Updated original requisition ${id} to 'Em Separação' status`
+            );
+            return RequisitionRepository.formatRequisition(result);
+          });
+
+        console.log(
+          "Throwing error: Returning both stock and compras requisitions"
+        );
+        // throw new Error(
+        //   "retornar as duas requisições, a original em estoque e a nova requisição de compras"
+        // );
+        return {
+          estoque: updatedReq,
+          compras: newComprasReq,
+        };
+      }
+
+      console.log("No items attended, updating requisition to compras scope");
+      const updatedReq = await tx.web_requisicao
+        .update({
+          where: { ID_REQUISICAO: id },
+          data: {
+            id_status_requisicao: requisitadoStatus.id_status_requisicao,
+            id_escopo_requisicao: 2,
+          },
+          include: RequisitionRepository.buildInclude(),
+        })
+        .then((result) => {
+          console.log(`Updated requisition ${id} to compras scope`);
+          return RequisitionRepository.formatRequisition(result);
+        });
+
+      console.log("Throwing error: Returning original requisition as compras");
+      // throw new Error("retornar a requisição original com escopo de compras");
+      return {
+        compras: updatedReq,
+        estoque: null,
+      };
+    });
+  }
+
+  async cloneSingleItem(newReqId, item, tx) {
+    //primeiro remove campos não utilizados
+    const {
+      id_item_requisicao,
+      id_requisicao,
+      anexos,
+      produto,
+      produto_descricao,
+      produto_codigo,
+      produto_unidade,
+      produto_quantidade_estoque,
+      produto_quantidade_disponivel,
+      items_cotacao,
+      quantidade_atendida,
+      ...rest
+    } = item;
+    const newItem = await tx.web_requisicao_items.create({
+      data: {
+        id_requisicao: newReqId,
+        ...rest,
+      },
+    });
+    const attachments = await tx.web_anexos_item_requisicao.findMany({
+      where: { id_item_requisicao: item.id_item_requisicao },
+    });
+    const clonedAttachments = [];
+
+    for (const attachment of attachments) {
+      const { id_anexo_item_requisicao, id_item_requisicao, ...rest } =
+        attachment;
+      const clonedAttachment = await tx.web_anexos_item_requisicao.create({
+        data: { id_item_requisicao: newItem.id_item_requisicao, ...rest },
+      });
+      clonedAttachments.push(clonedAttachment);
+    }
+    return newItem;
+  }
+
   async changeStatus(id_requisicao, newStatusId, alterado_por) {
     return await prisma.$transaction(async (tx) => {
       const req = await tx.web_requisicao.findFirst({
@@ -243,31 +669,34 @@ class RequisitionService {
         alterado_por,
         tx
       );
-      if(updatedReq){
+      if (updatedReq) {
+        console.log(`não é status de verificação de estoque`);
+        // throw new Error("not implemented");
         return updatedReq;
       }
       //não é status de verificação de estoque
-
-       updatedReq = await tx.web_requisicao.update({
-        where: { ID_REQUISICAO: id_requisicao },
+      updatedReq = await tx.web_requisicao
+        .update({
+          where: { ID_REQUISICAO: id_requisicao },
+          data: {
+            id_status_requisicao: newStatusId,
+            alterado_por: alterado_por,
+          },
+          include: RequisitionRepository.buildInclude(),
+        })
+        .then((result) => RequisitionRepository.formatRequisition(result));
+      await tx.web_alteracao_req_status.create({
         data: {
+          id_status_anterior: req.id_status_requisicao,
           id_status_requisicao: newStatusId,
+          id_requisicao: id_requisicao,
           alterado_por: alterado_por,
+          data_alteracao: getNowISODate(),
         },
-        include: RequisitionRepository.buildInclude()
-      }).then((result) => RequisitionRepository.formatRequisition(result));
-       await tx.web_alteracao_req_status.create({
-         data: {
-           id_status_anterior: req.id_status_requisicao,
-           id_status_requisicao: newStatusId,
-           id_requisicao: id_requisicao,
-           alterado_por: alterado_por,
-           data_alteracao: getNowISODate(),
-         },
-       });
+      });
       // cria histórico
+      // throw new Error("not implemented");
       return updatedReq;
-    
     });
   }
 
@@ -412,4 +841,4 @@ class RequisitionService {
 }
 
 module.exports = new RequisitionService();
-module.exports = new RequisitionService();
+
