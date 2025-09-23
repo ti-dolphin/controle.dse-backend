@@ -160,8 +160,7 @@ class RequisitionService {
           tx
         );
       // 4. Criando novos itens na requisição filha e mapeando IDs
-      const { oldReqItemToNewId, newReqItems } =
-        await RequisitionItemService.createChildItems(
+      const { oldReqItemToNewId, newReqItems } = await RequisitionItemService.createChildItems(
           items,
           newReq.ID_REQUISICAO,
           tx
@@ -217,6 +216,8 @@ class RequisitionService {
         data: { id_req_original: req.ID_REQUISICAO },
       });
       return newReq;
+    }, { 
+      timeout: 120000
     });
   }
 
@@ -459,6 +460,18 @@ class RequisitionService {
               return RequisitionRepository.formatRequisition(result);
             });
 
+            for(let item of items) {
+              const updatedProduct = await tx.produtos.update({
+                where: { ID: item.id_produto },
+                data: {
+                  quantidade_reservada: item.quantidade_atendida,
+                },
+              });
+              console.log(
+                `Updated product ${updatedProduct.ID} to quantity ${updatedProduct.quantidade_reservada}`
+              );
+            }
+
           console.log("Throwing error: All items attended");
           // throw new Error("todos itens atendidos");
           return {
@@ -548,10 +561,24 @@ class RequisitionService {
             where: { id_item_requisicao: item.id_item_requisicao },
             data: { quantidade: item.quantidade_atendida },
           });
+          //atualizar produto com quantidade reservada
+          const updatedProduct = await tx.produtos.update({
+            where: { 
+              ID: item.id_produto,
+
+            },
+            data: { 
+              quantidade_reservada: {
+                decrement: item.quantidade_atendida,
+              },
+            }
+          });
+
           stockItems.push(updatedStockItem);
           console.log(
             `Updated item ${item.id_item_requisicao} in stock requisition`
           );
+          console.log(`Product ${updatedProduct.ID} updated with new quantity ${updatedProduct.quantidade_reservada}`);
         }
 
         const separacaoStatus = await tx.web_status_requisicao.findFirst({
@@ -671,7 +698,16 @@ class RequisitionService {
       );
       if (updatedReq) {
         console.log(`não é status de verificação de estoque`);
-        // throw new Error("not implemented");
+         await tx.web_alteracao_req_status.create({
+           data: {
+             id_status_anterior: req.id_status_requisicao,
+             id_status_requisicao: updatedReq.id_status_requisicao,
+             id_requisicao: updatedReq.ID_REQUISICAO,
+             alterado_por: alterado_por,
+             data_alteracao: getNowISODate(),
+           },
+         });
+        
         return updatedReq;
       }
       //não é status de verificação de estoque
@@ -707,7 +743,8 @@ class RequisitionService {
   async getAccessRulesByKanban(user, kanbanStatusList) {
     const profiles = await prisma.web_perfil_usuario.findMany();
     const statusByProfile = this.getStatusListByProfile(kanbanStatusList);
-
+    console.log("Estados disponíveis para este kanban", statusByProfile);
+   
     return [
       {
         // Administrador: acesso total
@@ -790,6 +827,18 @@ class RequisitionService {
           statusList.includes(Number(req.id_status_requisicao)),
         profileId: 2,
       },
+      {
+        check: () => Number(user.PERM_ESTOQUE) === 1,
+        statusList: () => { 
+          const profileId = profiles.find(
+            (p) => p.nome === "Estoquista"
+          ).id_perfil_usuario;
+          return statusByProfile[profileId];
+        },
+        match: (req, user, statusList) => statusList && statusList.includes(Number(req.id_status_requisicao)),
+        profileId: 7,
+      },
+
     ];
   }
 

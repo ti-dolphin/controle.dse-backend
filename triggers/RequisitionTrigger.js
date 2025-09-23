@@ -96,8 +96,11 @@ class RequisitionTrigger {
           return updatedReq;
         }
       }
+      console.log("finalStockstatus", finalStockstatus);
+      
       //se o novo status for o ultimo estados do escopo estoque, precisamos fazer a baixa no estoque
       if (newStatusId === finalStockstatus.id_status_requisicao) {
+        
         const productIdToItem = new Map();
         const productIdToProduct = new Map();
         const itemIdToItem = new Map();

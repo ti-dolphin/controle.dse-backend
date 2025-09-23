@@ -1,10 +1,18 @@
 const { prisma } = require("../database");
-
+const { getNowISODate } = require("../utils");
 class OpportunityAttachmentRepository {
   static async getMany(CODOS) {
     return await prisma.web_anexos_os.findMany({
       where: { codos: CODOS },
-    });
+      include: { 
+        pessoa: { 
+          select : { 
+            NOME: true,
+            CODPESSOA: true
+          }
+        }
+      }
+    }).then((anexos) => anexos.map((anexo) => ({ ...anexo, criado_por: anexo.pessoa })));
   }
   static async getById(id_anexo_os) {
     return await prisma.web_anexos_os.findUnique({
@@ -13,8 +21,12 @@ class OpportunityAttachmentRepository {
   }
 
   static async create(data) {
+    
     return await prisma.web_anexos_os.create({
-      data: data,
+      data: { 
+        ...data,
+        criado_em: getNowISODate()
+      },
     });
   }
 

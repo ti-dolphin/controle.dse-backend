@@ -236,11 +236,17 @@ class RequisitionItemService {
         produto_codigo,
         produto_unidade,
         produto_quantidade_estoque,
+        produto_quantidade_disponivel,
         items_cotacao,
         anexos,
         ...rest
       } = item;
 
+      const attachments = await tx.web_anexos_item_requisicao.findMany({ 
+        where: { 
+          id_item_requisicao : item.id_item_requisicao
+        }
+      });
       const newItem = await tx.web_requisicao_items.create({
         data: {
           ...rest,
@@ -248,6 +254,16 @@ class RequisitionItemService {
           id_requisicao: newRequisitionId,
         },
       });
+
+      for(const attachment of attachments){
+        const {id_anexo_item_requisicao, id_item_requisicao, ...rest} = attachment;
+        await tx.web_anexos_item_requisicao.create({
+          data: {
+            ...rest,
+            id_item_requisicao: newItem.id_item_requisicao
+          }
+        })
+      }
 
       oldReqItemToNewId.set(id_item_requisicao, newItem.id_item_requisicao);
       newReqItems.push(newItem);

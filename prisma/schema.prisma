@@ -430,6 +430,7 @@ model pessoa {
   projetos                                             projetos[]
   projetos_projetos_ID_RESPONSAVELTopessoa             projetos[]                    @relation("projetos_ID_RESPONSAVELTopessoa")
   web_alteracao_req_status                             web_alteracao_req_status[]
+  web_anexos_os                                        web_anexos_os[]
   web_anexos_requisicao                                web_anexos_requisicao[]
   web_comentarios_requsicao                            web_comentarios_requsicao[]
   web_cotacao                                          web_cotacao[]
@@ -645,9 +646,13 @@ model web_anexos_os {
   codos        Int
   nome_arquivo String       @db.Text
   arquivo      String       @db.Text
+  criado_em    DateTime?    @db.DateTime(0)
+  criado_por   Int?
+  pessoa       pessoa?      @relation(fields: [criado_por], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "created_by")
   ordemservico ordemservico @relation(fields: [codos], references: [CODOS], onDelete: Cascade, map: "web_anexos_os_ibfk_1")
 
   @@index([codos], map: "web_anexos_os_ibfk_1")
+  @@index([criado_por], map: "created_by_idx")
 }
 
 model web_checklist_movimentacao {
