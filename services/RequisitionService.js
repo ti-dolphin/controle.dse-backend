@@ -464,7 +464,9 @@ class RequisitionService {
               const updatedProduct = await tx.produtos.update({
                 where: { ID: item.id_produto },
                 data: {
-                  quantidade_reservada: item.quantidade_atendida,
+                  quantidade_reservada: { 
+                    increment: item.quantidade_atendida
+                  },
                 },
               });
               console.log(
@@ -569,7 +571,7 @@ class RequisitionService {
             },
             data: { 
               quantidade_reservada: {
-                decrement: item.quantidade_atendida,
+                increment: item.quantidade_atendida,
               },
             }
           });
