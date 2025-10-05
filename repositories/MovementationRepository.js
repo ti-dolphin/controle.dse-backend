@@ -46,11 +46,12 @@ class MovementationRepository {
         // },
         include: this._includeObject(),
         orderBy: [
-        { data: 'desc' },          // Primary: Most recent date first (globally)
-      { id_movimentacao: 'desc' }, // Secondary: For ties on date, take the highest ID (most recent insertion)
-      // Remove { id_patrimonio: "desc" } unless you have a specific reason for sorting patrimonios when dates/IDs tie
+          { data: "desc" }, // Primary: Most recent date first (globally)
+          { id_movimentacao: "desc" }, // Secondary: For ties on date, take the highest ID (most recent insertion)
+          // Remove { id_patrimonio: "desc" } unless you have a specific reason for sorting patrimonios when dates/IDs tie
         ],
       })
+      .then((movimentacoes) => movimentacoes.map(this._formatMovimentacao));
      
 
     if (from === "patrimonios") {
@@ -73,13 +74,13 @@ class MovementationRepository {
           orderBy: [
             {id_patrimonio: 'desc'}
           ]
-        })
-        .then((movimentacoes) => movimentacoes.map(this._formatMovimentacao));;
+        }).then((movimentacoes) => movimentacoes.map(this._formatMovimentacao));
     }
 
     if(from === 'movimentacoes') {
         movs = movs.filter(mov => mov.id_patrimonio === Number(id_patrimonio));
     }
+    console.log("movs: ", movs)
     return movs;
   }
 

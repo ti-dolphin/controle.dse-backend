@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("PROD_DATABASE_URL")
+  url      = env("HOMOLOG_DATABASE_URL")
 }
 
 model motivo_perdido {
@@ -151,7 +151,7 @@ model web_items_cotacao {
   id_produto            Int?
   indisponivel          Int?                  @db.TinyInt
   produtos              produtos?             @relation(fields: [id_produto], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "id_produto")
-  WEB_REQUISICAO_ITEMS  WEB_REQUISICAO_ITEMS? @relation(fields: [id_item_requisicao], references: [id_item_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "item_requisicao_relacionado")
+  WEB_REQUISICAO_ITEMS  WEB_REQUISICAO_ITEMS? @relation(fields: [id_item_requisicao], references: [id_item_requisicao], onDelete: Cascade, map: "item_requisicao_relacionado")
   web_cotacao           web_cotacao           @relation(fields: [id_cotacao], references: [id_cotacao], onDelete: Cascade, map: "web_items_cotacao_ibfk_1")
 
   @@index([id_cotacao], map: "id_cotacao")
@@ -1116,7 +1116,7 @@ model WEB_REQUISICAO_ITEMS {
   id_item_cotacao             Int?
   id_req_original             Int?
   produtos                    produtos?                    @relation(fields: [id_produto], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "produto_associado")
-  WEB_REQUISICAO              WEB_REQUISICAO               @relation(fields: [id_requisicao], references: [ID_REQUISICAO], onDelete: NoAction, onUpdate: NoAction, map: "requisicao")
+  WEB_REQUISICAO              WEB_REQUISICAO               @relation(fields: [id_requisicao], references: [ID_REQUISICAO], onDelete: Cascade, map: "requisicao")
   web_anexos_item_requisicao  web_anexos_item_requisicao[]
   web_items_cotacao           web_items_cotacao[]
 
