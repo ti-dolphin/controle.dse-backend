@@ -83,7 +83,7 @@ class QuoteService {
     );
     const custo_total_frete =
       Number(requisition.custo_total_frete) + difference;
-    await prisma.web_requisicao.update({
+    await prisma.wEB_REQUISICAO.update({
       where: { ID_REQUISICAO: Number(id_requisicao) },
       data: { custo_total_frete },
     });
@@ -101,18 +101,22 @@ class QuoteService {
         where: { id_cotacao },
       });
       //items da requsição que tem items cotados
-      const quotedReqItems = await tx.web_requisicao_items.findMany({
-        where: { id_item_cotacao: { in: quoteItems.map((item) => item.id_item_cotacao) } },
+      const quotedReqItems = await tx.wEB_REQUISICAO_ITEMS.findMany({
+        where: {
+          id_item_cotacao: {
+            in: quoteItems.map((item) => item.id_item_cotacao),
+          },
+        },
       });
       for (const item of quotedReqItems) {
-          await tx.web_requisicao_items.update({ 
+        await tx.wEB_REQUISICAO_ITEMS.update({
           where: { id_item_requisicao: item.id_item_requisicao },
           data: { id_item_cotacao: null },
         });
       }
-      const updatedReqItems = await tx.web_requisicao_items.findMany({
-        where: {id_requisicao: quote.id_requisicao},
-      })
+      const updatedReqItems = await tx.wEB_REQUISICAO_ITEMS.findMany({
+        where: { id_requisicao: quote.id_requisicao },
+      });
       await RequisitionItemService.updateRequisitionWithNewTotals(
         quote.id_requisicao,
         updatedReqItems,

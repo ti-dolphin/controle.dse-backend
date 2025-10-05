@@ -7,6 +7,7 @@ class RequisitionFileController {
             const files = await RequisitionFileService.getMany(params);
             res.json(files);
         } catch (error) {
+            console.log("error", error)
             res.status(500).json({ error: error.message });
         }
     }

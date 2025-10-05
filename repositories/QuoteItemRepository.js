@@ -6,7 +6,7 @@ class QuoteItemRepository {
   include() {
     return {
       produtos: true,
-      web_requisicao_items: {
+      WEB_REQUISICAO_ITEMS: {
         include: {
           produtos: true,
         },
@@ -17,13 +17,13 @@ class QuoteItemRepository {
   format(item) {
     const formattedItem = {
       ...item,
-      produto: item.web_requisicao_items?.produtos,
-      produto_descricao: item.web_requisicao_items?.produtos?.descricao,
-      produto_codigo: item.web_requisicao_items?.produtos?.codigo,
-      produto_unidade: item.web_requisicao_items?.produtos?.unidade,
+      produto: item.WEB_REQUISICAO_ITEMS?.produtos,
+      produto_descricao: item.WEB_REQUISICAO_ITEMS?.produtos?.descricao,
+      produto_codigo: item.WEB_REQUISICAO_ITEMS?.produtos?.codigo,
+      produto_unidade: item.WEB_REQUISICAO_ITEMS?.produtos?.unidade,
     };
     delete formattedItem.produtos;
-    delete formattedItem.web_requisicao_items;
+    delete formattedItem.WEB_REQUISICAO_ITEMS;
     return formattedItem;
   }
 
@@ -35,17 +35,17 @@ class QuoteItemRepository {
     const generalFilters = {
       OR: [
         {
-          web_requisicao_items: {
+          WEB_REQUISICAO_ITEMS: {
             produtos: { descricao: { contains: searchTerm } },
           },
         },
         {
-          web_requisicao_items: {
+          WEB_REQUISICAO_ITEMS: {
             produtos: { codigo: { contains: searchTerm } },
           },
         },
         {
-          web_requisicao_items: {
+          WEB_REQUISICAO_ITEMS: {
             produtos: { unidade: { contains: searchTerm } },
           },
         },

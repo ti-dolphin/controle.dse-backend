@@ -26,23 +26,28 @@ class QuoteItemService {
 
   async update(id_item_cotacao, data) {
     return await prisma.$transaction(async (tx) => {
+
+      
       data.subtotal = await this.calculateSubTotal(id_item_cotacao, data);
+
+
+      console.log("data: ", data)
       await this.calculateItemsTotal(id_item_cotacao, data);
       const updatedItem = await tx.web_items_cotacao.update({
         where: { id_item_cotacao: Number(id_item_cotacao) },
         data,
         include: QuoteItemRepository.include(),
       }).then((item) => QuoteItemRepository.format(item));
-      const req = await tx.web_requisicao.findFirst({
+      const req = await tx.wEB_REQUISICAO.findFirst({
         where: {
-          web_requisicao_items: {
+          WEB_REQUISICAO_ITEMS: {
             some: {
               id_item_requisicao: Number(updatedItem.id_item_requisicao),
             },
           },
         },
         include: {
-          web_requisicao_items: true,
+          WEB_REQUISICAO_ITEMS: true,
         },
       });
       await RequisitionUtils.updateRequisitionWithNewTotals(

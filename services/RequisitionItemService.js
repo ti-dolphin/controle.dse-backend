@@ -56,7 +56,7 @@ class RequisitionItemService {
     try{ 
         const { updatedItems, updatedRequisition } = await prisma.$transaction(
           async (tx) => {
-            const requisitionItems = await tx.web_requisicao_items.findMany({
+            const requisitionItems = await tx.wEB_REQUISICAO_ITEMS.findMany({
               where: { id_requisicao: Number(id_requisicao) },
             });
             const updatedItems = [];
@@ -67,8 +67,7 @@ class RequisitionItemService {
                 ? Number(quoteItemsSelectedMap[reqItem.id_item_requisicao])
                 : null;
 
-              const updatedItem = await tx.web_requisicao_items
-                .update({
+              const updatedItem = await tx.wEB_REQUISICAO_ITEMS.update({
                   where: { id_item_requisicao: reqItem.id_item_requisicao },
                   data: { id_item_cotacao },
                   include: RequisitionItemRepository.include()
@@ -81,7 +80,7 @@ class RequisitionItemService {
                 updatedItems,
                 tx
               );
-            const updatedRequisition = await tx.web_requisicao
+            const updatedRequisition = await tx.wEB_REQUISICAO
               .findUnique({
                 where: { ID_REQUISICAO: Number(id_requisicao) },
                 include: RequisitionRepository.buildInclude(),
@@ -90,7 +89,6 @@ class RequisitionItemService {
             return { updatedItems, updatedRequisition };
           }
         );
-        console.log("updatedItems", updatedItems);
         return { updatedItems, updatedRequisition };
     }catch(e){ 
       console.log(e);
@@ -101,7 +99,7 @@ class RequisitionItemService {
   async calculateItemsTotal(quoteItemsSelected, requisitionItems, tx) {
    const requisitionId = requisitionItems[0].id_requisicao;
     if (!quoteItemsSelected || !quoteItemsSelected.length) {
-      await tx.web_requisicao.update({
+      await tx.wEB_REQUISICAO.update({
         where: { ID_REQUISICAO: Number(requisitionId) },
         data: { custo_total_itens: 0 },
       });
@@ -125,7 +123,7 @@ class RequisitionItemService {
       }
     });
 
-    await tx.web_requisicao.update({
+    await tx.wEB_REQUISICAO.update({
       where: { ID_REQUISICAO: Number(requisitionId) },
       data: { custo_total_itens: itemsTotal },
     });
@@ -134,7 +132,7 @@ class RequisitionItemService {
 
   async calculateShippingTotal(quoteItemsSelected, id_requisicao, tx) {
     if (!quoteItemsSelected || !quoteItemsSelected.length) {
-      await tx.web_requisicao.update({
+      await tx.wEB_REQUISICAO.update({
         where: { ID_REQUISICAO: Number(id_requisicao) },
         data: { custo_total_frete: 0 },
       });
@@ -150,7 +148,7 @@ class RequisitionItemService {
       .map((quote) => Number(quote.valor_frete) || 0)
       .reduce((acc, curr) => acc + curr, 0);
 
-    await tx.web_requisicao.update({
+    await tx.wEB_REQUISICAO.update({
       where: { ID_REQUISICAO: Number(id_requisicao) },
       data: { custo_total_frete: shippingTotal },
     });
@@ -204,13 +202,13 @@ class RequisitionItemService {
       const newQty = Number(item.quantidade) - Number(childReqItem.quantidade);
       if (newQty === 0) {
         updates.push(
-          tx.web_requisicao_items.delete({
+          tx.wEB_REQUISICAO_ITEMS.delete({
             where: { id_item_requisicao: item.id_item_requisicao },
           })
         );
         continue;
       }
-      const updatedItem = await tx.web_requisicao_items.update({
+      const updatedItem = await tx.wEB_REQUISICAO_ITEMS.update({
         where: { id_item_requisicao: item.id_item_requisicao },
         data: { quantidade: newQty },
       });
@@ -247,7 +245,7 @@ class RequisitionItemService {
           id_item_requisicao : item.id_item_requisicao
         }
       });
-      const newItem = await tx.web_requisicao_items.create({
+      const newItem = await tx.wEB_REQUISICAO_ITEMS.create({
         data: {
           ...rest,
           quantidade: Number(rest.quantidade),
@@ -281,7 +279,7 @@ class RequisitionItemService {
       }
       const newCotId = oldQuoteItemToNewId.get(newItem.id_item_cotacao);
       if (newCotId) {
-        const updatedItem = await tx.web_requisicao_items.update({
+        const updatedItem = await tx.wEB_REQUISICAO_ITEMS.update({
           where: { id_item_requisicao: newItem.id_item_requisicao },
           data: { id_item_cotacao: newCotId },
         });

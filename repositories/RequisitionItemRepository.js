@@ -15,7 +15,7 @@ class RequistionItemRepository {
           }
         : {};
 
-    const items = await prisma.web_requisicao_items.findMany({
+    const items = await prisma.wEB_REQUISICAO_ITEMS.findMany({
       where: {
         ...params,
         ...generalFilters,
@@ -29,14 +29,14 @@ class RequistionItemRepository {
   }
 
   async getById(id_item_requisicao) {
-    return prisma.web_requisicao_items.findUnique({
+    return prisma.wEB_REQUISICAO_ITEMS.findUnique({
       where: { id_item_requisicao },
       include: this.include(),
     }).then(this.format);
   }
 
   async create(data) {
-    return prisma.web_requisicao_items.create({
+    return prisma.wEB_REQUISICAO_ITEMS.create({
       data,
     });
   }
@@ -54,7 +54,7 @@ class RequistionItemRepository {
       };
     });
 
-    await prisma.web_requisicao_items.createMany({
+    await prisma.wEB_REQUISICAO_ITEMS.createMany({
       data: items,
     });
 
@@ -66,7 +66,7 @@ class RequistionItemRepository {
   }
 
   async update(id_item_requisicao, data) {
-    return prisma.web_requisicao_items.update({
+    return prisma.wEB_REQUISICAO_ITEMS.update({
       where: { id_item_requisicao },
       data,
       include: this.include(),
@@ -74,7 +74,7 @@ class RequistionItemRepository {
   }
 
   async updateShippingDate(ids, date) {
-    await prisma.web_requisicao_items.updateMany({
+    await prisma.wEB_REQUISICAO_ITEMS.updateMany({
       where: { id_item_requisicao: { in: ids } },
       data: { data_entrega: date },
     });
@@ -83,7 +83,7 @@ class RequistionItemRepository {
   }
 
   async updateOCS(ids, oc) {
-    await prisma.web_requisicao_items.updateMany({
+    await prisma.wEB_REQUISICAO_ITEMS.updateMany({
       where: { id_item_requisicao: { in: ids } },
       data: { oc },
     });
@@ -92,7 +92,7 @@ class RequistionItemRepository {
   }
 
   async delete(id_item_requisicao) {
-    return prisma.web_requisicao_items.delete({
+    return prisma.wEB_REQUISICAO_ITEMS.delete({
       where: { id_item_requisicao },
     });
   }

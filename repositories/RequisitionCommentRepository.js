@@ -6,13 +6,15 @@ class RequisitionCommentRepository {
     data.data_criacao = getNowISODate();
     data.data_alteracao = getNowISODate();
     return prisma.web_comentarios_requsicao.create({ data,
-      include: this.include(),
+      include:  {
+        ...this.include()
+      },
      }).then((comment) => this.format(comment));
   }
 
   include(){ 
     return {
-      pessoa: {
+      PESSOA: {
         select: {
           CODPESSOA: true,
           NOME: true
@@ -30,7 +32,7 @@ class RequisitionCommentRepository {
       data_criacao: comment.data_criacao,
       data_alteracao: comment.data_alteracao,
       descricao: comment.descricao,
-      pessoa_criado_por: comment.pessoa,
+      pessoa_criado_por: comment.PESSOA,
       requisicao: comment.web_requisicao,
     };
   }

@@ -25,7 +25,13 @@ class MovementationRepository {
           { web_patrimonio: { descricao: { contains: search } } },
           { pessoa: { NOME: { contains: search } } },
           { projetos: { DESCRICAO: { contains: search } } },
-          { projetos: { pessoa: { NOME: { contains: search } } } },
+          {
+            projetos: {
+              PESSOA_PROJETOS_CODGERENTEToPESSOA: {
+                NOME: { contains: search },
+              },
+            },
+          },
         ],
       };
     }
@@ -34,17 +40,18 @@ class MovementationRepository {
     }
     let movs = await prisma.web_movimentacao_patrimonio
       .findMany({
-        where: {
+        // where: {
 
-          AND: [searchFilter, composedFilters],
-        },
+        //   AND: [searchFilter, composedFilters],
+        // },
         include: this._includeObject(),
         orderBy: [
-          { id_patrimonio: "asc" }, // Ensure consistent grouping
-          { data: "desc" }, // Sort by date to get the most recent
+        { data: 'desc' },          // Primary: Most recent date first (globally)
+      { id_movimentacao: 'desc' }, // Secondary: For ties on date, take the highest ID (most recent insertion)
+      // Remove { id_patrimonio: "desc" } unless you have a specific reason for sorting patrimonios when dates/IDs tie
         ],
       })
-      .then((movimentacoes) => movimentacoes.map(this._formatMovimentacao));
+     
 
     if (from === "patrimonios") {
       const mostRecenetMovByPatrimonyId = new Map();
@@ -54,6 +61,20 @@ class MovementationRepository {
         }
       });
       movs = Array.from(mostRecenetMovByPatrimonyId.values());
+      movs = await prisma.web_movimentacao_patrimonio
+        .findMany({
+          where: {
+            id_movimentacao: {
+              in: movs.map((mov) => mov.id_movimentacao),
+            },
+            AND: [searchFilter, composedFilters],
+          },
+          include: this._includeObject(),
+          orderBy: [
+            {id_patrimonio: 'desc'}
+          ]
+        })
+        .then((movimentacoes) => movimentacoes.map(this._formatMovimentacao));;
     }
 
     if(from === 'movimentacoes') {
@@ -93,7 +114,7 @@ class MovementationRepository {
       },
       projetos: {
         include: {
-          pessoa: {
+          PESSOA_PROJETOS_CODGERENTEToPESSOA: {
             select: {
               CODPESSOA: true,
               NOME: true,
@@ -115,7 +136,7 @@ class MovementationRepository {
       ...movimentacao,
       responsavel: movimentacao.pessoa,
       projeto: movimentacao.projetos,
-      projeto_descricao : movimentacao.projetos.DESCRICAO,
+      projeto_descricao: movimentacao.projetos.DESCRICAO,
       patrimonio: movimentacao.web_patrimonio,
       patrimonio_tipo: movimentacao.web_patrimonio.web_tipo_patrimonio,
       patrimonio_nserie: movimentacao.web_patrimonio.nserie,
@@ -125,13 +146,11 @@ class MovementationRepository {
         movimentacao.web_patrimonio.web_tipo_patrimonio.nome_tipo,
       patrimonio_valor_compra: movimentacao.web_patrimonio.valor_compra,
       responsavel_nome: movimentacao.pessoa.NOME,
-
-      gerente: movimentacao.projetos.pessoa,
+      gerente: movimentacao.projetos.PESSOA_PROJETOS_CODGERENTEToPESSOA,
     };
     delete formattedMovimentacao.pessoa;
     delete formattedMovimentacao.projetos;
     delete formattedMovimentacao.web_patrimonio;
-    delete formattedMovimentacao.projeto.pessoa;
     return formattedMovimentacao;
   }
 }

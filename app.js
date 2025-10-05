@@ -141,8 +141,8 @@ app.use(function(err, req, res, next) {
 });
 
 // Schedulers (descomentando ativa)
-// OpportunityScheduler.startOpportunitiesVerification();
-// PatrimonyScheduler.startEmailSchedule();
-// PatrimonyScheduler.startchecklistVerification();
+OpportunityScheduler.startOpportunitiesVerification();
+PatrimonyScheduler.startEmailSchedule();
+PatrimonyScheduler.startchecklistVerification();
 
 module.exports = app;

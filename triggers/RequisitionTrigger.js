@@ -21,7 +21,7 @@ class RequisitionTrigger {
     try {
       const { ID_REQUISICAO } = requisition;
       return prisma.$transaction(async (tx) => {
-        const updatedReq = await tx.web_requisicao.update({
+        const updatedReq = await tx.wEB_REQUISICAO.update({
           where: { ID_REQUISICAO },
           data: {
             id_req_original: ID_REQUISICAO,
@@ -62,7 +62,7 @@ class RequisitionTrigger {
         newStatusId,
         tx
       );
-      const items = await tx.web_requisicao_items.findMany({
+      const items = await tx.wEB_REQUISICAO_ITEMS.findMany({
         where: { id_requisicao: req.ID_REQUISICAO },
       });
        const itemIdToItem = new Map();
@@ -86,7 +86,7 @@ class RequisitionTrigger {
             },
           });
           
-          const updatedReq = await tx.web_requisicao.update({
+          const updatedReq = await tx.wEB_REQUISICAO.update({
             where: { ID_REQUISICAO: req.ID_REQUISICAO },
             data: {
               id_escopo_requisicao: 1,
@@ -131,7 +131,7 @@ class RequisitionTrigger {
           updatedProducts.push(updatedProd);
         }
 
-        const updetedReq = await tx.web_requisicao
+        const updetedReq = await tx.wEB_REQUISICAO
           .update({
             where: { ID_REQUISICAO: req.ID_REQUISICAO },
             data: {
@@ -152,7 +152,7 @@ class RequisitionTrigger {
   }
 
   static async createCopyOfRequisitionWithChilds(req, tx) {
-    const newReq = await tx.web_requisicao.create({
+    const newReq = await tx.wEB_REQUISICAO.create({
       data: {
         ID_RESPONSAVEL: req.ID_RESPONSAVEL,
         id_status_requisicao: req.id_status_requisicao,
@@ -225,7 +225,7 @@ class RequisitionTrigger {
   }
 
   static async reqInStockScope(id_requisicao, tx) {
-    const reqsInStockScope = await tx.web_requisicao
+    const reqsInStockScope = await tx.wEB_REQUISICAO
       .findMany({
         where: {
           id_escopo_requisicao: 1,
@@ -236,7 +236,7 @@ class RequisitionTrigger {
   }
 
   static async subtractDeletedReqItemsQuantityFromReserves(id_requisicao, tx) {
-    const items = await tx.web_requisicao_items
+    const items = await tx.wEB_REQUISICAO_ITEMS
       .findMany({
         where: { id_requisicao: id_requisicao },
         include: {

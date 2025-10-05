@@ -8,7 +8,7 @@ class RequisitionFileRepository {
           .findMany({
             where,
             include: {
-              pessoa: {
+              PESSOA: {
                 select: {
                   CODPESSOA: true,
                   NOME: true,
@@ -20,9 +20,9 @@ class RequisitionFileRepository {
             anexos.map((anexo) => {
               const formattedAnexo = {
                 ...anexo,
-                pessoa_criado_por: anexo.pessoa,
+                pessoa_criado_por: anexo.PESSOA,
               };
-              delete formattedAnexo.pessoa;
+              delete formattedAnexo.PESSOA;
               return formattedAnexo;
             })
           );

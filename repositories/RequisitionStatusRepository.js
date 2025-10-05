@@ -7,7 +7,7 @@ class RequisitionStatusRepository {
 
   async getMany(params) {
     const {id_requisicao} = params;
-    const req = await prisma.web_requisicao.findFirst({
+    const req = await prisma.wEB_REQUISICAO.findFirst({
       where: { ID_REQUISICAO: Number(id_requisicao) },
     });
 
@@ -86,7 +86,7 @@ class RequisitionStatusRepository {
     });
   }
   async updateRequisitionStatus(id_status_requisicao, id_requisicao) {
-    return prisma.web_requisicao.update({
+    return prisma.wEB_REQUISICAO.update({
       where: { id_requisicao },
       data: { id_status_requisicao },
     });

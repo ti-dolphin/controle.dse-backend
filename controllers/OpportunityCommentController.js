@@ -36,7 +36,7 @@ class OpportunityCommentController {
       );
       res.status(201).json(opportunityComment);
     } catch (error) {
-      ;
+      console.log("error create comentário os: ", error)
       res.status(500).json({ message: "Erro ao criar comentário da oportunidade" });
     }
   }

@@ -7,43 +7,48 @@ const { getNowISODate, formatToCurrency } = require("../utils");
 class OpportunityRepository {
   static include() {
     return {
-      projetos: {
+      PROJETOS: {
         include: {
-          pessoa: true,
+          PESSOA_PROJETOS_CODGERENTEToPESSOA: true,
         },
       },
-      pessoa: {
+      PESSOA: {
         select: {
           NOME: true,
           CODPESSOA: true,
           EMAIL: true,
         },
       },
-      adicionais: true,
-      cliente: true,
-      status: true,
+      ADICIONAIS: true,
+      CLIENTE: true,
+      STATUS: true,
     };
   }
 
   static format = (opportunity) => {
     const formattedOpp = {
       ...opportunity,
-      projeto: opportunity.projetos,
-      gerente: opportunity.projetos.pessoa,
-      responsavel: opportunity.pessoa,
-      adicional: opportunity.adicionais,
-      situacao: this.getSituationByInteractionDate(opportunity ,opportunity.DATAINTERACAO),
+      projeto: opportunity.PROJETOS,
+      gerente: opportunity.PROJETOS.PESSOA_PROJETOS_CODGERENTEToPESSOA,
+      cliente : opportunity.CLIENTE,
+      responsavel: opportunity.PESSOA,
+      adicional: opportunity.ADICIONAIS,
+      status: opportunity.STATUS,
+      situacao: this.getSituationByInteractionDate(
+        opportunity,
+        opportunity.DATAINTERACAO
+      ),
       VALORFATDOLPHIN_FORMATTED: formatToCurrency(opportunity.VALORFATDOLPHIN),
       VALORFATDIRETO_FORMATTED: formatToCurrency(opportunity.VALORFATDIRETO),
       VALORTOTAL_FORMATTED: formatToCurrency(opportunity.VALOR_TOTAL),
     };
-    delete formattedOpp.adicionais;
-    delete formattedOpp.projetos;
-    delete formattedOpp.pessoa;
+    delete formattedOpp.ADICIONAIS;
+    delete formattedOpp.PROJETOS;
+    delete formattedOpp.PESSOA;
     return formattedOpp;
   };
   static async getById(CODOS) {
-    return await prisma.ordemservico
+    return await prisma.oRDEMSERVICO
       .findUnique({
         where: { CODOS },
         include: this.include(),
@@ -52,7 +57,7 @@ class OpportunityRepository {
   }
 
   static async getStatuses() {
-    return await prisma.status.findMany({
+    return await prisma.sTATUS.findMany({
       where: {
         ATIVO: true,
       },
@@ -70,32 +75,34 @@ class OpportunityRepository {
     let total = 0;
     let totalFatDolphin = 0;
     let totalFatDireto = 0;
-    const opps = await prisma.ordemservico
+    const opps = await prisma.oRDEMSERVICO
       .findMany({
         where: {
           AND: [
             { CODTIPOOS: 21 },
             {
-              projetos: {
+              PROJETOS: {
                 ATIVO: 1,
                 ID: UserService.isAdmin(user)
                   ? {}
                   : { in: projectsFollowedByUser },
               },
             },
-            { status: { ACAO: finalizados ? 1 : 0 } },
+            { STATUS: { ACAO: finalizados ? 1 : 0 } },
             searchFilter,
             composedFilters,
           ],
         },
         include: this.include(),
       })
-      .then((opps) => opps.map((opportunity) => { 
-        total += Number(opportunity.VALOR_TOTAL);
-        totalFatDolphin += Number(opportunity.VALORFATDOLPHIN);
-        totalFatDireto += Number(opportunity.VALORFATDIRETO);
-        return  this.format(opportunity);
-      }));
+      .then((opps) =>
+        opps.map((opportunity) => {
+          total += Number(opportunity.VALOR_TOTAL);
+          totalFatDolphin += Number(opportunity.VALORFATDOLPHIN);
+          totalFatDireto += Number(opportunity.VALORFATDIRETO);
+          return this.format(opportunity);
+        })
+      );
 
     return {
       opps,
@@ -110,7 +117,7 @@ class OpportunityRepository {
     payload.VALOR_COMISSAO = 0;
     payload.id_motivo_perdido = 1;
     console.log('payload', payload);
-    const customer = await tx.cliente.findFirst({
+    const customer = await tx.cLIENTE.findFirst({
       where: {
         CODCLIENTE: payload.FK_CODCLIENTE,
       },
@@ -120,7 +127,7 @@ class OpportunityRepository {
     });
     console.log("customer", customer);
 
-    return await tx.ordemservico
+    return await tx.oRDEMSERVICO
       .create({
         data: {
           ...payload,
@@ -132,7 +139,7 @@ class OpportunityRepository {
   }
 
   static async update(CODOS, payload) {
-    return await prisma.ordemservico
+    return await prisma.oRDEMSERVICO
       .update({
         where: { CODOS },
         data: payload,
@@ -142,22 +149,22 @@ class OpportunityRepository {
   }
 
   static async delete(CODOS, tx) {
-    return await tx.ordemservico.delete({
+    return await tx.oRDEMSERVICO.delete({
       where: { CODOS },
     });
   }
 
   static async getExpiredOpps() {
     const now = getNowISODate();
-    const opps = await prisma.ordemservico
+    const opps = await prisma.oRDEMSERVICO
       .findMany({
         where: {
           CODTIPOOS: 21,
-          status: { ACAO: 0 },
+          STATUS: { ACAO: 0 },
           DATAINTERACAO: {
             lt: now,
           },
-          projetos: {
+          PROJETOS: {
             ATIVO: 1,
           },
         },
@@ -173,7 +180,7 @@ class OpportunityRepository {
     const fiveDaysFromNow = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
     const expired = dateReceived < now;
     const toExpire = dateReceived > now && dateReceived < fiveDaysFromNow;
-    const closed = opp.status.ACAO === 1;
+    const closed = opp.STATUS.ACAO === 1;
     if(closed) return "fechada";
     if (expired) return "expirada";
     if (toExpire) return "expirando";
@@ -184,16 +191,16 @@ class OpportunityRepository {
     //wil expire in the next 5 days
     const now = new Date();
     const fiveDaysFromNow = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
-    const opps = await prisma.ordemservico
+    const opps = await prisma.oRDEMSERVICO
       .findMany({
         where: {
           CODTIPOOS: 21,
-          status: { ACAO: 0 },
+          STATUS: { ACAO: 0 },
           DATAINTERACAO: {
             gte: now.toISOString(),
             lte: fiveDaysFromNow.toISOString(),
           },
-          projetos: {
+          PROJETOS: {
             ATIVO: 1,
           },
         },
@@ -205,12 +212,11 @@ class OpportunityRepository {
 
   static buildSearchFilters(searchTerm) {
     const searchFilters = [
-      { projetos: { DESCRICAO: { contains: searchTerm } } },
-      { projetos: { pessoa: { NOME: { contains: searchTerm } } } },
-      { status: { NOME: { contains: searchTerm } } },
-      { cliente: { NOMEFANTASIA: { contains: searchTerm } } },
+      { PROJETOS: { DESCRICAO: { contains: searchTerm } } },
+      { STATUS: { NOME: { contains: searchTerm } } },
+      { CLIENTE: { NOMEFANTASIA: { contains: searchTerm } } },
       { NOME: { contains: searchTerm } },
-      { pessoa: { NOME: { contains: searchTerm } } },
+      { PESSOA: { NOME: { contains: searchTerm } } },
     ];
 
     return {
@@ -235,7 +241,7 @@ class OpportunityRepository {
         console.log(value);
         return value !== null && value !== '0' && value !== ''
           ? {
-              projetos: {
+              PROJETOS: {
                 ID: {
                   equals: Number(value),
                 },
@@ -244,10 +250,10 @@ class OpportunityRepository {
           : {};
       },
       NOME: (value) => (value ? { NOME: { contains: value } } : {}),
-      cliente: (value) => (value ? { cliente: { NOMEFANTASIA: { contains: value } } } : {}),
-      projeto: (value) => (value ? { projetos: { DESCRICAO: { contains: value } } } : {}),
-      status: (value) => (value ? { status: { NOME: { contains: value } } } : {}),
-      responsavel: (value) => (value ? { pessoa: { NOME: { contains: value } } } : {}),
+      cliente: (value) => (value ? { CLIENTE: { NOMEFANTASIA: { contains: value } } } : {}),
+      projeto: (value) => (value ? { PROJETOS: { DESCRICAO: { contains: value } } } : {}),
+      status: (value) => (value ? { STATUS: { NOME: { contains: value } } } : {}),
+      responsavel: (value) => (value ? { PESSOA: { NOME: { contains: value } } } : {}),
       DATASOLICITACAO_FROM: (value) => {
         return value
           ? {
@@ -323,7 +329,7 @@ class OpportunityRepository {
       adicional: (value) => {
         return value !== null && value !== '' && value !== '0'
           ? {
-              adicionais: {
+              ADICIONAIS: {
                 NUMERO: {
                   equals: Number(value),
                 },

@@ -52,7 +52,7 @@ class OpportunityService {
 
   async delete(CODOS) {
     return await prisma.$transaction(async (tx) => {
-      const opp = await tx.ordemservico.findUnique({
+      const opp = await tx.oRDEMSERVICO.findUnique({
         where: {
           CODOS,
         },

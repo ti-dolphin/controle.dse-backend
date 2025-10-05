@@ -12,7 +12,7 @@ class OpportunityTrigger {
         tx
       );
       data.ID_ADICIONAL = newAdicional.ID;
-      return await OpportunityRepository.create(data, tx);
+      return data;
     }
     let newProject = {
       CODGERENTE: 9999,
@@ -27,13 +27,13 @@ class OpportunityTrigger {
   };
 
   static afterDelete = async (ID_ADICIONAL, tx) => {
-    const adicional = await tx.adicionais.findUnique({
+    const adicional = await tx.aDICIONAIS.findUnique({
       where: {
         ID: ID_ADICIONAL
       },
     });
     if (adicional) {
-      await tx.adicionais.delete({
+      await tx.aDICIONAIS.delete({
         where: {
           ID: adicional.ID,
         },
@@ -51,7 +51,7 @@ class OpportunityTrigger {
   };
 
   static createAdicional = async (ID_PROJETO, tx) => {
-    const lastAdicional = await tx.adicionais.findFirst({
+    const lastAdicional = await tx.aDICIONAIS.findFirst({
       where: {
         ID: ID_PROJETO,
       },
@@ -61,7 +61,7 @@ class OpportunityTrigger {
     });
     if (lastAdicional) {
       const { NUMERO } = lastAdicional;
-      const newAdicional = await tx.adicionais.create({
+      const newAdicional = await tx.aDICIONAIS.create({
         data: {
           ID_PROJETO,
           NUMERO: NUMERO + 1,
@@ -69,7 +69,7 @@ class OpportunityTrigger {
       });
       return newAdicional;
     }
-    const newAdicional = await tx.adicionais.create({
+    const newAdicional = await tx.aDICIONAIS.create({
       data: {
         ID_PROJETO,
         NUMERO: 0,

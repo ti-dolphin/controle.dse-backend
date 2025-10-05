@@ -14,6 +14,7 @@ class RequisitionItemController {
       );
       res.json(items);
     } catch (err) {
+      console.log("error: ", err)
       res
         .status(500)
         .json({ error: "Erro interno do servidor: " + err.message });
@@ -89,6 +90,7 @@ class RequisitionItemController {
 
       res.status(201).json(newItemIds);
     } catch (e) {
+      console.log("erro - createMany: ", e.message)
       res.status(400).json({ error: e.message });
     }
   };

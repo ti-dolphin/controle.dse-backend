@@ -119,7 +119,7 @@ class RequisitionService {
   }
 
   async createCopy(req, tx) {
-    return await tx.web_requisicao.create({
+    return await tx.wEB_REQUISICAO.create({
       data: {
         ID_RESPONSAVEL: req.ID_RESPONSAVEL,
         id_status_requisicao: req.id_status_requisicao,
@@ -134,91 +134,95 @@ class RequisitionService {
   }
 
   async createFromOther(id_requisicao, items) {
-    return prisma.$transaction(async (tx) => {
-      // Validação de quantidades
-      const originalItems = await tx.web_requisicao_items.findMany({
-        where: { id_requisicao: Number(id_requisicao) },
-      });
-      await this.validateCreateCopy(id_requisicao, items, tx, originalItems);
-      // Pegando requisição original
-      const req = await this.getById(id_requisicao);
-      // Criando nova requisição
-      const newReq = await this.createCopy(req, tx);
-      // Clonando cotações
-      const { newQuoteByOldQuoteId, quoteItems } =
-        await QuoteService.cloneQuotes(
+    return prisma.$transaction(
+      async (tx) => {
+        // Validação de quantidades
+        const originalItems = await tx.wEB_REQUISICAO_ITEMS.findMany({
+          where: { id_requisicao: Number(id_requisicao) },
+        });
+        await this.validateCreateCopy(id_requisicao, items, tx, originalItems);
+        // Pegando requisição original
+        const req = await this.getById(id_requisicao);
+        // Criando nova requisição
+        const newReq = await this.createCopy(req, tx);
+        // Clonando cotações
+        const { newQuoteByOldQuoteId, quoteItems } =
+          await QuoteService.cloneQuotes(
+            req.ID_REQUISICAO,
+            newReq.ID_REQUISICAO,
+            tx
+          );
+
+        // Atualizando ou excluindo itens da requisição original
+        const updatedOriginalItems =
+          await RequisitionItemService.distributeQuantities(
+            originalItems,
+            items,
+            tx
+          );
+        // 4. Criando novos itens na requisição filha e mapeando IDs
+        const { oldReqItemToNewId, newReqItems } =
+          await RequisitionItemService.createChildItems(
+            items,
+            newReq.ID_REQUISICAO,
+            tx
+          );
+        // 5. Comentários
+        await RequisitionCommentService.cloneComments(
+          req,
+          newReq.ID_REQUISICAO,
+          tx
+        );
+        // 6. Alterações de status
+        await RequisitionStatusService.cloneStatusChanges(
           req.ID_REQUISICAO,
           newReq.ID_REQUISICAO,
           tx
         );
-
-      // Atualizando ou excluindo itens da requisição original
-      const updatedOriginalItems =
-        await RequisitionItemService.distributeQuantities(
-          originalItems,
-          items,
-          tx
-        );
-      // 4. Criando novos itens na requisição filha e mapeando IDs
-      const { oldReqItemToNewId, newReqItems } = await RequisitionItemService.createChildItems(
-          items,
+        // 7. Anexos
+        await RequisitionAttachmentService.cloneAttachments(
+          req.ID_REQUISICAO,
           newReq.ID_REQUISICAO,
           tx
         );
-      // 5. Comentários
-      await RequisitionCommentService.cloneComments(
-        req,
-        newReq.ID_REQUISICAO,
-        tx
-      );
-      // 6. Alterações de status
-      await RequisitionStatusService.cloneStatusChanges(
-        req.ID_REQUISICAO,
-        newReq.ID_REQUISICAO,
-        tx
-      );
-      // 7. Anexos
-      await RequisitionAttachmentService.cloneAttachments(
-        req.ID_REQUISICAO,
-        newReq.ID_REQUISICAO,
-        tx
-      );
-      // 8. Clonear itens de cotação
-      const { oldQuoteItemToNewId } = await QuoteItemService.cloneQuoteItems(
-        quoteItems,
-        newQuoteByOldQuoteId,
-        oldReqItemToNewId,
-        tx
-      );
-      // 9. Atualizar id_item_cotacao nos novos itens de requisição
-      const newItemsUpdated = await RequisitionItemService.updateQuoteItemIds(
-        newReqItems,
-        oldQuoteItemToNewId,
-        tx
-      );
-      // Step 10: atualiza novas cotações e nova requisição com novos totais
-      console.log("atualizando total novo");
-      await RequisitionItemService.updateRequisitionWithNewTotals(
-        newReq.ID_REQUISICAO,
-        newItemsUpdated,
-        tx
-      );
-      // Step 11: atualiza cotação e requisição original com novos totais
-      console.log("atualizando total original");
-      await RequisitionItemService.updateRequisitionWithNewTotals(
-        req.ID_REQUISICAO,
-        updatedOriginalItems,
-        tx
-      );
-      //atualizar nova requisição com id da requisição original
-      await tx.web_requisicao.update({
-        where: { ID_REQUISICAO: newReq.ID_REQUISICAO },
-        data: { id_req_original: req.ID_REQUISICAO },
-      });
-      return newReq;
-    }, { 
-      timeout: 120000
-    });
+        // 8. Clonear itens de cotação
+        const { oldQuoteItemToNewId } = await QuoteItemService.cloneQuoteItems(
+          quoteItems,
+          newQuoteByOldQuoteId,
+          oldReqItemToNewId,
+          tx
+        );
+        // 9. Atualizar id_item_cotacao nos novos itens de requisição
+        const newItemsUpdated = await RequisitionItemService.updateQuoteItemIds(
+          newReqItems,
+          oldQuoteItemToNewId,
+          tx
+        );
+        // Step 10: atualiza novas cotações e nova requisição com novos totais
+        console.log("atualizando total novo");
+        await RequisitionItemService.updateRequisitionWithNewTotals(
+          newReq.ID_REQUISICAO,
+          newItemsUpdated,
+          tx
+        );
+        // Step 11: atualiza cotação e requisição original com novos totais
+        console.log("atualizando total original");
+        await RequisitionItemService.updateRequisitionWithNewTotals(
+          req.ID_REQUISICAO,
+          updatedOriginalItems,
+          tx
+        );
+        //atualizar nova requisição com id da requisição original
+        await tx.wEB_REQUISICAO.update({
+          where: { ID_REQUISICAO: newReq.ID_REQUISICAO },
+          data: { id_req_original: req.ID_REQUISICAO },
+        });
+        return newReq;
+      },
+      {
+        timeout: 120000,
+      }
+    );
   }
 
   async update(id_requisicao, data) {
@@ -258,7 +262,7 @@ class RequisitionService {
 
   //    //os items irão chegar com o campo quantidade_atendida preenchido
   //   return await prisma.$transaction(async (tx) => {
-  //        const req = await tx.web_requisicao.findFirst({
+  //        const req = await tx.wEB_REQUISICAO.findFirst({
   //          where: { ID_REQUISICAO: Number(id) },
   //        });
   //        //pega status 'requisitado'
@@ -280,7 +284,7 @@ class RequisitionService {
   //                  nome: "Em Separação",
   //                },
   //              });
-  //            const updatedReq = await tx.web_requisicao
+  //            const updatedReq = await tx.wEB_REQUISICAO
   //              .update({
   //                where: { ID_REQUISICAO: id },
   //                data: {
@@ -305,7 +309,7 @@ class RequisitionService {
   //            ...rest
   //          } = req;
   //          //criando nova requsiição de comprar e clonando registros filhos
-  //          const newComprasReq = await tx.web_requisicao.create({
+  //          const newComprasReq = await tx.wEB_REQUISICAO.create({
   //            data: {
   //              ...rest,
   //              id_escopo_requisicao: 2,
@@ -329,7 +333,7 @@ class RequisitionService {
   //                item,
   //                tx
   //              );
-  //              await tx.web_requisicao_items.delete({  where: { id_item_requisicao: item.id_item_requisicao }});
+  //              await tx.wEB_REQUISICAO_ITEMS.delete({  where: { id_item_requisicao: item.id_item_requisicao }});
   //              comprasItems.push(newComprasReqItem);
   //              continue;
   //            }
@@ -341,7 +345,7 @@ class RequisitionService {
   //              tx
   //            );
   //            comprasItems.push(newComprasReqItem);
-  //            const updatedStockItem = await tx.web_requisicao_items.update({
+  //            const updatedStockItem = await tx.wEB_REQUISICAO_ITEMS.update({
   //              where: { id_item_requisicao: item.id_item_requisicao },
   //              data: { quantidade: item.quantidade_atendida },
   //            });
@@ -354,7 +358,7 @@ class RequisitionService {
   //              },
   //            }
   //          );
-  //          const updatedReq = await tx.web_requisicao
+  //          const updatedReq = await tx.wEB_REQUISICAO
   //            .update({
   //              where: { ID_REQUISICAO: id },
   //              data: {
@@ -372,7 +376,7 @@ class RequisitionService {
   //           };
   //        }
   //        //nenhum item atendido --> retornar requisição original com escopo de compras
-  //        const updatedReq = await tx.web_requisicao
+  //        const updatedReq = await tx.wEB_REQUISICAO
   //          .update({
   //            where: { ID_REQUISICAO: id },
   //            data: {
@@ -399,7 +403,7 @@ class RequisitionService {
     return await prisma.$transaction(async (tx) => {
       console.log("Transaction started");
 
-      const req = await tx.web_requisicao.findFirst({
+      const req = await tx.wEB_REQUISICAO.findFirst({
         where: { ID_REQUISICAO: Number(id) },
       });
       console.log(
@@ -447,7 +451,7 @@ class RequisitionService {
             throw new Error("Em Separação status not found");
           }
 
-          const updatedReq = await tx.web_requisicao
+          const updatedReq = await tx.wEB_REQUISICAO
             .update({
               where: { ID_REQUISICAO: id },
               data: {
@@ -460,19 +464,19 @@ class RequisitionService {
               return RequisitionRepository.formatRequisition(result);
             });
 
-            for(let item of items) {
-              const updatedProduct = await tx.produtos.update({
-                where: { ID: item.id_produto },
-                data: {
-                  quantidade_reservada: { 
-                    increment: item.quantidade_atendida
-                  },
+          for (let item of items) {
+            const updatedProduct = await tx.produtos.update({
+              where: { ID: item.id_produto },
+              data: {
+                quantidade_reservada: {
+                  increment: item.quantidade_atendida,
                 },
-              });
-              console.log(
-                `Updated product ${updatedProduct.ID} to quantity ${updatedProduct.quantidade_reservada}`
-              );
-            }
+              },
+            });
+            console.log(
+              `Updated product ${updatedProduct.ID} to quantity ${updatedProduct.quantidade_reservada}`
+            );
+          }
 
           console.log("Throwing error: All items attended");
           // throw new Error("todos itens atendidos");
@@ -490,7 +494,7 @@ class RequisitionService {
           custo_total,
           ...rest
         } = req;
-        const newComprasReq = await tx.web_requisicao.create({
+        const newComprasReq = await tx.wEB_REQUISICAO.create({
           data: {
             ...rest,
             id_escopo_requisicao: 2,
@@ -539,7 +543,7 @@ class RequisitionService {
               item,
               tx
             );
-            await tx.web_requisicao_items.delete({
+            await tx.wEB_REQUISICAO_ITEMS.delete({
               where: { id_item_requisicao: item.id_item_requisicao },
             });
             comprasItems.push(newComprasReqItem);
@@ -559,28 +563,29 @@ class RequisitionService {
           console.log(
             `Cloned item ${item.id_item_requisicao} to compras requisition`
           );
-          const updatedStockItem = await tx.web_requisicao_items.update({
+          const updatedStockItem = await tx.wEB_REQUISICAO_ITEMS.update({
             where: { id_item_requisicao: item.id_item_requisicao },
             data: { quantidade: item.quantidade_atendida },
           });
           //atualizar produto com quantidade reservada
           const updatedProduct = await tx.produtos.update({
-            where: { 
+            where: {
               ID: item.id_produto,
-
             },
-            data: { 
+            data: {
               quantidade_reservada: {
                 increment: item.quantidade_atendida,
               },
-            }
+            },
           });
 
           stockItems.push(updatedStockItem);
           console.log(
             `Updated item ${item.id_item_requisicao} in stock requisition`
           );
-          console.log(`Product ${updatedProduct.ID} updated with new quantity ${updatedProduct.quantidade_reservada}`);
+          console.log(
+            `Product ${updatedProduct.ID} updated with new quantity ${updatedProduct.quantidade_reservada}`
+          );
         }
 
         const separacaoStatus = await tx.web_status_requisicao.findFirst({
@@ -598,7 +603,7 @@ class RequisitionService {
           throw new Error("Em Separação status not found");
         }
 
-        const updatedReq = await tx.web_requisicao
+        const updatedReq = await tx.wEB_REQUISICAO
           .update({
             where: { ID_REQUISICAO: id },
             data: {
@@ -626,7 +631,7 @@ class RequisitionService {
       }
 
       console.log("No items attended, updating requisition to compras scope");
-      const updatedReq = await tx.web_requisicao
+      const updatedReq = await tx.wEB_REQUISICAO
         .update({
           where: { ID_REQUISICAO: id },
           data: {
@@ -665,7 +670,7 @@ class RequisitionService {
       quantidade_atendida,
       ...rest
     } = item;
-    const newItem = await tx.web_requisicao_items.create({
+    const newItem = await tx.wEB_REQUISICAO_ITEMS.create({
       data: {
         id_requisicao: newReqId,
         ...rest,
@@ -689,7 +694,7 @@ class RequisitionService {
 
   async changeStatus(id_requisicao, newStatusId, alterado_por) {
     return await prisma.$transaction(async (tx) => {
-      const req = await tx.web_requisicao.findFirst({
+      const req = await tx.wEB_REQUISICAO.findFirst({
         where: { ID_REQUISICAO: id_requisicao },
       });
       let updatedReq = await RequisitionTrigger.beforeUpdateStatus(
@@ -700,21 +705,20 @@ class RequisitionService {
       );
       if (updatedReq) {
         console.log(`não é status de verificação de estoque`);
-         await tx.web_alteracao_req_status.create({
-           data: {
-             id_status_anterior: req.id_status_requisicao,
-             id_status_requisicao: updatedReq.id_status_requisicao,
-             id_requisicao: updatedReq.ID_REQUISICAO,
-             alterado_por: alterado_por,
-             data_alteracao: getNowISODate(),
-           },
-         });
-        
+        await tx.web_alteracao_req_status.create({
+          data: {
+            id_status_anterior: req.id_status_requisicao,
+            id_status_requisicao: updatedReq.id_status_requisicao,
+            id_requisicao: updatedReq.ID_REQUISICAO,
+            alterado_por: alterado_por,
+            data_alteracao: getNowISODate(),
+          },
+        });
+
         return updatedReq;
       }
       //não é status de verificação de estoque
-      updatedReq = await tx.web_requisicao
-        .update({
+      updatedReq = await tx.wEB_REQUISICAO.update({
           where: { ID_REQUISICAO: id_requisicao },
           data: {
             id_status_requisicao: newStatusId,
@@ -746,7 +750,7 @@ class RequisitionService {
     const profiles = await prisma.web_perfil_usuario.findMany();
     const statusByProfile = this.getStatusListByProfile(kanbanStatusList);
     console.log("Estados disponíveis para este kanban", statusByProfile);
-   
+
     return [
       {
         // Administrador: acesso total
@@ -831,16 +835,16 @@ class RequisitionService {
       },
       {
         check: () => Number(user.PERM_ESTOQUE) === 1,
-        statusList: () => { 
+        statusList: () => {
           const profileId = profiles.find(
             (p) => p.nome === "Estoquista"
           ).id_perfil_usuario;
           return statusByProfile[profileId];
         },
-        match: (req, user, statusList) => statusList && statusList.includes(Number(req.id_status_requisicao)),
+        match: (req, user, statusList) =>
+          statusList && statusList.includes(Number(req.id_status_requisicao)),
         profileId: 7,
       },
-
     ];
   }
 

@@ -5,12 +5,15 @@ class RequisitionRepository {
     const searchFilter = searchTerm && searchTerm.trim() !== "" ? this.buildSearchFilter(searchTerm) : {};
     const filters = this.buildFilters(extraFilters);
 
-    return prisma.web_requisicao
+    return prisma.wEB_REQUISICAO
       .findMany({
         where: {
           AND: [{ ...kanbanFilters }, searchFilter, filters],
         },
-        include: this.buildInclude(),
+        include: {
+          ...this.buildInclude(),
+          
+        },
         orderBy: {
           ID_REQUISICAO: "desc",
         },
@@ -19,7 +22,7 @@ class RequisitionRepository {
   };
 
   findById = (ID_REQUISICAO) => {
-    return prisma.web_requisicao
+    return prisma.wEB_REQUISICAO
       .findUnique({
         where: { ID_REQUISICAO: parseInt(ID_REQUISICAO) },
         include: this.buildInclude(),
@@ -28,7 +31,8 @@ class RequisitionRepository {
   };
 
   create = (data) => {
-    return prisma.web_requisicao
+    console.log("data: ", data)
+    return prisma.wEB_REQUISICAO
       .create({
         data: data,
         include: this.buildInclude(),
@@ -40,7 +44,7 @@ class RequisitionRepository {
     const cancelledStatus = await prisma.web_status_requisicao.findFirst({
       where: { nome: "Cancelado" },
     });
-    return prisma.web_requisicao
+    return prisma.wEB_REQUISICAO
       .update({
         where: { ID_REQUISICAO: parseInt(ID_REQUISICAO) },
         include: this.buildInclude(),
@@ -55,7 +59,7 @@ class RequisitionRepository {
       orderBy: { data_alteracao: "desc" },
     });
     const previousStatusId = alteration.id_status_requisicao;
-    return prisma.web_requisicao
+    return prisma.wEB_REQUISICAO
       .update({
         where: { ID_REQUISICAO: parseInt(ID_REQUISICAO) },
         data: { id_status_requisicao: previousStatusId },
@@ -65,7 +69,7 @@ class RequisitionRepository {
   };
 
   update = (ID_REQUISICAO, data) => {
-    return prisma.web_requisicao
+    return prisma.wEB_REQUISICAO
       .update({
         where: { ID_REQUISICAO: parseInt(ID_REQUISICAO) },
         data: data,
@@ -77,17 +81,17 @@ class RequisitionRepository {
   buildInclude = () => {
     return {
       web_tipo_requisicao: true,
-      projetos: {
+      PROJETOS: {
         include: {
           //gerente projeto
-          pessoa: {
+          PESSOA_PROJETOS_ID_RESPONSAVELToPESSOA: {
             select: {
               NOME: true,
               CODPESSOA: true,
             },
           },
           //responsável projeto
-          pessoa_projetos_ID_RESPONSAVELTopessoa: {
+          PESSOA_PROJETOS_CODGERENTEToPESSOA: {
             select: {
               NOME: true,
               CODPESSOA: true,
@@ -96,21 +100,21 @@ class RequisitionRepository {
         },
       },
       //responsável requisição
-      pessoa_web_requisicao_ID_RESPONSAVELTopessoa: {
+      PESSOA_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA: {
         select: {
           NOME: true,
           CODPESSOA: true,
         },
       },
-      //pessoa que fez ultima alteração
-      pessoa_web_requisicao_alterado_porTopessoa: {
+      //PESSOA que fez ultima alteração
+      PESSOA_WEB_REQUISICAO_alterado_porToPESSOA: {
         select: {
           NOME: true,
           CODPESSOA: true,
         },
       },
-      //pessoa que criou
-      pessoa_web_requisicao_criado_porTopessoa: {
+      //PESSOA que criou
+      PESSOA_WEB_REQUISICAO_criado_porToPESSOA: {
         select: {
           NOME: true,
           CODPESSOA: true,
@@ -124,24 +128,25 @@ class RequisitionRepository {
     const requisition = {
       ...item,
       tipo_requisicao: item.web_tipo_requisicao,
-      projeto: item.projetos,
-      gerente: item.projetos?.pessoa,
-      responsavel: item.pessoa_web_requisicao_ID_RESPONSAVELTopessoa,
-      responsavel_projeto: item.projetos?.pessoa_projetos_ID_RESPONSAVELTopessoa,
+      projeto: item.PROJETOS,
+      gerente: item.PROJETOS?.PESSOA_PROJETOS_CODGERENTEToPESSOA,
+      responsavel: item.PESSOA_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA,
+      responsavel_projeto:
+        item.PROJETOS?.PESSOA_PROJETOS_ID_RESPONSAVELToPESSOA,
       status: item.web_status_requisicao,
-      alterado_por: item.pessoa_web_requisicao_alterado_porTopessoa,
-      criado_por: item.pessoa_web_requisicao_criado_porTopessoa,
+      alterado_por: item.PESSOA_wEB_REQUISICAO_alterado_porToPESSOA,
+      criado_por: item.PESSOA_wEB_REQUISICAO_criado_porToPESSOA,
     };
     if (requisition.projeto) {
-      delete requisition.projeto.pessoa;
-      delete requisition.projeto.pessoa_projetos_ID_RESPONSAVELTopessoa;
+      delete requisition.projeto.PESSOA;
+      delete requisition.projeto.PESSOA_PROJETOS_ID_RESPONSAVELToPESSOA;
     }
     delete requisition.web_tipo_requisicao;
-    delete requisition.projetos;
-    delete requisition.pessoa_web_requisicao_ID_RESPONSAVELTopessoa;
+    delete requisition.PROJETOS;
+    delete requisition. PESSOA_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA;
     delete requisition.web_status_requisicao;
-    delete requisition.pessoa_web_requisicao_alterado_porTopessoa;
-    delete requisition.pessoa_web_requisicao_criado_porTopessoa;
+    delete requisition.PESSOA_wEB_REQUISICAO_alterado_porToPESSOA;
+    delete requisition.PESSOA_wEB_REQUISICAO_criado_porToPESSOA;
     return requisition;
   };
 
@@ -151,22 +156,28 @@ class RequisitionRepository {
         { DESCRIPTION: { contains: searchTerm } },
         { OBSERVACAO: { contains: searchTerm } },
         {
-          pessoa_web_requisicao_ID_RESPONSAVELTopessoa: {
+          PESSOA_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA: {
             NOME: { contains: searchTerm },
           },
         },
         {
-          pessoa_web_requisicao_alterado_porTopessoa: {
+          PESSOA_WEB_REQUISICAO_alterado_porToPESSOA: {
             NOME: { contains: searchTerm },
           },
         },
         {
-          pessoa_web_requisicao_criado_porTopessoa: {
+          PESSOA_WEB_REQUISICAO_criado_porToPESSOA: {
             NOME: { contains: searchTerm },
           },
         },
-        { projetos: { DESCRICAO: { contains: searchTerm } } },
-        { projetos: { pessoa: { NOME: { contains: searchTerm } } } },
+        { PROJETOS: { DESCRICAO: { contains: searchTerm } } },
+        {
+          PROJETOS: {
+            PESSOA_PROJETOS_CODGERENTEToPESSOA: {
+              NOME: { contains: searchTerm },
+            },
+          },
+        },
         { web_status_requisicao: { nome: { contains: searchTerm } } },
         { web_tipo_requisicao: { nome_tipo: { contains: searchTerm } } },
       ],
@@ -188,16 +199,22 @@ class RequisitionRepository {
       },
       DESCRIPTION: (value) => ({ DESCRIPTION: { contains: value } }),
       responsavel: (value) => ({
-        pessoa_web_requisicao_ID_RESPONSAVELTopessoa: {
+        PESSOA_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA: {
           NOME: { contains: value },
         },
       }),
-      projeto: (value) => ({ projetos: { DESCRICAO: { contains: value } } }),
+      projeto: (value) => ({ PROJETOS: { DESCRICAO: { contains: value } } }),
       gerente: (value) => ({
-        projetos: { pessoa: { NOME: { contains: value } } },
+        PROJETOS: {
+          PESSOA_PROJETOS_CODGERENTEToPESSOA: { NOME: { contains: value } },
+        },
       }),
-      status: (value) => ({ web_status_requisicao: { nome: { contains: value } } }),
-      tipo: (value) => ({ web_tipo_requisicao: { nome_tipo: { contains: value } } }),
+      status: (value) => ({
+        web_status_requisicao: { nome: { contains: value } },
+      }),
+      tipo: (value) => ({
+        web_tipo_requisicao: { nome_tipo: { contains: value } },
+      }),
       custo_total: (value) => {
         return value !== ""
           ? {
@@ -208,7 +225,9 @@ class RequisitionRepository {
           : {};
       },
       responsavel_projeto: (value) => ({
-        projetos: { pessoa_projetos_ID_RESPONSAVELTopessoa: { NOME: { contains: value } } },
+        PROJETOS: {
+          PESSOA_PROJETOS_ID_RESPONSAVELToPESSOA: { NOME: { contains: value } },
+        },
       }),
     };
 
@@ -223,7 +242,7 @@ class RequisitionRepository {
   };
 
   delete = (ID_REQUISICAO) => {
-    return prisma.web_requisicao.delete({
+    return prisma.wEB_REQUISICAO.delete({
       where: {
         ID_REQUISICAO: parseInt(ID_REQUISICAO),
       },

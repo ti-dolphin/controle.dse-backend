@@ -2,14 +2,14 @@ const { prisma } = require("../database");
 
 class ProjectRepository {
     async getMany(params) {
-        return await prisma.projetos.findMany({
+        return await prisma.pROJETOS.findMany({
             where: {...params, AND : [{ATIVO : 1}]},
         });
     }
 
     async getById(ID) {
-        return await prisma.projetos.findUnique({
-            where: { ID: Number(ID) },
+        return await prisma.pROJETOS.findUnique({
+          where: { ID: Number(ID) },
         });
     }
 
@@ -28,25 +28,24 @@ class ProjectRepository {
     }
 
     async create(projectData) {
-        const newProject =  await prisma.projetos.create({
-            data: projectData,
-              include: { 
-                pessoa: {
-                    select: {
-                        CODPESSOA: true,
-                        NOME: true,
-                    }
-                }
-            }
-            
+        const newProject = await prisma.pROJETOS.create({
+          data: projectData,
+          include: {
+            pessoa: {
+              select: {
+                CODPESSOA: true,
+                NOME: true,
+              },
+            },
+          },
         });
         return newProject;
     }
 
     async update(ID, projectData) {
-        return await prisma.projetos.update({
-            where: { ID: Number(ID) },
-            data: projectData,
+        return await prisma.pROJETOS.update({
+          where: { ID: Number(ID) },
+          data: projectData,
         });
     }
 
@@ -73,8 +72,8 @@ class ProjectRepository {
     }
 
     async delete(ID) {
-        return await prisma.projetos.delete({
-            where: { ID: Number(ID) },
+        return await prisma.pROJETOS.delete({
+          where: { ID: Number(ID) },
         });
     }
 

@@ -43,7 +43,7 @@ class RequisitionUtils {
   async calculateItemsTotal(quoteItemsSelected, requisitionItems, tx) {
     const requisitionId = requisitionItems[0].id_requisicao;
     if (!quoteItemsSelected || !quoteItemsSelected.length) {
-      await tx.web_requisicao.update({
+      await tx.wEB_REQUISICAO.update({
         where: { ID_REQUISICAO: Number(requisitionId) },
         data: { custo_total_itens: 0 },
       });
@@ -68,7 +68,7 @@ class RequisitionUtils {
       }
     });
 
-    await tx.web_requisicao.update({
+    await tx.wEB_REQUISICAO.update({
       where: { ID_REQUISICAO: Number(requisitionId) },
       data: { custo_total_itens: itemsTotal },
     });
@@ -78,7 +78,7 @@ class RequisitionUtils {
 
   async calculateShippingTotal(quoteItemsSelected, id_requisicao, tx) {
     if (!quoteItemsSelected || !quoteItemsSelected.length) {
-      await tx.web_requisicao.update({
+      await tx.wEB_REQUISICAO.update({
         where: { ID_REQUISICAO: Number(id_requisicao) },
         data: { custo_total_frete: 0 },
       });
@@ -94,7 +94,7 @@ class RequisitionUtils {
       .map((quote) => Number(quote.valor_frete) || 0)
       .reduce((acc, curr) => acc + curr, 0);
 
-    await tx.web_requisicao.update({
+    await tx.wEB_REQUISICAO.update({
       where: { ID_REQUISICAO: Number(id_requisicao) },
       data: { custo_total_frete: shippingTotal },
     });
