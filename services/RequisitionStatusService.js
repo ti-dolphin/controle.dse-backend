@@ -47,12 +47,17 @@ class RequisitionStatusService {
           id_perfil_usuario: { in: userProfileIdList },
         },
       });
+
+      console.log("profileActionStatusList", profileActionStatusList);
+      console.log("requisition.id_status_requisicao", requisition.id_status_requisicao);
     //se pelo menos alguma relação tiver acao 1 NAQUELE status, a permissão para mudar o status é concedida
     permissionToChangeStatus = profileActionStatusList.some(
       (item) =>
         item.acao === 1 &&
         item.id_status_requisicao === Number(requisition.id_status_requisicao)
     );
+          console.log("permissionToChangeStatus", permissionToChangeStatus);
+
     return { permissionToChangeStatus };
   }
 

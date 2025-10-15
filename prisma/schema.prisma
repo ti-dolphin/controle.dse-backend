@@ -346,7 +346,7 @@ model web_anexos_acessorio_patrimonio {
 }
 
 model web_anexos_item_requisicao {
-  id_anexo_item_requisicao Int                  @id
+  id_anexo_item_requisicao Int                  @id @default(autoincrement())
   arquivo                  String?              @db.LongText
   id_item_requisicao       Int
   nome_arquivo             String?              @db.LongText
@@ -1080,9 +1080,9 @@ model WEB_REQUISICAO {
   criado_por                                   Int?
   id_escopo_requisicao                         Int?
   id_req_original                              Int?
-  custo_total_itens                            Decimal?                    @default(0) @db.Decimal(10, 0)
-  custo_total_frete                            Decimal?                    @default(0) @db.Decimal(10, 0)
-  custo_total                                  Decimal?                    @db.Decimal(10, 0)
+  custo_total_itens                            Decimal?                    @default(0.00) @db.Decimal(10, 2)
+  custo_total_frete                            Decimal?                    @default(0.00) @db.Decimal(10, 2)
+  custo_total                                  Decimal?                    @db.Decimal(10, 2)
   PROJETOS                                     PROJETOS?                   @relation(fields: [ID_PROJETO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ID_PROJETO")
   PESSOA_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA PESSOA?                     @relation("WEB_REQUISICAO_ID_RESPONSAVELToPESSOA", fields: [ID_RESPONSAVEL], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "ID_RESPONSAVEL")
   PESSOA_WEB_REQUISICAO_alterado_porToPESSOA   PESSOA?                     @relation("WEB_REQUISICAO_alterado_porToPESSOA", fields: [alterado_por], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "alterado")

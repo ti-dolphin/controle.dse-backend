@@ -115,10 +115,8 @@ class RequisitionTrigger {
         });
         const updatedProducts = [];
         for (const product of products) {
-          const newAvailableQuantity =
-            product.quantidade_estoque - product.quantidade_reservada;
-          const newReservedQuantity =
-            product.quantidade_reservada - product.quantidade_reservada;
+          const newAvailableQuantity = product.quantidade_estoque - product.quantidade_reservada;
+          const newReservedQuantity = product.quantidade_reservada - product.quantidade_reservada;
           product.quantidade_estoque = newAvailableQuantity;
           product.quantidade_reservada = newReservedQuantity;
           const updatedProd = await tx.produtos.update({
