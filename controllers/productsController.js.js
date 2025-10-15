@@ -7,7 +7,7 @@ class ProductsController {
          const params = req.query;
          const {searchTerm } = params;
 
-          const products = await ProductService.getMany({}, searchTerm);
+          const products = await ProductService.getMany({ inativo: 0 }, searchTerm);
           res.json(products);
        } catch (err) {
          res.status(500).json({ error: err.message });
