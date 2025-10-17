@@ -258,143 +258,6 @@ class RequisitionService {
     );
   }
 
-  // async attend(id, items) {
-
-  //    //os items irão chegar com o campo quantidade_atendida preenchido
-  //   return await prisma.$transaction(async (tx) => {
-  //        const req = await tx.wEB_REQUISICAO.findFirst({
-  //          where: { ID_REQUISICAO: Number(id) },
-  //        });
-  //        //pega status 'requisitado'
-  //           const requisitadoStatus = await tx.web_status_requisicao.findFirst(
-  //          {
-  //            where: {
-  //              nome: "Requisitado",
-  //            },
-  //          }
-  //        );
-  //        const comprasItems = [];
-  //        const stockItems = [];
-  //        if (await this.oneAttendedItem(items)) {
-  //          if (this.allItemsAttended(items)) {
-  //           //se todos items atendidos
-  //            const separacaoStatus =
-  //              await tx.web_status_requisicao.findFirst({
-  //                where: {
-  //                  nome: "Em Separação",
-  //                },
-  //              });
-  //            const updatedReq = await tx.wEB_REQUISICAO
-  //              .update({
-  //                where: { ID_REQUISICAO: id },
-  //                data: {
-  //                  id_status_requisicao: separacaoStatus.id_status_requisicao,
-  //                },
-  //                include: RequisitionRepository.buildInclude(),
-  //              }).then((result) => RequisitionRepository.formatRequisition(result));
-  //              //caso todos os items tenha sido atendidos, a requisição original é atualizada para estoque e não criamos uma de compras pois não será preciso comprar
-  //              throw new Error('todos itens atendidos')
-  //            return {
-  //             estoque: updatedReq,
-  //             compras: null
-  //            };
-  //          }
-  //          //se alguns items atendidos e alguns não atendidos
-  //          //separar não atendidos em nova requisição do escopo compras e atendidos mantém na original
-  //          const {
-  //            ID_REQUISICAO,
-  //            id_escopo_requisicao,
-  //            id_status_requisicao,
-  //            custo_total,
-  //            ...rest
-  //          } = req;
-  //          //criando nova requsiição de comprar e clonando registros filhos
-  //          const newComprasReq = await tx.wEB_REQUISICAO.create({
-  //            data: {
-  //              ...rest,
-  //              id_escopo_requisicao: 2,
-  //              id_status_requisicao: requisitadoStatus.id_status_requisicao
-  //            },
-  //          });
-  //          await RequisitionCommentService.cloneComments(req, newComprasReq.ID_REQUISICAO, tx);
-  //          await RequisitionAttachmentService.cloneAttachments(req.ID_REQUISICAO, newComprasReq.ID_REQUISICAO, tx);
-  //          await RequisitionStatusService.cloneStatusChanges(req.ID_REQUISICAO, newComprasReq.ID_REQUISICAO, tx);
-  //          //separando os items para cada requisição (compras ou estoque)
-  //          for (let item of items) {
-  //           //item totalmente atendido
-  //            if (item.quantidade_atendida === item.quantidade) {
-  //              stockItems.push(item);
-  //              continue;
-  //            }
-  //            //item não atendido
-  //            if (!item.quantidade_atendida) {
-  //              const newComprasReqItem = await this.cloneSingleItem(
-  //                newComprasReq.ID_REQUISICAO,
-  //                item,
-  //                tx
-  //              );
-  //              await tx.wEB_REQUISICAO_ITEMS.delete({  where: { id_item_requisicao: item.id_item_requisicao }});
-  //              comprasItems.push(newComprasReqItem);
-  //              continue;
-  //            }
-  //            //atendido parcialmente
-  //            item.quantidade = item.quantidade - item.quantidade_atendida;
-  //            const newComprasReqItem = await this.cloneSingleItem(
-  //              newComprasReq.ID_REQUISICAO,
-  //              item,
-  //              tx
-  //            );
-  //            comprasItems.push(newComprasReqItem);
-  //            const updatedStockItem = await tx.wEB_REQUISICAO_ITEMS.update({
-  //              where: { id_item_requisicao: item.id_item_requisicao },
-  //              data: { quantidade: item.quantidade_atendida },
-  //            });
-  //            stockItems.push(updatedStockItem);
-  //          }
-  //          const separacaoStatus = await tx.web_status_requisicao.findFirst(
-  //            {
-  //              where: {
-  //                nome: "Em Separação",
-  //              },
-  //            }
-  //          );
-  //          const updatedReq = await tx.wEB_REQUISICAO
-  //            .update({
-  //              where: { ID_REQUISICAO: id },
-  //              data: {
-  //                id_status_requisicao: separacaoStatus.id_status_requisicao,
-  //              },
-  //              include: RequisitionRepository.buildInclude(),
-  //            })
-  //            .then((result) => RequisitionRepository.formatRequisition(result));
-  //            //retornar as duas requisições, a original em estoque e a nova requisição de compras
-
-  //          throw new Error("retornar as duas requisições, a original em estoque e a nova requisição de compras");
-  //          return {
-  //            estoque: updatedReq,
-  //            compras: newComprasReq
-  //           };
-  //        }
-  //        //nenhum item atendido --> retornar requisição original com escopo de compras
-  //        const updatedReq = await tx.wEB_REQUISICAO
-  //          .update({
-  //            where: { ID_REQUISICAO: id },
-  //            data: {
-  //              id_status_requisicao: requisitadoStatus.id_status_requisicao,
-  //              id_escopo_requisicao: 2
-  //            },
-  //            include: RequisitionRepository.buildInclude(),
-  //          })
-  //          .then((result) => RequisitionRepository.formatRequisition(result));
-
-  //       throw new Error("retornar a requisição original com escopo de compras");
-  //        return {
-  //          compras: updatedReq,
-  //          estoque: null
-  //        };
-  //   })
-  // }
-
   async attend(id, items) {
     console.log(
       `Starting attend process for requisition ID: ${id}, with ${items.length} items`
@@ -431,9 +294,7 @@ class RequisitionService {
 
       const comprasItems = [];
       const stockItems = [];
-      console.log("Checking if at least one item is attended");
       if (await this.oneAttendedItem(items)) {
-        console.log("At least one item is attended");
         if (this.allItemsAttended(items)) {
           console.log("All items are fully attended");
           const separacaoStatus = await tx.web_status_requisicao.findFirst({
@@ -477,16 +338,12 @@ class RequisitionService {
               `Updated product ${updatedProduct.ID} to quantity ${updatedProduct.quantidade_reservada}`
             );
           }
-
-          console.log("Throwing error: All items attended");
           // throw new Error("todos itens atendidos");
           return {
             estoque: updatedReq,
             compras: null,
           };
         }
-
-        console.log("Some items are attended, splitting requisitions");
         const {
           ID_REQUISICAO,
           id_escopo_requisicao,
@@ -504,70 +361,26 @@ class RequisitionService {
         console.log(
           `Created new compras requisition: ID ${newComprasReq.ID_REQUISICAO}`
         );
-
-        console.log("Cloning comments, attachments, and status changes");
         await RequisitionCommentService.cloneComments(
           req,
           newComprasReq.ID_REQUISICAO,
           tx
-        );
-        console.log("Comments cloned successfully");
+        )
         await RequisitionAttachmentService.cloneAttachments(
           req.ID_REQUISICAO,
           newComprasReq.ID_REQUISICAO,
           tx
         );
-        console.log("Attachments cloned successfully");
+
         await RequisitionStatusService.cloneStatusChanges(
           req.ID_REQUISICAO,
           newComprasReq.ID_REQUISICAO,
           tx
         );
-        console.log("Status changes cloned successfully");
-
-        console.log("Processing items for stock and compras requisitions");
+        console.log('entrando no for que vai distribuir os itens para a requisição de compras');
         for (let item of items) {
           if (item.quantidade_atendida === item.quantidade) {
-            console.log(
-              `Item ${item.id_item_requisicao} fully attended, adding to stock`
-            );
-            stockItems.push(item);
-            continue;
-          }
-          if (!item.quantidade_atendida) {
-            console.log(
-              `Item ${item.id_item_requisicao} not attended, moving to compras`
-            );
-            const newComprasReqItem = await this.cloneSingleItem(
-              newComprasReq.ID_REQUISICAO,
-              item,
-              tx
-            );
-            await tx.wEB_REQUISICAO_ITEMS.delete({
-              where: { id_item_requisicao: item.id_item_requisicao },
-            });
-            comprasItems.push(newComprasReqItem);
-            console.log(
-              `Item ${item.id_item_requisicao} moved to compras requisition`
-            );
-            continue;
-          }
-          console.log(`Item ${item.id_item_requisicao} partially attended`);
-          item.quantidade = item.quantidade - item.quantidade_atendida;
-          const newComprasReqItem = await this.cloneSingleItem(
-            newComprasReq.ID_REQUISICAO,
-            item,
-            tx
-          );
-          comprasItems.push(newComprasReqItem);
-          console.log(
-            `Cloned item ${item.id_item_requisicao} to compras requisition`
-          );
-          const updatedStockItem = await tx.wEB_REQUISICAO_ITEMS.update({
-            where: { id_item_requisicao: item.id_item_requisicao },
-            data: { quantidade: item.quantidade_atendida },
-          });
-          //atualizar produto com quantidade reservada
+             console.log("atualizando produto com quantidade reservada");
           const updatedProduct = await tx.produtos.update({
             where: {
               ID: item.id_produto,
@@ -578,26 +391,53 @@ class RequisitionService {
               },
             },
           });
+          console.log("produto atualizado com quantidade reservada: ", updatedProduct.quantidade_reservada);
+            stockItems.push(item);
+            continue;
+          }
+          if (!item.quantidade_atendida) {
+            const newComprasReqItem = await this.cloneSingleItem(
+              newComprasReq.ID_REQUISICAO,
+              item,
+              tx
+            );
+            await tx.wEB_REQUISICAO_ITEMS.delete({
+              where: { id_item_requisicao: item.id_item_requisicao },
+            });
+            comprasItems.push(newComprasReqItem);
+            continue;
+          }
+          item.quantidade = item.quantidade - item.quantidade_atendida;
+          const newComprasReqItem = await this.cloneSingleItem(
+            newComprasReq.ID_REQUISICAO,
+            item,
+            tx
+          );
+          comprasItems.push(newComprasReqItem);
+          const updatedStockItem = await tx.wEB_REQUISICAO_ITEMS.update({
+            where: { id_item_requisicao: item.id_item_requisicao },
+            data: { quantidade: item.quantidade_atendida },
+          });
+          console.log("atualizando produto com quantidade reservada");
+          const updatedProduct = await tx.produtos.update({
+            where: {
+              ID: item.id_produto,
+            },
+            data: {
+              quantidade_reservada: {
+                increment: item.quantidade_atendida,
+              },
+            },
+          });
+          console.log("produto atualizado com quantidade reservada: ", updatedProduct.quantidade_reservada);
 
           stockItems.push(updatedStockItem);
-          console.log(
-            `Updated item ${item.id_item_requisicao} in stock requisition`
-          );
-          console.log(
-            `Product ${updatedProduct.ID} updated with new quantity ${updatedProduct.quantidade_reservada}`
-          );
+        
         }
 
         const separacaoStatus = await tx.web_status_requisicao.findFirst({
           where: { nome: "Em Separação" },
         });
-        console.log(
-          `Fetched 'Em Separação' status: ${
-            separacaoStatus
-              ? `ID ${separacaoStatus.id_status_requisicao}`
-              : "Not found"
-          }`
-        );
         if (!separacaoStatus) {
           console.error("Em Separação status not found");
           throw new Error("Em Separação status not found");
@@ -612,25 +452,14 @@ class RequisitionService {
             include: RequisitionRepository.buildInclude(),
           })
           .then((result) => {
-            console.log(
-              `Updated original requisition ${id} to 'Em Separação' status`
-            );
             return RequisitionRepository.formatRequisition(result);
           });
-
-        console.log(
-          "Throwing error: Returning both stock and compras requisitions"
-        );
-        // throw new Error(
-        //   "retornar as duas requisições, a original em estoque e a nova requisição de compras"
-        // );
         return {
           estoque: updatedReq,
           compras: newComprasReq,
         };
       }
-
-      console.log("No items attended, updating requisition to compras scope");
+      console.log("atualizando requisição original com escopo de compras, nenhum item atendido");
       const updatedReq = await tx.wEB_REQUISICAO
         .update({
           where: { ID_REQUISICAO: id },
@@ -644,9 +473,6 @@ class RequisitionService {
           console.log(`Updated requisition ${id} to compras scope`);
           return RequisitionRepository.formatRequisition(result);
         });
-
-      console.log("Throwing error: Returning original requisition as compras");
-      // throw new Error("retornar a requisição original com escopo de compras");
       return {
         compras: updatedReq,
         estoque: null,

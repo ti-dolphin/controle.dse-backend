@@ -74,11 +74,12 @@ class RequisitionTrigger {
       });
       //mandando requisição para requisitado, vem a etapa de verificação do estoque s ehouver pelo menos um item no estoque
       if (updatingToRequisitado) {
-        const atLeastOneInStock = products.some(
-          (product) =>
-            product.quantidade_estoque && product.quantidade_estoque > 0
+        const atLeastOneItemAvailable = products.some(
+          (product) => (
+             product.quantidade_estoque && product.quantidade_estoque > 0 && product.quantidade_disponivel > 0
+          )
         );
-        if (atLeastOneInStock) {
+        if (atLeastOneItemAvailable) {
           console.log(`há pelo menos um item em estoqe, a requisição é retornada com escopo do estoque`);
           const firstStockStatus = await tx.web_status_requisicao.findFirst({
             where: {
