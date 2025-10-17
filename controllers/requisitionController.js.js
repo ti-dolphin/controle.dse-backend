@@ -1,4 +1,5 @@
 const RequisitionService = require("../services/RequisitionService");
+const RequisitionStatusService = require("../services/RequisitionStatusService");
 
 class RequisitionController {
   async getMany(req, res) {
@@ -95,6 +96,24 @@ class RequisitionController {
       res.status(200).json(updated);
     } catch (error) {
       console.error(error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async revertToPreviousStatus(req, res) {
+    try {
+      const { id_requisicao } = req.params;
+      const { motivo } = req.body;
+      const { user } = req.query;
+
+      const result = await RequisitionStatusService.revertToPreviousStatus(
+        Number(id_requisicao),
+        user,
+        motivo
+      );
+      res.status(200).json(result);
+    } catch (error) {
+      console.error('Erro ao reverter status:', error);
       res.status(400).json({ error: error.message });
     }
   }

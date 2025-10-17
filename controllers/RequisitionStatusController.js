@@ -79,6 +79,24 @@ class RequisitionStatusController {
     }
   }
 
+  async revertToPreviousStatus(req, res) {
+    const { id_requisicao } = req.params;
+    const { motivo } = req.body;
+    const { user } = req.query;
+
+    try {
+      const result = await RequisitionStatusService.revertToPreviousStatus(
+        Number(id_requisicao),
+        user,
+        motivo
+      );
+      res.json(result);
+    } catch (error) {
+      console.error('Erro ao reverter status:', error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async delete(req, res) {
     try {
       await RequisitionStatusService.delete(Number(req.params.id_status_requisicao));

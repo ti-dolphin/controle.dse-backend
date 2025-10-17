@@ -11,6 +11,7 @@ router.put("/:id_requisicao", RequisitionController.update);
 router.put("/:id_requisicao/cancelar", RequisitionController.cancel);
 router.put("/:id_requisicao/ativar", RequisitionController.activate);
 router.put("/:id_requisicao/status", RequisitionController.changeStatus);
+router.put("/:id_requisicao/status/revert", RequisitionController.revertToPreviousStatus);
 router.post("/:id_requisicao/atender", RequisitionController.attend);
 router.delete("/:id_requisicao", RequisitionController.delete);
 module.exports = router;
