@@ -19,6 +19,7 @@ class RequistionItemRepository {
       where: {
         ...params,
         ...generalFilters,
+        ativo: 1, // Apenas itens ativos por padrão
       },
       include: {
         ...this.include(),
@@ -26,6 +27,12 @@ class RequistionItemRepository {
       },
     });
     return items.map(this.format);
+  }
+  async getAll(id_requisicao) {
+    return await prisma.wEB_REQUISICAO_ITEMS.findMany({
+      where: { id_requisicao },
+      include: this.include(),
+    });
   }
 
   async getById(id_item_requisicao) {
@@ -92,8 +99,9 @@ class RequistionItemRepository {
   }
 
   async delete(id_item_requisicao) {
-    return prisma.wEB_REQUISICAO_ITEMS.delete({
+    return prisma.wEB_REQUISICAO_ITEMS.update({
       where: { id_item_requisicao },
+      data: { ativo: 0 },
     });
   }
 

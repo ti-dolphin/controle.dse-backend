@@ -51,6 +51,7 @@ class RequisitionTrigger {
   }
 
   static async beforeUpdateStatus(req, newStatusId, alterado_por, tx) {
+    console.log("entrando no beforeUpdateStatus");
     try {
       //status final do escopo estoque
       const finalStockstatus = await tx.web_status_requisicao.findFirst({
@@ -62,6 +63,14 @@ class RequisitionTrigger {
         newStatusId,
         tx
       );
+
+      const newStatus = await tx.web_status_requisicao.findFirst({
+        where: {
+          id_status_requisicao: newStatusId,
+        },
+      });
+      const requisitionStatusisAdvancing = newStatus.etapa && req.status?.etapa
+      
       const items = await tx.wEB_REQUISICAO_ITEMS.findMany({
         where: { id_requisicao: req.ID_REQUISICAO },
       });
@@ -73,7 +82,7 @@ class RequisitionTrigger {
         where: { ID: { in: items.map((item) => item.id_produto) } },
       });
       //mandando requisição para requisitado, vem a etapa de verificação do estoque s ehouver pelo menos um item no estoque
-      if (updatingToRequisitado) {
+      if (updatingToRequisitado && requisitionStatusisAdvancing) {
         const atLeastOneItemAvailable = products.some(
           (product) => (
              product.quantidade_estoque && product.quantidade_estoque > 0 && product.quantidade_disponivel > 0

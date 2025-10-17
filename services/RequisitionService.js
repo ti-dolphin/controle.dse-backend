@@ -401,8 +401,9 @@ class RequisitionService {
               item,
               tx
             );
-            await tx.wEB_REQUISICAO_ITEMS.delete({
+            await tx.wEB_REQUISICAO_ITEMS.update({
               where: { id_item_requisicao: item.id_item_requisicao },
+              data: { ativo: 0 },
             });
             comprasItems.push(newComprasReqItem);
             continue;
@@ -519,10 +520,12 @@ class RequisitionService {
   }
 
   async changeStatus(id_requisicao, newStatusId, alterado_por) {
+    console.log("entrando no changeStatus");
     return await prisma.$transaction(async (tx) => {
       const req = await tx.wEB_REQUISICAO.findFirst({
         where: { ID_REQUISICAO: id_requisicao },
-      });
+        include: RequisitionRepository.buildInclude(),
+      }).then((result) => RequisitionRepository.formatRequisition(result));
       let updatedReq = await RequisitionTrigger.beforeUpdateStatus(
         req,
         newStatusId,
@@ -574,6 +577,7 @@ class RequisitionService {
   }
   async getAccessRulesByKanban(user, kanbanStatusList) {
     const profiles = await prisma.web_perfil_usuario.findMany();
+    console.log("kanbanStatusList", kanbanStatusList);
     const statusByProfile = this.getStatusListByProfile(kanbanStatusList);
     console.log("Estados disponíveis para este kanban", statusByProfile);
 

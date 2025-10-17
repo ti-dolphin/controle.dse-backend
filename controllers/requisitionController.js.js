@@ -80,6 +80,7 @@ class RequisitionController {
   }
 
   async changeStatus(req, res){ 
+    console.log("entrando no changeStatus - controller");
     try {
       const { id_requisicao } = req.params;
       const { alterado_por, id_status_requisicao } = req.body;

@@ -157,8 +157,10 @@ class RequisitionItemService {
   }
 
   async requisitionHasOnlyOneItem(id_requisicao) {
-    const requisitionItems = await this.getMany({ id_requisicao });
-    return requisitionItems.length === 1;
+    // Busca todos os itens (ativos e inativos) para verificar se é o último item ativo
+    const allItems = await RequisitionItemRepository.getAll({ id_requisicao });
+    const activeItems = allItems.filter(item => item.ativo === 1);
+    return activeItems.length === 1;
   }
 
   async delete(id_item_requisicao) {
@@ -202,8 +204,9 @@ class RequisitionItemService {
       const newQty = Number(item.quantidade) - Number(childReqItem.quantidade);
       if (newQty === 0) {
         updates.push(
-          tx.wEB_REQUISICAO_ITEMS.delete({
+          tx.wEB_REQUISICAO_ITEMS.update({
             where: { id_item_requisicao: item.id_item_requisicao },
+            data: { ativo: 0 },
           })
         );
         continue;

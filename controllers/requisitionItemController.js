@@ -172,6 +172,7 @@ class RequisitionItemController {
       }
       res.json({ message: "Item excluído com sucesso" });
     } catch (err) {
+      console.log(err);
       res
         .status(500)
         .json({ error: "Erro interno do servidor: " + err.message });
