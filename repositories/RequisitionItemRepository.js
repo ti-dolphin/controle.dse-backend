@@ -121,6 +121,7 @@ class RequistionItemRepository {
       produto_unidade: item.produtos.unidade,
       produto_quantidade_estoque: item.produtos.quantidade_estoque,
       produto_quantidade_disponivel: item.produtos.quantidade_disponivel,
+      quantidade_disponivel: item.quantidade_disponivel,
       items_cotacao: item.web_items_cotacao,
       anexos: item.web_anexos_item_requisicao || []
     };

@@ -63,39 +63,75 @@ class RequisitionTrigger {
         newStatusId,
         tx
       );
-
       const newStatus = await tx.web_status_requisicao.findFirst({
         where: {
           id_status_requisicao: newStatusId,
         },
       });
       const requisitionStatusisAdvancing = newStatus.etapa && req.status?.etapa
-      
       const items = await tx.wEB_REQUISICAO_ITEMS.findMany({
         where: { id_requisicao: req.ID_REQUISICAO },
       });
-       const itemIdToItem = new Map();
-       items.forEach((item) => {
-         itemIdToItem.set(item.id_item_requisicao, item);
-       });
+      const productIdToITem = new Map();
+      items.forEach((item) => {
+        productIdToITem.set(item.id_produto, item);
+      });
       const products = await tx.produtos.findMany({
         where: { ID: { in: items.map((item) => item.id_produto) } },
       });
+      console.log("updatingToRequisitado", updatingToRequisitado);
+      console.log("requisitionStatusisAdvancing", requisitionStatusisAdvancing);
+    
       //mandando requisição para requisitado, vem a etapa de verificação do estoque s ehouver pelo menos um item no estoque
-      if (updatingToRequisitado && requisitionStatusisAdvancing) {
+    if (updatingToRequisitado && requisitionStatusisAdvancing) {
         const atLeastOneItemAvailable = products.some(
           (product) => (
              product.quantidade_estoque && product.quantidade_estoque > 0 && product.quantidade_disponivel > 0
           )
         );
+        console.log("products", products);
+        console.log("atLeastOneItemAvailable", atLeastOneItemAvailable);
         if (atLeastOneItemAvailable) {
-          console.log(`há pelo menos um item em estoqe, a requisição é retornada com escopo do estoque`);
+            for (const product of products) { 
+        const item = productIdToITem.get(product.ID);
+        if (product.quantidade_disponivel < item.quantidade) {
+          //se a quantidade disponível for menor que a quantidade solicitada, a quantidade reservada é igual a quantidade disponível
+          console.log(`a quantidade disponível para o produto ${product.nome_fantasia} é menor que a quantidade solicitada, a quantidade reservada é igual a quantidade disponível`);
+          await tx.wEB_REQUISICAO_ITEMS.update({
+            where: { id_item_requisicao: item.id_item_requisicao },
+            data: {
+              quantidade_disponivel: product.quantidade_disponivel,
+            },
+          });
+          await tx.produtos.update({
+            where: { ID: product.ID },
+            data: {
+              quantidade_reservada: product.quantidade_disponivel,
+            },
+          });
+          continue;
+        }
+        if (product.quantidade_disponivel >= item.quantidade) {
+          console.log(`a quantidade disponível para o produto ${product.nome_fantasia} é maior ou igual à quantidade solicitada, a quantidade reservada é igual à quantidade solicitada`);
+          await tx.wEB_REQUISICAO_ITEMS.update({
+            where: { id_item_requisicao: item.id_item_requisicao },
+            data: {
+              quantidade_disponivel: item.quantidade,
+            },
+          });
+          await tx.produtos.update({
+            where: { ID: product.ID },
+            data: {
+              quantidade_reservada: item.quantidade,
+            },
+          });
+        }
+      }
           const firstStockStatus = await tx.web_status_requisicao.findFirst({
             where: {
               nome: "Separar Estoque",
             },
           });
-          
           const updatedReq = await tx.wEB_REQUISICAO.update({
             where: { ID_REQUISICAO: req.ID_REQUISICAO },
             data: {
@@ -108,49 +144,7 @@ class RequisitionTrigger {
       }
       console.log("finalStockstatus", finalStockstatus);
       
-      //se o novo status for o ultimo estados do escopo estoque, precisamos fazer a baixa no estoque
-      if (newStatusId === finalStockstatus.id_status_requisicao) {
-        
-        const productIdToItem = new Map();
-        const productIdToProduct = new Map();
-        const itemIdToItem = new Map();
-        items.forEach((item) => {
-          productIdToItem.set(item.id_produto, item);
-        });
-        products.forEach((product) => {
-          productIdToProduct.set(product.ID, product);
-        });
-        items.forEach((item) => {
-          itemIdToItem.set(item.id_item_requisicao, item);
-        });
-        const updatedProducts = [];
-        for (const product of products) {
-          const newAvailableQuantity = product.quantidade_estoque - product.quantidade_reservada;
-          const newReservedQuantity = product.quantidade_reservada - product.quantidade_reservada;
-          product.quantidade_estoque = newAvailableQuantity;
-          product.quantidade_reservada = newReservedQuantity;
-          const updatedProd = await tx.produtos.update({
-            where: { ID: product.ID },
-            data: {
-              quantidade_estoque: newAvailableQuantity,
-              quantidade_reservada: newReservedQuantity,
-            },
-          });
-          updatedProducts.push(updatedProd);
-        }
-
-        const updetedReq = await tx.wEB_REQUISICAO
-          .update({
-            where: { ID_REQUISICAO: req.ID_REQUISICAO },
-            data: {
-              id_status_requisicao: newStatusId,
-              alterado_por: alterado_por,
-            },
-            include: RequisitionRepository.buildInclude(),
-          })
-          .then((result) => RequisitionRepository.formatRequisition(result));
-        return updetedReq;
-      }
+    
 
       // Logic to execute before updating a requisition
     } catch (error) {

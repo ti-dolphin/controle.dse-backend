@@ -259,34 +259,21 @@ class RequisitionService {
   }
 
   async attend(id, items) {
-    console.log(
-      `Starting attend process for requisition ID: ${id}, with ${items.length} items`
-    );
-
     return await prisma.$transaction(async (tx) => {
-      console.log("Transaction started");
+
+      console.log("items", items.length);
 
       const req = await tx.wEB_REQUISICAO.findFirst({
         where: { ID_REQUISICAO: Number(id) },
       });
-      console.log(
-        `Fetched requisition: ${req ? `ID ${req.ID_REQUISICAO}` : "Not found"}`
-      );
+      
       if (!req) {
         console.error("Requisition not found");
         throw new Error("Requisition not found");
       }
-
       const requisitadoStatus = await tx.web_status_requisicao.findFirst({
         where: { nome: "Requisitado" },
       });
-      console.log(
-        `Fetched 'Requisitado' status: ${
-          requisitadoStatus
-            ? `ID ${requisitadoStatus.id_status_requisicao}`
-            : "Not found"
-        }`
-      );
       if (!requisitadoStatus) {
         console.error("Requisitado status not found");
         throw new Error("Requisitado status not found");
@@ -294,24 +281,22 @@ class RequisitionService {
 
       const comprasItems = [];
       const stockItems = [];
+      const products = await tx.produtos.findMany({
+        where: { ID: { in: items.map((item) => item.id_produto) } },
+      });
+      const productIdToProduct = new Map();
+      products.forEach((product) => {
+        productIdToProduct.set(product.ID, product);
+      });
       if (await this.oneAttendedItem(items)) {
+
         if (this.allItemsAttended(items)) {
-          console.log("All items are fully attended");
           const separacaoStatus = await tx.web_status_requisicao.findFirst({
             where: { nome: "Em Separação" },
           });
-          console.log(
-            `Fetched 'Em Separação' status: ${
-              separacaoStatus
-                ? `ID ${separacaoStatus.id_status_requisicao}`
-                : "Not found"
-            }`
-          );
           if (!separacaoStatus) {
-            console.error("Em Separação status not found");
             throw new Error("Em Separação status not found");
           }
-
           const updatedReq = await tx.wEB_REQUISICAO
             .update({
               where: { ID_REQUISICAO: id },
@@ -324,21 +309,23 @@ class RequisitionService {
               console.log(`Updated requisition ${id} to 'Em Separação' status`);
               return RequisitionRepository.formatRequisition(result);
             });
-
+        
           for (let item of items) {
+            const product = productIdToProduct.get(item.id_produto);
             const updatedProduct = await tx.produtos.update({
               where: { ID: item.id_produto },
               data: {
+                quantidade_estoque: {
+                  decrement: item.quantidade_atendida
+                },
                 quantidade_reservada: {
-                  increment: item.quantidade_atendida,
+                  decrement: product.quantidade_reservada
                 },
               },
             });
-            console.log(
-              `Updated product ${updatedProduct.ID} to quantity ${updatedProduct.quantidade_reservada}`
-            );
           }
-          // throw new Error("todos itens atendidos");
+        
+
           return {
             estoque: updatedReq,
             compras: null,
@@ -349,18 +336,17 @@ class RequisitionService {
           id_escopo_requisicao,
           id_status_requisicao,
           custo_total,
+          DESCRIPTION,
           ...rest
         } = req;
         const newComprasReq = await tx.wEB_REQUISICAO.create({
           data: {
             ...rest,
+            DESCRIPTION: `${DESCRIPTION} - compras`,
             id_escopo_requisicao: 2,
             id_status_requisicao: requisitadoStatus.id_status_requisicao,
           },
         });
-        console.log(
-          `Created new compras requisition: ID ${newComprasReq.ID_REQUISICAO}`
-        );
         await RequisitionCommentService.cloneComments(
           req,
           newComprasReq.ID_REQUISICAO,
@@ -371,27 +357,27 @@ class RequisitionService {
           newComprasReq.ID_REQUISICAO,
           tx
         );
-
         await RequisitionStatusService.cloneStatusChanges(
           req.ID_REQUISICAO,
           newComprasReq.ID_REQUISICAO,
           tx
         );
-        console.log('entrando no for que vai distribuir os itens para a requisição de compras');
         for (let item of items) {
           if (item.quantidade_atendida === item.quantidade) {
-             console.log("atualizando produto com quantidade reservada");
+          const product = productIdToProduct.get(item.id_produto);
           const updatedProduct = await tx.produtos.update({
             where: {
               ID: item.id_produto,
             },
             data: {
+              quantidade_estoque: {
+                decrement: item.quantidade_atendida || 0,
+              },
               quantidade_reservada: {
-                increment: item.quantidade_atendida,
+                decrement: product.quantidade_reservada || 0,
               },
             },
           });
-          console.log("produto atualizado com quantidade reservada: ", updatedProduct.quantidade_reservada);
             stockItems.push(item);
             continue;
           }
@@ -430,10 +416,7 @@ class RequisitionService {
               },
             },
           });
-          console.log("produto atualizado com quantidade reservada: ", updatedProduct.quantidade_reservada);
-
           stockItems.push(updatedStockItem);
-        
         }
 
         const separacaoStatus = await tx.web_status_requisicao.findFirst({
@@ -443,7 +426,6 @@ class RequisitionService {
           console.error("Em Separação status not found");
           throw new Error("Em Separação status not found");
         }
-
         const updatedReq = await tx.wEB_REQUISICAO
           .update({
             where: { ID_REQUISICAO: id },
@@ -455,6 +437,8 @@ class RequisitionService {
           .then((result) => {
             return RequisitionRepository.formatRequisition(result);
           });
+          console.log("estoque items", stockItems);
+          console.log("compras items", comprasItems);
         return {
           estoque: updatedReq,
           compras: newComprasReq,
@@ -474,6 +458,9 @@ class RequisitionService {
           console.log(`Updated requisition ${id} to compras scope`);
           return RequisitionRepository.formatRequisition(result);
         });
+         console.log("estoque items", stockItems);
+         console.log("compras items", comprasItems);
+ 
       return {
         compras: updatedReq,
         estoque: null,
@@ -583,7 +570,7 @@ class RequisitionService {
 
     return [
       {
-        // Administrador: acesso total
+        // Administrador: acesso totalF
         check: () => Number(user.PERM_ADMINISTRADOR) === 1,
         statusList: () => null, // ignora status
         match: () => true,

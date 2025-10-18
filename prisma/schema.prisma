@@ -1115,6 +1115,7 @@ model WEB_REQUISICAO_ITEMS {
   data_entrega                DateTime?                    @db.DateTime(0)
   id_item_cotacao             Int?
   id_req_original             Int?
+  quantidade_disponivel       Int?
   produtos                    produtos?                    @relation(fields: [id_produto], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "produto_associado")
   WEB_REQUISICAO              WEB_REQUISICAO               @relation(fields: [id_requisicao], references: [ID_REQUISICAO], onDelete: Cascade, map: "requisicao")
   web_anexos_item_requisicao  web_anexos_item_requisicao[]
