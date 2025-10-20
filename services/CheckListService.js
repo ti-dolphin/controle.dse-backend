@@ -94,10 +94,10 @@ class CheckListService {
     let emailsSent = 0;
     for (let checklist of undoneChecklits) {
       const {responsavel, patrimonio} = checklist;
-       const templateSource = fs.readFileSync(
-              `./views/checklistNotification.handlebars`,
-              "utf8"
-            );
+      const templateSource = fs.readFileSync(
+        `./views/checklistNotification.handlebars`,
+        "utf8"
+      );
       const template = Handlebars.compile(templateSource);
       const html = template({
         responsavel: responsavel, //será utilizado o campo NOME
@@ -123,6 +123,10 @@ class CheckListService {
 
   async delete(id_checklist_movimentacao) {
     return CheckListRepository.delete(id_checklist_movimentacao);
+  }
+
+  async approve(id_checklist_movimentacao) {
+    return CheckListRepository.approve(id_checklist_movimentacao);
   }
 }
 
