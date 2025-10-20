@@ -30,19 +30,23 @@ class UserService {
     if (!user) {
       throw new Error("Login Inválido");
     }
-    const hashedPassword = crypto
-      .createHash("md5")
+    console.log('senha: ', SENHA)
+    console.log("payload: ", payload)
+    const hashedPassword = crypto.createHash("md5")
       .update(SENHA)
       .digest("hex")
       .toUpperCase();
+       console.log("hashedPassword: ", hashedPassword)
     if (user.SENHA !== hashedPassword) {
       throw new Error("E-mail ou senha inválidos");
     }
+
     const token = jwt.sign(
       { LOGIN, SENHA },
       process.env.JWT_SECRET || "default_secret",
       { expiresIn: "10h" }
     );
+    console.log("token: ", token)
     return { user, token };
   }
 
