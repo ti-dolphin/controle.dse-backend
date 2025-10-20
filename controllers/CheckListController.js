@@ -76,7 +76,20 @@ class CheckListController {
     }
   }
 
+  async approve(req, res) {
+    try {
+      const { id_checklist_movimentacao } = req.params;
 
+      const checklist = await CheckListService.approve(
+        Number(id_checklist_movimentacao)
+      );
+
+      res.json(checklist);
+    } catch (error) {
+      console.error("Error approving checklist:", error);
+      res.status(500).json({ error: error.message });
+    }
+  }
 
   async update(req, res) {
     try {

@@ -21,15 +21,15 @@ class CheckListRepository {
           select: {
             CODPESSOA: true,
             NOME: true,
-            EMAIL: true
+            EMAIL: true,
           },
         },
         web_patrimonio: {
           include: {
-            web_tipo_patrimonio: { 
-              include : { 
-                web_items_checklist_tipo: true
-              }
+            web_tipo_patrimonio: {
+              include: {
+                web_items_checklist_tipo: true,
+              },
             },
           },
         },
@@ -59,21 +59,31 @@ class CheckListRepository {
 
   async create(id_movimentacao, tx) {
     const checklist = await tx.web_checklist_movimentacao
-    .create({ data : { 
-      id_movimentacao,
-      data_criacao: getNowISODate(),
-      aprovado: false,
-      realizado: false
-    }, include: this.include }).then((result) => (result ? this.format(result) : null));
-    const items = await ChecklistMovementationItemRepository.getItemsFromTypeOfPatrimony(checklist.id_movimentacao, tx);
+      .create({
+        data: {
+          id_movimentacao,
+          data_criacao: getNowISODate(),
+          aprovado: false,
+          realizado: false,
+        },
+        include: this.include,
+      })
+      .then((result) => (result ? this.format(result) : null));
+    const items =
+      await ChecklistMovementationItemRepository.getItemsFromTypeOfPatrimony(
+        checklist.id_movimentacao,
+        tx
+      );
 
     const createdChecklistItems = [];
-    for(const item of items) {
+    for (const item of items) {
       const { nome_item_checklist } = item;
-      const itemCreated = await tx.web_items_checklist_movimentacao.create({ data: { 
-        id_checklist_movimentacao: checklist.id_checklist_movimentacao,
-        nome_item_checklist
-      } });
+      const itemCreated = await tx.web_items_checklist_movimentacao.create({
+        data: {
+          id_checklist_movimentacao: checklist.id_checklist_movimentacao,
+          nome_item_checklist,
+        },
+      });
       createdChecklistItems.push(itemCreated);
     }
 
@@ -91,16 +101,18 @@ class CheckListRepository {
           ...params,
           AND: [searchFilter, extraFilters],
         },
-        orderBy: {id_checklist_movimentacao: "desc"},
+        orderBy: { id_checklist_movimentacao: "desc" },
         include: this.include,
       })
       .then((results) => results.map(this.format));
   }
 
   async getManyByUser(codpessoa, filters, searchTerm, situacao) {
-    const searchFilter = searchTerm !== "" ? this.buildSearchFilters(searchTerm) : {};
+    const searchFilter =
+      searchTerm !== "" ? this.buildSearchFilters(searchTerm) : {};
     const extraFilters = this.buildFilters(filters);
-    const typesUserIsResponsableFor = await PatrimonyRepository.getTypesUserIsResponsableFor(codpessoa, true);
+    const typesUserIsResponsableFor =
+      await PatrimonyRepository.getTypesUserIsResponsableFor(codpessoa, true);
 
     const situationFilter = this.buildSituationFilters(
       situacao,
@@ -136,62 +148,66 @@ class CheckListRepository {
   }
 
   async getFinishedExpiredChecklists() {
-      const patrimonies = await prisma.web_patrimonio.findMany({
-        where: { ativo: 1 }, // Opcional: apenas ativos
-        include: {
-          web_tipo_patrimonio: true,
-          web_movimentacao_patrimonio: {
-            orderBy: { id_movimentacao: "desc" }, // Última movimentação primeiro
-            include: {
-              web_checklist_movimentacao: {
-                orderBy: { id_checklist_movimentacao: "desc" }, // Último checklist primeiro
-              },
+    const patrimonies = await prisma.web_patrimonio.findMany({
+      where: { ativo: 1 }, // Opcional: apenas ativos
+      include: {
+        web_tipo_patrimonio: true,
+        web_movimentacao_patrimonio: {
+          orderBy: { id_movimentacao: "desc" }, // Última movimentação primeiro
+          include: {
+            web_checklist_movimentacao: {
+              orderBy: { id_checklist_movimentacao: "desc" }, // Último checklist primeiro
             },
           },
         },
-      });
-// Processa para extrair apenas o último de cada
-      const checklists = patrimonies.map((patrimonio) => {
-          const lastMov = patrimonio.web_movimentacao_patrimonio[0]; // Primeiro é o último (devido orderBy desc)
-          if (!lastMov) {
-            return {
-              id_patrimonio: patrimonio.id_patrimonio,
-              nome: patrimonio.nome,
-              lastChecklist: null,
-            };
-          }
-        const lastChecklist = lastMov.web_checklist_movimentacao[0]; // Similar
-        return { 
-          ...lastChecklist,
-          periodicidade: patrimonio.web_tipo_patrimonio.periodicidade
+      },
+    });
+    // Processa para extrair apenas o último de cada
+    const checklists = patrimonies.map((patrimonio) => {
+      const lastMov = patrimonio.web_movimentacao_patrimonio[0]; // Primeiro é o último (devido orderBy desc)
+      if (!lastMov) {
+        return {
+          id_patrimonio: patrimonio.id_patrimonio,
+          nome: patrimonio.nome,
+          lastChecklist: null,
         };
+      }
+      const lastChecklist = lastMov.web_checklist_movimentacao[0]; // Similar
+      return {
+        ...lastChecklist,
+        periodicidade: patrimonio.web_tipo_patrimonio.periodicidade,
+      };
     });
 
-    const expireds = checklists.filter((checklist) => this.isExpired(checklist, checklist.periodicidade));
+    const expireds = checklists.filter((checklist) =>
+      this.isExpired(checklist, checklist.periodicidade)
+    );
     return expireds;
   }
 
-  async getChecklistsWithoutItems(){ 
-    const checklists  = await prisma.web_checklist_movimentacao
+  async getChecklistsWithoutItems() {
+    const checklists = await prisma.web_checklist_movimentacao
       .findMany({
         where: {
           realizado: false,
-          aprovado: false
+          aprovado: false,
         },
-        include: this.include
+        include: this.include,
       })
       .then((results) => results.map(this.format));
     return checklists.filter((checklist) => !(checklist.items.length > 0));
   }
 
-  async getUndoneChecklists(){ 
-    const checklists = await prisma.web_checklist_movimentacao.findMany({ 
-      where: {
-        realizado: false,
-        aprovado: false
-      },
-      include: this.include
-    }).then((results) => results.map(this.format));
+  async getUndoneChecklists() {
+    const checklists = await prisma.web_checklist_movimentacao
+      .findMany({
+        where: {
+          realizado: false,
+          aprovado: false,
+        },
+        include: this.include,
+      })
+      .then((results) => results.map(this.format));
     return checklists;
   }
 
@@ -205,23 +221,37 @@ class CheckListRepository {
       .then((result) => (result ? this.format(result) : null));
   }
 
-  isExpired(checklist, periodicidade){ 
+  async approve(id_checklist_movimentacao) {
+    return prisma.web_checklist_movimentacao
+      .update({
+        where: { id_checklist_movimentacao },
+        data: {
+          aprovado: true,
+          data_aprovado: getNowISODate(),
+        },
+        include: this.include,
+      })
+      .then((result) => (result ? this.format(result) : null));
+    ;
+  }
+
+  isExpired(checklist, periodicidade) {
     const now = new Date();
-       if(checklist.realizado && checklist.aprovado) {
-         // Assumindo que 'now' está definido como new Date();
-         const approvalDate = new Date(checklist.data_aprovado); // Converte a data de aprovação para Date
-         // Calcula a diferença em milissegundos entre agora e a data de aprovação
-         const differenceInMilliseconds = now - approvalDate;
-         // Converte para dias (arredondando para baixo)
-         const differenceInDays = Math.floor(
-           differenceInMilliseconds / (1000 * 60 * 60 * 24)
-         );
-         // Verifica se a diferença é MAIOR que a periodicidade (expirado)
-         if (differenceInDays > periodicidade) {
-           return true;
-         }
-       }
-       return false
+    if (checklist.realizado && checklist.aprovado) {
+      // Assumindo que 'now' está definido como new Date();
+      const approvalDate = new Date(checklist.data_aprovado); // Converte a data de aprovação para Date
+      // Calcula a diferença em milissegundos entre agora e a data de aprovação
+      const differenceInMilliseconds = now - approvalDate;
+      // Converte para dias (arredondando para baixo)
+      const differenceInDays = Math.floor(
+        differenceInMilliseconds / (1000 * 60 * 60 * 24)
+      );
+      // Verifica se a diferença é MAIOR que a periodicidade (expirado)
+      if (differenceInDays > periodicidade) {
+        return true;
+      }
+    }
+    return false;
   }
 
   async delete(id_checklist_movimentacao) {
@@ -336,17 +366,14 @@ class CheckListRepository {
           id_responsavel: Number(codpessoa),
         },
       },
-      todas :  { 
-        OR: [
-          {aprovado: false},
-          {realizado: false}
-        ],
+      todas: {
+        OR: [{ aprovado: false }, { realizado: false }],
         movimentacao_patrimonio: {
           web_patrimonio: {
             tipo: { in: typesUserIsResponsableFor },
           },
         },
-      }
+      },
     };
     const situationFilter = situationFilters[situacao] ?? {};
     return situationFilter;
