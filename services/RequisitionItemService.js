@@ -57,7 +57,10 @@ class RequisitionItemService {
         const { updatedItems, updatedRequisition } = await prisma.$transaction(
           async (tx) => {
             const requisitionItems = await tx.wEB_REQUISICAO_ITEMS.findMany({
-              where: { id_requisicao: Number(id_requisicao) },
+              where: { 
+                id_requisicao: Number(id_requisicao),
+                ativo: 1
+              },
             });
             const updatedItems = [];
             for (const reqItem of requisitionItems) {
