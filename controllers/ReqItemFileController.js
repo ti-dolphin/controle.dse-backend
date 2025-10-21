@@ -27,7 +27,7 @@ class ReqItemFileController {
         }
     }
 
-     async create(req, res) {
+    async create(req, res) {
         try {
             const payload = req.body;
             const newFile = await ReqItemFileService.create(payload);

@@ -13,7 +13,6 @@ class ReqItemFileService {
 
   async create(payload) {
     const newFile = await ReqItemFileRepository.create(payload);
-    console.log("newFile", newFile);
     return newFile;
   }
 
