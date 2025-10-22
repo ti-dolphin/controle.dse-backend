@@ -18,13 +18,14 @@ class ReqItemFileRepository {
 
   async create(payload) {
     console.log("payload", payload);
-    // Permitir apenas os campos válidos para criação de arquivo
+    // Monte explicitamente o objeto data, sem nunca incluir id_anexo_item_requisicao
     const data = {
       arquivo: payload.arquivo,
       id_item_requisicao: payload.id_item_requisicao,
       nome_arquivo: payload.nome_arquivo,
-      // Adicione aqui outros campos permitidos para anexo, se houver
+      // Adicione outros campos válidos explicitamente, se houver
     };
+    // Remova qualquer campo indesejado do objeto data (garantia extra)
     return prisma.web_anexos_item_requisicao.create({
       data,
     });
