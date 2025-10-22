@@ -5,7 +5,13 @@ class RequisitionController {
   async getMany(req, res) {
     try {
         const params = req.query.params;
-        const user = req.query.user;
+        let user = req.query.user;
+
+        if (params?.removeAdmView) {
+          user.PERM_ADMINISTRADOR = 'false'
+        }
+
+        console.log(user.PERM_ADMINISTRADOR, 'user.PERM_ADMINISTRADOR');
         
       const requisitions = await RequisitionService.getMany(user, params);
 
