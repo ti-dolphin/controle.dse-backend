@@ -10,26 +10,29 @@ class ReqItemFileRepository {
     });
   }
 
-  async getById(id) {
+  async getById(id_anexo_item_requisicao) {
     return prisma.web_anexos_item_requisicao.findUnique({
-      where: { id: id },
+      where: { id_anexo_item_requisicao },
     });
   }
 
   async create(payload) {
     console.log("payload", payload);
-    // Remover id_anexo_item_requisicao se existir
-    if ('id_anexo_item_requisicao' in payload) {
-      delete payload.id_anexo_item_requisicao;
-    }
+    // Permitir apenas os campos válidos para criação de arquivo
+    const data = {
+      arquivo: payload.arquivo,
+      id_item_requisicao: payload.id_item_requisicao,
+      nome_arquivo: payload.nome_arquivo,
+      // Adicione aqui outros campos permitidos para anexo, se houver
+    };
     return prisma.web_anexos_item_requisicao.create({
-      data: payload,
+      data,
     });
   }
 
-  async update(id, payload) {
+  async update(id_anexo_item_requisicao, payload) {
     return prisma.web_anexos_item_requisicao.update({
-      where: { id: id },
+      where: { id_anexo_item_requisicao },
       data: payload,
     });
   }
