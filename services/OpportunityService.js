@@ -7,6 +7,7 @@ const EmailService = require("../services/EmailService");
 const OpportunityTrigger = require("../triggers/OpportunityTrigger");
 class OpportunityService {
   async getById(CODOS) {
+    //código da oportunindade
     return await OpportunityRepository.getById(CODOS);
   }
 
