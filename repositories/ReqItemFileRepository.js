@@ -17,9 +17,14 @@ class ReqItemFileRepository {
   }
 
   async create(payload) {
-    console.log("payload", payload);
+    const data = {
+      arquivo: payload.arquivo,
+      id_item_requisicao: payload.id_item_requisicao,
+      nome_arquivo: payload.nome_arquivo,
+    };
+    console.log(" AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAdata enviado ao prisma:", data);
     return prisma.web_anexos_item_requisicao.create({
-      data: payload,
+      data
     });
   }
 

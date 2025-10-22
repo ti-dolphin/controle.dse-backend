@@ -225,7 +225,7 @@ class RequisitionItemService {
   }
 
   async crateAttachment(data){ 
-     return prisma.web_anexos_item_requisicao.create({data});
+    return prisma.web_anexos_item_requisicao.create({data});
   }
 
   async createChildItems(items, newRequisitionId, tx) {
