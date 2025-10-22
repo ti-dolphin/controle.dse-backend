@@ -18,6 +18,10 @@ class ReqItemFileRepository {
 
   async create(payload) {
     console.log("payload", payload);
+    // Remover id_anexo_item_requisicao se existir
+    if ('id_anexo_item_requisicao' in payload) {
+      delete payload.id_anexo_item_requisicao;
+    }
     return prisma.web_anexos_item_requisicao.create({
       data: payload,
     });
