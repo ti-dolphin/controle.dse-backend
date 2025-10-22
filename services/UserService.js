@@ -24,7 +24,7 @@ class UserService {
     return isAdmin;
   }
   
-  async login(payload) {
+  async login(payload) {np
     const { LOGIN, SENHA } = payload;
     const user = await UserRepository.getUserByLogin(LOGIN);
     if (!user) {
@@ -41,7 +41,7 @@ class UserService {
     const token = jwt.sign(
       { LOGIN, SENHA },
       process.env.JWT_SECRET || "default_secret",
-      { expiresIn: "10h" }
+      { expiresIn: "14d" }
     );
     return { user, token };
   }
