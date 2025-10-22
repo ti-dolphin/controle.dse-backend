@@ -24,7 +24,7 @@ class UserService {
     return isAdmin;
   }
   
-  async login(payload) {np
+  async login(payload) {
     const { LOGIN, SENHA } = payload;
     const user = await UserRepository.getUserByLogin(LOGIN);
     if (!user) {
