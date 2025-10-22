@@ -225,11 +225,7 @@ class RequisitionItemService {
   }
 
   async crateAttachment(data){ 
-     // Remover id_anexo_item_requisicao do payload, se existir
-     if ('id_anexo_item_requisicao' in data) {
-       delete data.id_anexo_item_requisicao;
-     }
-     return prisma.web_anexos_item_requisicao.create({data});
+    return prisma.web_anexos_item_requisicao.create({data});
   }
 
   async createChildItems(items, newRequisitionId, tx) {
