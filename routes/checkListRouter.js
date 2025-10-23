@@ -1,7 +1,7 @@
 //checklistRouter
 var express = require("express");
 var router = express.Router();
-const CheckListController = require('../controllers/CheckListController');
+const CheckListController = require('../controllers/ChecklistController.js');
 
 // POST routes
 router.post("/", CheckListController.create);
