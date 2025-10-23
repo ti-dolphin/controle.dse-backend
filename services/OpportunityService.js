@@ -39,8 +39,6 @@ class OpportunityService {
     });
   }
 
-  
-
   async update(CODOS, data) {
     // if (data.VALORFATDOLPHIN && data.VALORFATDIRETO && data.VALOR_COMISSAO){
     data.VALORFATDOLPHIN =
