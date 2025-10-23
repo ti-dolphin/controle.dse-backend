@@ -88,7 +88,10 @@ class OpportunityRepository {
                   : { in: projectsFollowedByUser },
               },
             },
-            { STATUS: { ACAO: finalizados ? 1 : 0 } },
+            // Ajuste: se finalizados for true, não filtra por STATUS.ACAO, senão filtra apenas abertos
+            ...(finalizados
+              ? []
+              : [{ STATUS: { ACAO: 0 } }]),
             searchFilter,
             composedFilters,
           ],
