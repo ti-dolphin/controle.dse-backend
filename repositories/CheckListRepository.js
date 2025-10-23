@@ -227,6 +227,7 @@ class CheckListRepository {
         where: { id_checklist_movimentacao },
         data: {
           aprovado: true,
+          realizado: true,
           data_aprovado: getNowISODate(),
         },
         include: this.include,
