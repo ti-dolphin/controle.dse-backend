@@ -69,7 +69,7 @@ class RequistionItemRepository {
   }
 
   async crateAttachment(data){ 
-     return prisma.web_anexos_item_requisicao.create({data});
+    return prisma.web_anexos_item_requisicao.create({data});
   }
 
   async update(id_item_requisicao, data) {
