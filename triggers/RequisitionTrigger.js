@@ -76,8 +76,10 @@ class RequisitionTrigger {
       items.forEach((item) => {
         productIdToITem.set(item.id_produto, item);
       });
+      // Filtra apenas os itens que possuem id_produto
+      const itemsWithProductId = items.filter(item => !!item.id_produto);
       const products = await tx.produtos.findMany({
-        where: { ID: { in: items.map((item) => item.id_produto) } },
+        where: { ID: { in: itemsWithProductId.map((item) => item.id_produto) } },
       });
       console.log("updatingToRequisitado", updatingToRequisitado);
       console.log("requisitionStatusisAdvancing", requisitionStatusisAdvancing);

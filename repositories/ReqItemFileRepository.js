@@ -22,7 +22,6 @@ class ReqItemFileRepository {
       id_item_requisicao: payload.id_item_requisicao,
       nome_arquivo: payload.nome_arquivo,
     };
-    console.log(" AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAdata enviado ao prisma:", data);
     return prisma.web_anexos_item_requisicao.create({
       data
     });
