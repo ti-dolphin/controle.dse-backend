@@ -28,6 +28,7 @@ class RequisitionService {
 
       // Caso o status seja fazendo, filtra somente pelas que EU (usuario) estou fazendo
       if (Number(id_kanban_requisicao) === 2) {
+        console.log('TA ENTRANDO AQUI CERTINHO')
         reqs = await this.filterByOnlyMyReqs(user, reqs);
       }
 
