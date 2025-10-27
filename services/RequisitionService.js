@@ -49,8 +49,10 @@ class RequisitionService {
       reqIds.map(reqId => RequisitionStatusService.getPreviousStatus(reqId))
     )
 
-    console.log( 'Validations:', validations);
-    console.log( 'User:', user.CODPESSOA);
+    for (let i = 0; i < validations.length; i++) {
+      console.log('Req ID:', reqIds[i], 'Alterado por:', validations[i]?.alterado_por, 'Type:', typeof validations[i]?.alterado_por);
+      console.log( 'User:', user.CODPESSOA, typeof user.CODPESSOA);
+    }
 
     return reqIds.filter((reqIds, i) => +validations[i]?.alterado_por === +user.CODPESSOA)
   }
