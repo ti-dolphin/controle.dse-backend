@@ -88,7 +88,7 @@ class RequisitionTrigger {
     if (updatingToRequisitado && requisitionStatusisAdvancing) {
         const atLeastOneItemAvailable = products.some(
           (product) => (
-             product.quantidade_estoque && product.quantidade_estoque > 0 && product.quantidade_disponivel > 0
+            product.quantidade_estoque && product.quantidade_estoque > 0 && product.quantidade_disponivel > 0
           )
         );
         console.log("products", products);
