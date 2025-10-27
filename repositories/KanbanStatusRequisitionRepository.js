@@ -2,28 +2,28 @@ const {prisma} = require('../database');
 
 
 class KanbanStatusRequisitionRepository{ 
-    async create(data){
+    async create(data) {
         return prisma.web_kanban_status_requisicao.create({data});
     }
 
-    async update(id, data){
+    async update(id, data) {
         return prisma.web_kanban_status_requisicao.update({where: {id}, data});
     }
 
-    async delete(id){
+    async delete(id) {
         return prisma.web_kanban_status_requisicao.delete({where: {id}});
     }
 
-    async getById(id){
+    async getById(id) {
         return prisma.web_kanban_status_requisicao.findUnique({where: {id}});
     }
 
-    async getMany(params){
-
+    async getMany(params) {
         return prisma.web_kanban_status_requisicao.findMany({ 
             where : params
         });
     }
+
 }
 
 module.exports = new KanbanStatusRequisitionRepository();

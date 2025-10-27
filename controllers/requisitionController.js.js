@@ -5,14 +5,13 @@ class RequisitionController {
   async getMany(req, res) {
     try {
         const params = req.query.params;
+
         let user = req.query.user;
 
         if (params?.removeAdmView) {
           user.PERM_ADMINISTRADOR = 'false'
         }
 
-        console.log(user.PERM_ADMINISTRADOR, 'user.PERM_ADMINISTRADOR');
-        
       const requisitions = await RequisitionService.getMany(user, params);
 
       res.status(200).json(requisitions);
@@ -86,11 +85,9 @@ class RequisitionController {
   }
 
   async changeStatus(req, res){ 
-    console.log("entrando no changeStatus - controller");
     try {
       const { id_requisicao } = req.params;
       const { alterado_por, id_status_requisicao } = req.body;
-      console.log("req body: ", req.body);
       const updated = await RequisitionService.changeStatus(
         Number(id_requisicao),
         Number(id_status_requisicao),

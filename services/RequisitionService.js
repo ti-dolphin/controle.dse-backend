@@ -15,24 +15,40 @@ class RequisitionService {
 
     // Se não for o kanban "5", aplica regras de acesso e status
     if (Number(id_kanban_requisicao) !== 5) {
+      let reqs
       // Busca os status do kanban selecionado
       const kanbanStatusList = await KanbanStatusRequisitionRepository.getMany({
         id_kanban_requisicao: Number(id_kanban_requisicao),
       });
       // Filtra as requisições permitidas para o usuário
-      const filteredReqsByKanban = await this.getReqsBykanban(
+      reqs = await this.getReqsBykanban(
         user,
         kanbanStatusList
       );
+
+      // Caso o status seja fazendo, filtra somente pelas que EU (usuario) estou fazendo
+      if (Number(id_kanban_requisicao) === 2) {
+        reqs = await this.filterByOnlyMyReqs(user, reqs);
+      }
+
+
       // Busca as requisições filtradas por ID, termo de busca geral e filtros adicionais
       return await RequisitionRepository.findMany(
-        { ID_REQUISICAO: { in: filteredReqsByKanban } },
+        { ID_REQUISICAO: { in: reqs } },
         searchTerm,
         filters
       );
     }
     // Se for o kanban "5", retorna todas as requisições com filtros aplicados
     return await RequisitionRepository.findMany({}, searchTerm, filters);
+  }
+
+  async filterByOnlyMyReqs(user, reqIds) {
+    const validations = await Promise.all(
+      reqIds.map(reqId => RequisitionStatusService.getPreviousStatus(reqId))
+    )
+
+    return reqIds.filter((reqIds, i) => +validations[i]?.alterado_por === +user.CODPESSOA)
   }
 
   async getReqsBykanban(user, kanbanStatusList) {
@@ -199,14 +215,12 @@ class RequisitionService {
           tx
         );
         // Step 10: atualiza novas cotações e nova requisição com novos totais
-        console.log("atualizando total novo");
         await RequisitionItemService.updateRequisitionWithNewTotals(
           newReq.ID_REQUISICAO,
           newItemsUpdated,
           tx
         );
         // Step 11: atualiza cotação e requisição original com novos totais
-        console.log("atualizando total original");
         await RequisitionItemService.updateRequisitionWithNewTotals(
           req.ID_REQUISICAO,
           updatedOriginalItems,
@@ -242,15 +256,6 @@ class RequisitionService {
   }
 
   allItemsAttended(items) {
-    console.log(
-      "allItemsAttended",
-      items.every((item) => {
-        return (
-          item.quantidade_atendida > 0 &&
-          item.quantidade_atendida === item.quantidade
-        );
-      })
-    );
     return items.every(
       (item) =>
         item.quantidade_atendida > 0 &&
@@ -260,8 +265,6 @@ class RequisitionService {
 
   async attend(id, items) {
     return await prisma.$transaction(async (tx) => {
-
-      console.log("items", items.length);
 
       const req = await tx.wEB_REQUISICAO.findFirst({
         where: { ID_REQUISICAO: Number(id) },
@@ -306,7 +309,6 @@ class RequisitionService {
               include: RequisitionRepository.buildInclude(),
             })
             .then((result) => {
-              console.log(`Updated requisition ${id} to 'Em Separação' status`);
               return RequisitionRepository.formatRequisition(result);
             });
         
@@ -417,7 +419,6 @@ class RequisitionService {
             where: { id_item_requisicao: item.id_item_requisicao },
             data: { quantidade: item.quantidade_atendida },
           });
-     
           const updatedProduct = await tx.produtos.update({
             where: {
               ID: item.id_produto,
@@ -449,14 +450,11 @@ class RequisitionService {
           .then((result) => {
             return RequisitionRepository.formatRequisition(result);
           });
-          console.log("estoque items", stockItems);
-          console.log("compras items", comprasItems);
         return {
           estoque: updatedReq,
           compras: newComprasReq,
         };
       }
-      console.log("atualizando requisição original com escopo de compras, nenhum item atendido");
       const updatedReq = await tx.wEB_REQUISICAO
         .update({
           where: { ID_REQUISICAO: id },
@@ -467,12 +465,8 @@ class RequisitionService {
           include: RequisitionRepository.buildInclude(),
         })
         .then((result) => {
-          console.log(`Updated requisition ${id} to compras scope`);
           return RequisitionRepository.formatRequisition(result);
         });
-         console.log("estoque items", stockItems);
-         console.log("compras items", comprasItems);
- 
       return {
         compras: updatedReq,
         estoque: null,
@@ -519,7 +513,6 @@ class RequisitionService {
   }
 
   async changeStatus(id_requisicao, newStatusId, alterado_por) {
-    console.log("entrando no changeStatus");
     return await prisma.$transaction(async (tx) => {
       const req = await tx.wEB_REQUISICAO.findFirst({
         where: { ID_REQUISICAO: id_requisicao },
@@ -532,7 +525,6 @@ class RequisitionService {
         tx
       );
       if (updatedReq) {
-        console.log(`não é status de verificação de estoque`);
         await tx.web_alteracao_req_status.create({
           data: {
             id_status_anterior: req.id_status_requisicao,
@@ -576,9 +568,7 @@ class RequisitionService {
   }
   async getAccessRulesByKanban(user, kanbanStatusList) {
     const profiles = await prisma.web_perfil_usuario.findMany();
-    console.log("kanbanStatusList", kanbanStatusList);
     const statusByProfile = this.getStatusListByProfile(kanbanStatusList);
-    console.log("Estados disponíveis para este kanban", statusByProfile);
 
     return [
       {
