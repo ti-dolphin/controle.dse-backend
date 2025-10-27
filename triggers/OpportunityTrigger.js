@@ -38,7 +38,6 @@ class OpportunityTrigger {
           ID: adicional.ID,
         },
       });
-      console.log("adicional deleteado: ", adicional.ID);
     }
     if (adicional.NUMERO === 0) {
       await tx.projetos.delete({
@@ -46,14 +45,13 @@ class OpportunityTrigger {
           ID: adicional.ID_PROJETO,
         },
       });
-      console.log("projeto deleteado: ", adicional.ID_PROJETO);
     }
   };
 
   static createAdicional = async (ID_PROJETO, tx) => {
     const lastAdicional = await tx.aDICIONAIS.findFirst({
       where: {
-        ID: ID_PROJETO,
+        ID_PROJETO: ID_PROJETO,
       },
       orderBy: {
         ID: "desc",

@@ -110,7 +110,6 @@ class OpportunityService {
       const oppsByResponsable = await this.getOppsByResponsable();
       if (oppsByResponsable) {
         const reportSent = await this.sendWeeklyReport(oppsByResponsable);
-        console.log("reportSent: ", reportSent);
         return reportSent;
       }
       return false;
