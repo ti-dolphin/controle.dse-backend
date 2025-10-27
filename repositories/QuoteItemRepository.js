@@ -22,6 +22,9 @@ class QuoteItemRepository {
       produto_codigo: item.WEB_REQUISICAO_ITEMS?.produtos?.codigo,
       produto_unidade: item.WEB_REQUISICAO_ITEMS?.produtos?.unidade,
     };
+    if (item.WEB_REQUISICAO_ITEMS?.produtos?.descricao === 'MATERIAL OU SERVIÇO NÃO CADASTRADO') {
+      formattedItem.produto_descricao = item.WEB_REQUISICAO_ITEMS?.observacao || item.WEB_REQUISICAO_ITEMS?.produtos?.descricao
+    }
     delete formattedItem.produtos;
     delete formattedItem.WEB_REQUISICAO_ITEMS;
     return formattedItem;

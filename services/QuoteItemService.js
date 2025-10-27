@@ -31,7 +31,6 @@ class QuoteItemService {
       data.subtotal = await this.calculateSubTotal(id_item_cotacao, data);
 
 
-      console.log("data: ", data)
       await this.calculateItemsTotal(id_item_cotacao, data);
       const updatedItem = await tx.web_items_cotacao.update({
         where: { id_item_cotacao: Number(id_item_cotacao) },
@@ -247,9 +246,6 @@ class QuoteItemService {
       const itemsSum = updatedQuoteItems
         .filter((item) => item.id_cotacao === quote.id_cotacao)
         .reduce((acc, curr) => acc + Number(curr.subtotal || 0), 0);
-      console.log(
-        `atualizando cotação ${quote.id_cotacao} com valor total itens ${itemsSum}`
-      );
       await tx.web_cotacao.update({
         where: { id_cotacao: quote.id_cotacao },
         data: {
