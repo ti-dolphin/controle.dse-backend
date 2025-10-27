@@ -7,6 +7,7 @@ class UserController {
             const {token, user} = await UserService.login(payload);
             res.status(200).json({ token, user });
         } catch (err) {
+            console.log("error: ", err)
             res.status(401).json({ error: err.message });
         }
     }

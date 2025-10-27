@@ -393,6 +393,18 @@ class RequisitionService {
               where: { id_item_requisicao: item.id_item_requisicao },
               data: { ativo: 0 },
             });
+            const product = productIdToProduct.get(item.id_produto);
+            const quantityToDecrement = item.quantidade_disponivel > product.quantidade_reservada ? product.quantidade_reservada : item.quantidade_disponivel;
+            const updatedProduct = await tx.produtos.update({
+              where: {
+                ID: item.id_produto,
+              },
+              data: {
+                quantidade_reservada: {
+                  decrement: quantityToDecrement
+                },
+              },
+            });
             comprasItems.push(newComprasReqItem);
             continue;
           }
