@@ -11,9 +11,7 @@ const QuoteItemService = require("./QuoteItemService");
 const RequisitionTrigger = require("../triggers/RequisitionTrigger");
 class RequisitionService {
   async getMany(user, params) {
-    const { id_kanban_requisicao, searchTerm, filters, doneReqFilter, cancelledReqFilter } = params;
-
-    console.log(doneReqFilter, cancelledReqFilter, 'AABCDEFGHIJKLMNOPQRSTUWX')
+    const { id_kanban_requisicao, searchTerm, filters } = params;
 
     // Se não for o kanban "5", aplica regras de acesso e status
     if (Number(id_kanban_requisicao) !== 5) {
@@ -41,21 +39,40 @@ class RequisitionService {
       // Busca as requisições filtradas por ID, termo de busca geral e filtros adicionais
       return await RequisitionRepository.findMany(
         { ID_REQUISICAO: { in: reqs } },
+
         searchTerm,
         filters
       );
     }
     // Se for o kanban "5", retorna todas as requisições com filtros aplicados
-    return await RequisitionRepository.findMany({}, searchTerm, filters, doneReqFilter, cancelledReqFilter);
+    return await RequisitionRepository.findMany({}, searchTerm, filters);
   }
 
   async initialFilterForMyReqs(user, reqIds) {
-    const validations = await Promise.all(
+    // Busca todos os status de todas as requisições em paralelo
+    const statusesList = await Promise.all(
       reqIds.map(reqId => RequisitionStatusService.getAllLastStatuses(reqId))
     );
-    return reqIds.some((reqId, i) =>
-      +validations[i]?.alterado_por === +user.CODPESSOA
-    )
+    const arrReturn = [];
+    await Promise.all(
+      statusesList.map(async (allStatuses, idx) => {
+        const reqId = reqIds[idx];
+        if (!allStatuses) return;
+        for (const status of allStatuses) {
+          if (+status?.alterado_por === +user.CODPESSOA) {
+            arrReturn.push(reqId);
+            break;
+          } else {
+            const actualStatus = await RequisitionStatusService.getStatus(reqId);
+            if (actualStatus.id_status_requisicao === 2) {
+              arrReturn.push(reqId);
+              break;
+            }
+          }
+        }
+      })
+    );
+    return arrReturn;
   }
 
   async filterByOnlyMyReqs(user, reqIds) {
