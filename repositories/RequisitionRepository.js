@@ -1,41 +1,18 @@
 const { prisma } = require("../database");
 
 class RequisitionRepository {
-  findMany = ( 
-    kanbanFilters,
-    searchTerm,
-    extraFilters,
-    doneReqFilter,
-    cancelledReqFilter
-  ) => {
+  findMany = (kanbanFilters, searchTerm, extraFilters) => {
     const searchFilter =
       searchTerm && searchTerm.trim() !== ""
         ? this.buildSearchFilter(searchTerm)
-        : null; // Altere para null ao invés de {}
+        : {};
     const filters = this.buildFilters(extraFilters);
-
-    let filter = {
-      id_status_requisicao: {
-        not: 99
-      },
-      AND: [
-        { ...kanbanFilters },
-        ...(searchFilter ? [searchFilter] : []),
-        ...(filters && filters.AND && filters.AND.length > 0 ? [filters] : []),
-      ],
-    };
-
-    if (doneReqFilter && cancelledReqFilter) {
-      delete filter.id_status_requisicao;
-    } else if (doneReqFilter) {
-      filter.id_status_requisicao.notIn = [99];
-    } else if (cancelledReqFilter) {
-      filter.id_status_requisicao.notIn = [104];
-    }
 
     return prisma.wEB_REQUISICAO
       .findMany({
-        where: filter,
+        where: {
+          AND: [{ ...kanbanFilters }, searchFilter, filters],
+        },
         include: {
           ...this.buildInclude(),
         },
@@ -43,10 +20,7 @@ class RequisitionRepository {
           ID_REQUISICAO: "desc",
         },
       })
-      .then((results) => {
-        console.log("Quantidade de resultados:", results.length);
-        return results.map((item) => this.formatRequisition(item));
-      });
+      .then((results) => results.map((item) => this.formatRequisition(item)));
   };
 
   findById = (ID_REQUISICAO) => {
@@ -279,4 +253,3 @@ class RequisitionRepository {
 }
 
 module.exports = new RequisitionRepository();
-
