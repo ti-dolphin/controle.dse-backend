@@ -11,7 +11,9 @@ const QuoteItemService = require("./QuoteItemService");
 const RequisitionTrigger = require("../triggers/RequisitionTrigger");
 class RequisitionService {
   async getMany(user, params) {
-    const { id_kanban_requisicao, searchTerm, filters } = params;
+    const { id_kanban_requisicao, searchTerm, filters, doneReqFilter, cancelledReqFilter } = params;
+
+    console.log(doneReqFilter, cancelledReqFilter, 'AABCDEFGHIJKLMNOPQRSTUWX')
 
     // Se não for o kanban "5", aplica regras de acesso e status
     if (Number(id_kanban_requisicao) !== 5) {
@@ -40,7 +42,7 @@ class RequisitionService {
       );
     }
     // Se for o kanban "5", retorna todas as requisições com filtros aplicados
-    return await RequisitionRepository.findMany({}, searchTerm, filters);
+    return await RequisitionRepository.findMany({}, searchTerm, filters, doneReqFilter, cancelledReqFilter);
   }
 
   async filterByOnlyMyReqs(user, reqIds) {

@@ -1,24 +1,52 @@
 const { prisma } = require("../database");
 
 class RequisitionRepository {
-  findMany = (kanbanFilters, searchTerm, extraFilters) => {
-    const searchFilter = searchTerm && searchTerm.trim() !== "" ? this.buildSearchFilter(searchTerm) : {};
+  findMany = ( 
+    kanbanFilters,
+    searchTerm,
+    extraFilters,
+    doneReqFilter,
+    cancelledReqFilter
+  ) => {
+    const searchFilter =
+      searchTerm && searchTerm.trim() !== ""
+        ? this.buildSearchFilter(searchTerm)
+        : null; // Altere para null ao invés de {}
     const filters = this.buildFilters(extraFilters);
+
+    let filter = {
+      id_status_requisicao: {
+        not: 99
+      },
+      AND: [
+        { ...kanbanFilters },
+        ...(searchFilter ? [searchFilter] : []),
+        ...(filters && filters.AND && filters.AND.length > 0 ? [filters] : []),
+      ],
+    };
+
+    if (doneReqFilter && cancelledReqFilter) {
+      delete filter.id_status_requisicao;
+    } else if (doneReqFilter) {
+      filter.id_status_requisicao.notIn = [99];
+    } else if (cancelledReqFilter) {
+      filter.id_status_requisicao.notIn = [104];
+    }
 
     return prisma.wEB_REQUISICAO
       .findMany({
-        where: {
-          AND: [{ ...kanbanFilters }, searchFilter, filters],
-        },
+        where: filter,
         include: {
           ...this.buildInclude(),
-          
         },
         orderBy: {
           ID_REQUISICAO: "desc",
         },
       })
-      .then((results) => results.map((item) => this.formatRequisition(item)));
+      .then((results) => {
+        console.log("Quantidade de resultados:", results.length);
+        return results.map((item) => this.formatRequisition(item));
+      });
   };
 
   findById = (ID_REQUISICAO) => {
@@ -31,7 +59,7 @@ class RequisitionRepository {
   };
 
   create = (data) => {
-    console.log("data: ", data)
+    console.log("data: ", data);
     return prisma.wEB_REQUISICAO
       .create({
         data: data,
@@ -143,7 +171,7 @@ class RequisitionRepository {
     }
     delete requisition.web_tipo_requisicao;
     delete requisition.PROJETOS;
-    delete requisition. PESSOA_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA;
+    delete requisition.PESSOA_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA;
     delete requisition.web_status_requisicao;
     delete requisition.PESSOA_wEB_REQUISICAO_alterado_porToPESSOA;
     delete requisition.PESSOA_wEB_REQUISICAO_criado_porToPESSOA;
