@@ -73,6 +73,7 @@ class RequistionItemRepository {
   }
 
   async update(id_item_requisicao, data) {
+    console.log('RequisitionItemRepository update data:', data);
     return prisma.wEB_REQUISICAO_ITEMS.update({
       where: { id_item_requisicao },
       data,
