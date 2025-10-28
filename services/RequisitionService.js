@@ -11,7 +11,7 @@ const QuoteItemService = require("./QuoteItemService");
 const RequisitionTrigger = require("../triggers/RequisitionTrigger");
 class RequisitionService {
   async getMany(user, params) {
-    const { id_kanban_requisicao, searchTerm, filters } = params;
+    const { id_kanban_requisicao, searchTerm, filters, doneReqFilter, cancelledReqFilter, removeAdmView } = params;
 
     // Se não for o kanban "5", aplica regras de acesso e status
     if (Number(id_kanban_requisicao) !== 5) {
@@ -26,22 +26,54 @@ class RequisitionService {
         kanbanStatusList
       );
 
+      //Caso o status seja a fazer, verificar se não é uma requiisição que eu já iniciei
+      if (Number(id_kanban_requisicao) === 1) {
+        reqs = await this.initialFilterForMyReqs(user, reqs);
+      }
+
       // Caso o status seja fazendo, filtra somente pelas que EU (usuario) estou fazendo
       if (Number(id_kanban_requisicao) === 2) {
         console.log('TA ENTRANDO AQUI CERTINHO')
         reqs = await this.filterByOnlyMyReqs(user, reqs);
       }
 
-
       // Busca as requisições filtradas por ID, termo de busca geral e filtros adicionais
       return await RequisitionRepository.findMany(
         { ID_REQUISICAO: { in: reqs } },
+
         searchTerm,
         filters
       );
     }
     // Se for o kanban "5", retorna todas as requisições com filtros aplicados
-    return await RequisitionRepository.findMany({}, searchTerm, filters);
+    return await RequisitionRepository.findMany({}, searchTerm, filters, doneReqFilter, cancelledReqFilter);
+  }
+
+  async initialFilterForMyReqs(user, reqIds) {
+    // Busca todos os status de todas as requisições em paralelo
+    const statusesList = await Promise.all(
+      reqIds.map(reqId => RequisitionStatusService.getAllLastStatuses(reqId))
+    );
+    const arrReturn = [];
+    await Promise.all(
+      statusesList.map(async (allStatuses, idx) => {
+        const reqId = reqIds[idx];
+        if (!allStatuses) return;
+        for (const status of allStatuses) {
+          if (+status?.alterado_por === +user.CODPESSOA) {
+            arrReturn.push(reqId);
+            break;
+          } else {
+            const actualStatus = await RequisitionStatusService.getStatus(reqId);
+            if (actualStatus.id_status_requisicao === 2) {
+              arrReturn.push(reqId);
+              break;
+            }
+          }
+        }
+      })
+    );
+    return arrReturn;
   }
 
   async filterByOnlyMyReqs(user, reqIds) {

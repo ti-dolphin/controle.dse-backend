@@ -1,23 +1,63 @@
 const { prisma } = require("../database");
 
 class RequisitionRepository {
-  findMany = (kanbanFilters, searchTerm, extraFilters) => {
-    const searchFilter = searchTerm && searchTerm.trim() !== "" ? this.buildSearchFilter(searchTerm) : {};
+  findMany = (kanbanFilters, searchTerm, extraFilters, doneReqFilter, cancelledReqFilter) => {
+    const searchFilter =
+      searchTerm && searchTerm.trim() !== ""
+        ? this.buildSearchFilter(searchTerm)
+        : {};
     const filters = this.buildFilters(extraFilters);
 
+    console.log("doneReqFilter:", doneReqFilter , typeof doneReqFilter);
+    console.log("cancelledReqFilter:", cancelledReqFilter , typeof cancelledReqFilter); 
+
+    const query ={
+      where: {
+        AND: [
+          { ...kanbanFilters },
+          searchFilter,
+          filters,
+          {
+            web_status_requisicao: {
+              nome: { notIn: ["Concluído", "Cancelado"] }
+            }
+          }
+        ],
+      },
+      include: {
+        ...this.buildInclude(),
+      },
+      orderBy: {
+        ID_REQUISICAO: "desc",
+      },
+    }
+
+    if (doneReqFilter === 'true' && cancelledReqFilter === 'false') {
+      query.where.AND[3] = {
+        web_status_requisicao: {
+          nome: { notIn: ["Concluído"] }
+        }
+      };
+    }
+
+    if (cancelledReqFilter === 'true' && doneReqFilter === 'false') {
+      query.where.AND[3] = {
+        web_status_requisicao: {
+          nome: { notIn: ["Cancelado"] }
+        }
+      };
+    }
+
+    if (doneReqFilter === 'true' && cancelledReqFilter === 'true') {
+      query.where.AND[3] = {
+        web_status_requisicao: {
+          nome: { notIn: [] }
+        }
+      };
+    }
+
     return prisma.wEB_REQUISICAO
-      .findMany({
-        where: {
-          AND: [{ ...kanbanFilters }, searchFilter, filters],
-        },
-        include: {
-          ...this.buildInclude(),
-          
-        },
-        orderBy: {
-          ID_REQUISICAO: "desc",
-        },
-      })
+      .findMany(query)
       .then((results) => results.map((item) => this.formatRequisition(item)));
   };
 
@@ -31,7 +71,7 @@ class RequisitionRepository {
   };
 
   create = (data) => {
-    console.log("data: ", data)
+    console.log("data: ", data);
     return prisma.wEB_REQUISICAO
       .create({
         data: data,
@@ -143,7 +183,7 @@ class RequisitionRepository {
     }
     delete requisition.web_tipo_requisicao;
     delete requisition.PROJETOS;
-    delete requisition. PESSOA_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA;
+    delete requisition.PESSOA_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA;
     delete requisition.web_status_requisicao;
     delete requisition.PESSOA_wEB_REQUISICAO_alterado_porToPESSOA;
     delete requisition.PESSOA_wEB_REQUISICAO_criado_porToPESSOA;
@@ -251,4 +291,3 @@ class RequisitionRepository {
 }
 
 module.exports = new RequisitionRepository();
-
