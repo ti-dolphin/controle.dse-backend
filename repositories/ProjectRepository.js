@@ -29,15 +29,7 @@ class ProjectRepository {
 
     async create(projectData) {
         const newProject = await prisma.pROJETOS.create({
-          data: projectData,
-          include: {
-            pessoa: {
-              select: {
-                CODPESSOA: true,
-                NOME: true,
-              },
-            },
-          },
+          data: projectData
         });
         return newProject;
     }
