@@ -28,11 +28,15 @@ class RequisitionService {
         kanbanStatusList
       );
 
+      //Caso o status seja a fazer, verificar se não é uma requiisição que eu já iniciei
+      if (Number(id_kanban_requisicao) === 1) {
+        reqs = await this.initialFilterForMyReqs(user, reqs);
+      }
+
       // Caso o status seja fazendo, filtra somente pelas que EU (usuario) estou fazendo
       if (Number(id_kanban_requisicao) === 2) {
         reqs = await this.filterByOnlyMyReqs(user, reqs);
       }
-
 
       // Busca as requisições filtradas por ID, termo de busca geral e filtros adicionais
       return await RequisitionRepository.findMany(
@@ -43,6 +47,15 @@ class RequisitionService {
     }
     // Se for o kanban "5", retorna todas as requisições com filtros aplicados
     return await RequisitionRepository.findMany({}, searchTerm, filters, doneReqFilter, cancelledReqFilter);
+  }
+
+  async initialFilterForMyReqs(user, reqIds) {
+    const validations = await Promise.all(
+      reqIds.map(reqId => RequisitionStatusService.getAllLastStatuses(reqId))
+    );
+    return reqIds.some((reqId, i) =>
+      +validations[i]?.alterado_por === +user.CODPESSOA
+    )
   }
 
   async filterByOnlyMyReqs(user, reqIds) {

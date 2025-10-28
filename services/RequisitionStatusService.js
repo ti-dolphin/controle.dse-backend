@@ -303,6 +303,18 @@ class RequisitionStatusService {
     return statusChanges[1];
   }
 
+  async getAllLastStatuses(id_requisicao) {
+    const statusChanges = await prisma.web_alteracao_req_status.findMany({
+      where: { id_requisicao: Number(id_requisicao) },
+      orderBy: { data_alteracao: 'desc' },
+    });
+
+    if (statusChanges.length < 2) {
+      return null;
+    }
+    return statusChanges
+  }
+
   async getStatusAlteration(id_requisicao) {
     return RequisitionStatusRepository.getStatusAlteration(id_requisicao);
   }
