@@ -26,8 +26,8 @@ class RequisitionService {
         kanbanStatusList
       );
 
-      //Caso o status seja a fazer, verificar se não é uma requiisição que eu já iniciei
-      if (Number(id_kanban_requisicao) === 1) {
+      //Caso o status seja a fazer, verificar se não é uma requisição que eu já iniciei
+      if (Number(id_kanban_requisicao) === 1 || (Number(id_kanban_requisicao) === 3)) {
         reqs = await this.initialFilterForMyReqs(user, reqs);
       }
 
