@@ -35,15 +35,15 @@ class RequisitionRepository {
     if (doneReqFilter === 'true' && cancelledReqFilter === 'false') {
       query.where.AND[3] = {
         web_status_requisicao: {
-          nome: { notIn: ["Concluído"] }
+          nome: { notIn: ["Cancelado"] }
         }
       };
     }
-
+    
     if (cancelledReqFilter === 'true' && doneReqFilter === 'false') {
       query.where.AND[3] = {
         web_status_requisicao: {
-          nome: { notIn: ["Cancelado"] }
+          nome: { notIn: ["Concluído"] }
         }
       };
     }
