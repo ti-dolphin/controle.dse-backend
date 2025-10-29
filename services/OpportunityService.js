@@ -5,6 +5,8 @@ const fs = require("fs");
 const Handlebars = require("handlebars");
 const EmailService = require("../services/EmailService");
 const OpportunityTrigger = require("../triggers/OpportunityTrigger");
+const OpportunityView = require("../views/OpportunityViews");
+
 class OpportunityService {
   async getById(CODOS) {
     //código da oportunindade
@@ -39,14 +41,27 @@ class OpportunityService {
     });
   }
 
-  async update(CODOS, data) {
+  async update(CODOS, data, user) {
     // if (data.VALORFATDOLPHIN && data.VALORFATDIRETO && data.VALOR_COMISSAO){
     data.VALORFATDOLPHIN =
       data.VALORFATDOLPHIN !== "" ? data.VALORFATDOLPHIN : 0;
     data.VALORFATDIRETO = data.VALORFATDIRETO !== "" ? data.VALORFATDIRETO : 0;
     data.VALOR_COMISSAO = data.VALOR_COMISSAO !== "" ? data.VALOR_COMISSAO : 0;
     // }
-    return await OpportunityRepository.update(CODOS, data);
+    try {
+      const updatedOpportunity = await OpportunityRepository.update(CODOS, data);
+      // Verifica se não houve erro antes de enviar o email de ganho
+      if (updatedOpportunity && !updatedOpportunity.error) {
+        console.log(data)
+        await this.sendSoldOpportunityEmail(
+          CODOS,
+          data
+        );
+      }
+      return updatedOpportunity;
+    } catch (e) {
+      throw e;
+    }
   }
 
   async delete(CODOS) {
@@ -156,16 +171,16 @@ class OpportunityService {
           });
         }else {
           failedEmails += 1;
-           const successEmailLog = await prisma.web_email_logs.create({
-             data: {
-               id_destinatario: parseInt(
-                 oppsByResponsable.get(CODPESSOA).responsavel.CODPESSOA
-               ),
-               assunto: "Relatório Semanal de Oportunidades",
-               sucesso: 0,
-               erro: 1,
-             },
-           });
+          const successEmailLog = await prisma.web_email_logs.create({
+            data: {
+              id_destinatario: parseInt(
+                oppsByResponsable.get(CODPESSOA).responsavel.CODPESSOA
+              ),
+              assunto: "Relatório Semanal de Oportunidades",
+              sucesso: 0,
+              erro: 1,
+            },
+          });
         }
       }
 
@@ -173,6 +188,76 @@ class OpportunityService {
     } catch (e) {
       return false;
     }
+  }
+
+  async sendSoldOpportunityEmail (
+    CODOS,
+    data
+  ) {
+    // Busca dados necessários do banco
+    const os = await prisma.oRDEMSERVICO.findFirst({
+      where: { CODOS },
+      select: {
+        ID_PROJETO: true,
+        ID_ADICIONAL: true,
+        NOME: true,
+        VALORFATDIRETO: true,
+        VALORFATDOLPHIN: true,
+        FK_CODCLIENTE: true,
+      },
+    });
+
+    const adicional = await prisma.aDICIONAIS.findFirst({
+      where: { ID: os.ID_ADICIONAL },
+      select: { NUMERO: true },
+    });
+
+    const client = await prisma.cLIENTE.findFirst({
+      where: { CODCLIENTE: os.FK_CODCLIENTE },
+      select: { NOMEFANTASIA: true, },
+    });
+
+    // Monta o objeto conforme OpportunityView espera
+    const opportunity = {
+      idProjeto: os.ID_PROJETO,
+      isAdicional: adicional.NUMERO > 0 ? true : false,
+      numeroAdicional: adicional?.NUMERO ?? 0,
+      nome: os.NOME,
+      valorFatDireto: os.VALORFATDIRETO,
+      valorFatDolphin: os.VALORFATDOLPHIN,
+      descricaoVenda: os.DESCRICAOVENDA,
+    };
+
+    const clientName = client?.NOMEFANTASIA || "N/A";
+    const user = data.user || {}; // ajuste conforme contexto
+
+    const htmlContent = OpportunityView.createSoldOppEmail(
+      opportunity,
+      user,
+      clientName
+    );
+    try {
+      if (opportunity.isAdicional) {
+        //cliente   //projeto.adicional
+        await EmailService.sendEmail(
+          "leorocha2004@gmail.com",
+          `Adicional Vendido: ${clientName} - ${opportunity.idProjeto}.${opportunity.numeroAdicional} - ${opportunity.nome}`,
+          htmlContent,
+          ["ti.dse01@dse.com.br"]
+        );
+      }
+      if (!opportunity.isAdicional) {
+        await EmailService.sendEmail(
+          "leorocha2004@gmail.com",
+          `Projeto Vendido: ${clientName} - ${opportunity.idProjeto}.${opportunity.numeroAdicional} - ${opportunity.nome}`,
+          htmlContent,
+          ["ti.dse01@dse.com.br"]
+        );
+      }
+    } catch (e) {
+      throw new Error(e);
+    }
+    return;
   }
 
   async getOppsByResponsable() {

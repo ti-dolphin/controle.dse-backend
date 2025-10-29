@@ -7,14 +7,20 @@ static createSoldOppEmail = (opportunity, user, clientName) => {
         currency: 'BRL'
     });
     const rows = [
-        { label: 'Projeto', data: `${opportunity.idProjeto}.${opportunity.numeroAdicional} - ${opportunity.descricao || opportunity.nome}` },
         {
-            label: 'Valor Faturamento Direto', data: formatter.format(Number(opportunity.valorFatDireto))},
+          label: 'Projeto', data: `${opportunity.idProjeto}.${opportunity.numeroAdicional} - ${opportunity.descricao || opportunity.nome}` 
+        },
         {
-            label: 'Valor Faturamento Dolphin', data: formatter.format(Number(opportunity.valorFatDolphin)) },
+          label: 'Valor Faturamento Direto', data: formatter.format(Number(opportunity.valorFatDireto))
+        },
         {
-            label: 'Valor Total', data: formatter.format(Number(opportunity.valorFatDolphin) + Number(opportunity.valorFatDireto) )}
+          label: 'Valor Faturamento Dolphin', data: formatter.format(Number(opportunity.valorFatDolphin)) 
+        },
+        {
+          label: 'Valor Total', data: formatter.format(Number(opportunity.valorFatDolphin) + Number(opportunity.valorFatDireto) )
+        }
     ];
+    console.log('rows', rows);
     const currentDateTime = new Date().toLocaleString('pt-BR', {
         day: '2-digit',
         month: '2-digit',

@@ -9,7 +9,7 @@ class ProjectRepository {
 
     async getById(ID) {
         return await prisma.pROJETOS.findUnique({
-          where: { ID: Number(ID) },
+            where: { ID: Number(ID) },
         });
     }
 
