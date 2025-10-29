@@ -74,6 +74,15 @@ class ProjectRepository {
             where: {codpessoa: Number(COPESSOA)},
         })
     }
+
+    async isUserProjectCoordinator(CODPESSOA) {
+        return await prisma.pROJETOS.findMany({
+            where: {
+                ID_RESPONSAVEL: Number(CODPESSOA),
+                ATIVO: 1
+            }
+        });
+    }
 }
 
 module.exports = new ProjectRepository();

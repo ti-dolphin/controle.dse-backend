@@ -1,6 +1,7 @@
 const KanbanStatusRequisitionRepository = require("../repositories/KanbanStatusRequisitionRepository");
 const RequisitionRepository = require("../repositories/RequisitionRepository");
-const {prisma } = require('../database');
+const ProjectRepository = require("../repositories/ProjectRepository");
+const { prisma } = require('../database');
 const { getNowISODate } = require("../utils");
 const QuoteService = require("./QuoteService");
 const RequisitionItemService = require("./RequisitionItemService");
@@ -26,14 +27,20 @@ class RequisitionService {
         kanbanStatusList
       );
 
-      //Caso o status seja a fazer, verificar se não é uma requisição que eu já iniciei
-      if (Number(id_kanban_requisicao) === 1 || (Number(id_kanban_requisicao) === 3)) {
-        reqs = await this.initialFilterForMyReqs(user, reqs);
-      }
+        const coordinatorProjects = await ProjectRepository.isUserProjectCoordinator(user.CODPESSOA);
+        const isCoordinator = coordinatorProjects.length > 0;
 
-      // Caso o status seja fazendo, filtra somente pelas que EU (usuario) estou fazendo
-      if (Number(id_kanban_requisicao) === 2) {
-        reqs = await this.filterByOnlyMyReqs(user, reqs);
+        // Regras adicionais para usuários que não são diretores
+      if (user.PERM_DIRETOR === '0' && !user.CODGERENTE && !isCoordinator) {
+        //Caso o status seja a fazer, verificar se não é uma requisição que eu já iniciei
+        if (Number(id_kanban_requisicao) === 1 || (Number(id_kanban_requisicao) === 3)) {
+          reqs = await this.initialFilterForMyReqs(user, reqs);
+        }
+  
+        // Caso o status seja fazendo, filtra somente pelas que EU (usuario) estou fazendo
+        if (Number(id_kanban_requisicao) === 2) {
+          reqs = await this.filterByOnlyMyReqs(user, reqs);
+        }
       }
 
       // Busca as requisições filtradas por ID, termo de busca geral e filtros adicionais
@@ -91,6 +98,7 @@ class RequisitionService {
       id_status_requisicao: { in: allStatusIds },
     });
 
+    // ANALISANDO ESSA FUNÇÃO
     const accessRules = await this.getAccessRulesByKanban(
       user,
       kanbanStatusList
@@ -106,13 +114,13 @@ class RequisitionService {
     return filteredReqIds;
   }
 
-  getStatusListByProfile(kanban_status_list) {
-    return kanban_status_list.reduce((acc, item) => {
-      if (!acc[item.perfil]) {
-        acc[item.perfil] = [];
+  getStatusListByProfile(kanbanStatusList) {
+    return kanbanStatusList.reduce((statusByProfile, { perfil, id_status_requisicao }) => {
+      if (!statusByProfile[perfil]) {
+        statusByProfile[perfil] = [];
       }
-      acc[item.perfil].push(item.id_status_requisicao);
-      return acc;
+      statusByProfile[perfil].push(id_status_requisicao);
+      return statusByProfile;
     }, {});
   }
 
