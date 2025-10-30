@@ -142,6 +142,9 @@ class OpportunityRepository {
   }
 
   static async update(CODOS, payload) {
+    if (payload?.user) {
+      delete payload.user
+    }
     return await prisma.oRDEMSERVICO
       .update({
         where: { CODOS },

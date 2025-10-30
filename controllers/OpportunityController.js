@@ -69,9 +69,11 @@ class OpportunityController {
        async update(req, res) {
         try {
           const { CODOS } = req.params;
+          const user = req.body.user; // extrai do body
           const updatedOpportunity = await OpportunityService.update(
             Number(CODOS),
-            req.body
+            req.body,
+            user
           );
           if (!updatedOpportunity) {
             return res.status(404).json({ message: 'Opportunity not found' });
@@ -101,7 +103,8 @@ class OpportunityController {
         try {
           const { CODOS } = req.params;
           const data = req.body;
-          await OpportunityService.sendSoldOpportunityEmail(Number(CODOS), data);
+          const user = req.body.user; // extrai do body
+          await OpportunityService.sendSoldOpportunityEmail(Number(CODOS), data, user);
           res.status(200).json({ success: true, message: "E-mail de ganho enviado com sucesso!" });
         } catch (e) {
           res.status(500).json({ success: false, message: "Erro ao enviar e-mail de ganho", error: e.message });

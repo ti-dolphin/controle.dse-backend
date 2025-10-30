@@ -52,12 +52,9 @@ class OpportunityService {
       const updatedOpportunity = await OpportunityRepository.update(CODOS, data);
       // Verifica se não houve erro antes de enviar o email de ganho
       if (updatedOpportunity && !updatedOpportunity.error) {
-        if (data.CODSTATUS === '11') {
-          await this.sendSoldOpportunityEmail(
-            CODOS,
-            data
-          );
-        }
+        if (updatedOpportunity.status.CODSTATUS === 11) {
+          await this.sendSoldOpportunityEmail(CODOS, data, user);
+        } 
       }
       return updatedOpportunity;
     } catch (e) {
@@ -193,7 +190,8 @@ class OpportunityService {
 
   async sendSoldOpportunityEmail (
     CODOS,
-    data
+    data,
+    user
   ) {
     // Busca dados necessários do banco
     const os = await prisma.oRDEMSERVICO.findFirst({
@@ -230,7 +228,6 @@ class OpportunityService {
     };
 
     const clientName = client?.NOMEFANTASIA || "N/A";
-    const user = data.user || {}; // ajuste conforme contexto
 
     const htmlContent = OpportunityView.createSoldOppEmail(
       opportunity,

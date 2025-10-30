@@ -28,7 +28,6 @@ static createSoldOppEmail = (opportunity, user, clientName) => {
         hour: '2-digit',
         minute: '2-digit'
     }).replace(',', '');
-
     return `
     <!DOCTYPE html>
     <html lang="pt-br">
