@@ -241,7 +241,7 @@ class OpportunityService {
       if (opportunity.isAdicional) {
         //cliente   //projeto.adicional
         await EmailService.sendEmail(
-          "leorocha2004@gmail.com",
+          "pmo@dse.com.br",
           `Adicional Vendido: ${clientName} - ${opportunity.idProjeto}.${opportunity.numeroAdicional} - ${opportunity.nome}`,
           htmlContent,
           ["ti.dse01@dse.com.br"]
@@ -249,7 +249,7 @@ class OpportunityService {
       }
       if (!opportunity.isAdicional) {
         await EmailService.sendEmail(
-          "leorocha2004@gmail.com",
+          "pmo@dse.com.br",
           `Projeto Vendido: ${clientName} - ${opportunity.idProjeto}.${opportunity.numeroAdicional} - ${opportunity.nome}`,
           htmlContent,
           ["ti.dse01@dse.com.br"]
