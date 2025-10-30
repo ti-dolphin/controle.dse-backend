@@ -96,6 +96,17 @@ class OpportunityController {
           res.status(500).json({ message: error.message });
         }
       }
+
+      async sendSoldOpportunityEmail(req, res) {
+        try {
+          const { CODOS } = req.params;
+          const data = req.body;
+          await OpportunityService.sendSoldOpportunityEmail(Number(CODOS), data);
+          res.status(200).json({ success: true, message: "E-mail de ganho enviado com sucesso!" });
+        } catch (e) {
+          res.status(500).json({ success: false, message: "Erro ao enviar e-mail de ganho", error: e.message });
+        }
+      }
 }
 
 module.exports = new OpportunityController();

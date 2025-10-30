@@ -52,11 +52,12 @@ class OpportunityService {
       const updatedOpportunity = await OpportunityRepository.update(CODOS, data);
       // Verifica se não houve erro antes de enviar o email de ganho
       if (updatedOpportunity && !updatedOpportunity.error) {
-        console.log(data)
-        await this.sendSoldOpportunityEmail(
-          CODOS,
-          data
-        );
+        if (data.CODSTATUS === '11') {
+          await this.sendSoldOpportunityEmail(
+            CODOS,
+            data
+          );
+        }
       }
       return updatedOpportunity;
     } catch (e) {
