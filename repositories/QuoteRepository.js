@@ -2,6 +2,12 @@ const { prisma } = require("../database.js");
 const { buildWhere } = require("../utils");
 
 class QuoteRepository {
+  async getAllQuotesByReq(id_requisicao) {
+    return await prisma.web_cotacao.findMany({
+      where: { id_requisicao },
+    });
+  }
+
   async getMany(params) {
     const where = buildWhere(params, ["id_requisicao"]);
     return await prisma.web_cotacao.findMany({ where });
@@ -46,7 +52,8 @@ class QuoteRepository {
   async getQuotesByRequisition(id_requisicao) {
     return await prisma.web_cotacao.findMany({ where: { id_requisicao }, select :{ 
       id_cotacao: true,
-      fornecedor: true
+      fornecedor: true,
+      valor_total_itens: true
     } });
   }
 

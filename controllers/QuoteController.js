@@ -2,7 +2,17 @@ const QuoteService = require("../services/QuoteService");
 
 class QuoteController {
 
-     async getMany(req, res) {
+    async getAllQuotesByReq(req, res) {
+        try {
+            const id_requisicao = Number(req.params.id_requisicao);
+            const quotes = await QuoteService.getAllQuotesByReq(id_requisicao);
+            res.json(quotes);
+        } catch (err) {
+            res.status(500).json({ error: "Erro interno do servidor." });
+        }
+    }
+
+    async getMany(req, res) {
         try {
             const params = req.query;
             const quotes = await QuoteService.getMany(params);
@@ -12,10 +22,10 @@ class QuoteController {
         }
     }
 
-     async getById(req, res) {
+    async getById(req, res) {
         try {
             const quote = await QuoteService.getById(
-              Number(req.params.id_cotacao)
+            Number(req.params.id_cotacao)
             );
             if (!quote) {
                 return res.status(404).json({ error: "Cotação não encontrada." });

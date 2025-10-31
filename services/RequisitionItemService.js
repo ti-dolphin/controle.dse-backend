@@ -19,7 +19,9 @@ class RequisitionItemService {
       id_requisicao
     );
     const columns = quotesByrequisicao.map((quote) => ({
-      headerName: quote.fornecedor,
+      headerName: quote.valor_total_itens
+        ? `${quote.fornecedor} (R$ ${quote.valor_total_itens})`
+        : `${quote.fornecedor}`,
       field: String(quote.id_cotacao),
       flex: 0.6,
       editable: false,
