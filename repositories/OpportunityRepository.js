@@ -142,6 +142,9 @@ class OpportunityRepository {
   }
 
   static async update(CODOS, payload) {
+    if (payload?.user) {
+      delete payload.user
+    }
     return await prisma.oRDEMSERVICO
       .update({
         where: { CODOS },
@@ -242,7 +245,7 @@ class OpportunityRepository {
       },
       ID_PROJETO: (value) => {
         console.log(value);
-        return value !== null && value !== '0' && value !== ''
+        return value !== null && value !== "0" && value !== ""
           ? {
               PROJETOS: {
                 ID: {
@@ -253,15 +256,37 @@ class OpportunityRepository {
           : {};
       },
       NOME: (value) => (value ? { NOME: { contains: value } } : {}),
-      cliente: (value) => (value ? { CLIENTE: { NOMEFANTASIA: { contains: value } } } : {}),
-      projeto: (value) => (value ? { PROJETOS: { DESCRICAO: { contains: value } } } : {}),
-      status: (value) => (value ? { STATUS: { NOME: { contains: value } } } : {}),
-      responsavel: (value) => (value ? { PESSOA: { NOME: { contains: value } } } : {}),
+      cliente: (value) =>
+        value ? { CLIENTE: { NOMEFANTASIA: { contains: value } } } : {},
+      projeto: (value) =>
+        value ? { PROJETOS: { DESCRICAO: { contains: value } } } : {},
+      status: (value) =>
+        value ? { STATUS: { NOME: { contains: value } } } : {},
+      responsavel: (value) =>
+        value ? { PESSOA: { NOME: { contains: value } } } : {},
+      DATAINTERACAO_FROM: (value) => {
+        return value
+          ? {
+              DATAINTERACAO: {
+                gte: value,
+              },
+            }
+          : {};
+      },
+      DATAINTERACAO_TO: (value) => {
+        return value
+          ? {
+              DATAINTERACAO: {
+                lte: value,
+              },
+            }
+          : {};
+      },
       DATASOLICITACAO_FROM: (value) => {
         return value
           ? {
               DATASOLICITACAO: {
-                gte:value,
+                gte: value,
               },
             }
           : {};
@@ -279,7 +304,7 @@ class OpportunityRepository {
         return value
           ? {
               DATAINICIO: {
-                gte:value,
+                gte: value,
               },
             }
           : {};
@@ -288,7 +313,7 @@ class OpportunityRepository {
         return value
           ? {
               DATAINICIO: {
-                lte:value,
+                lte: value,
               },
             }
           : {};
@@ -297,7 +322,7 @@ class OpportunityRepository {
         return value
           ? {
               DATAENTREGA: {
-                gte:value,
+                gte: value,
               },
             }
           : {};
@@ -306,7 +331,7 @@ class OpportunityRepository {
         return value
           ? {
               DATAENTREGA: {
-                lte:value,
+                lte: value,
               },
             }
           : {};
@@ -330,7 +355,7 @@ class OpportunityRepository {
           : {};
       },
       adicional: (value) => {
-        return value !== null && value !== '' && value !== '0'
+        return value !== null && value !== "" && value !== "0"
           ? {
               ADICIONAIS: {
                 NUMERO: {

@@ -22,5 +22,8 @@ router.put('/:CODOS', OpportunityController.update);
 //deleta oportunidade
 router.delete('/:CODOS', OpportunityController.delete);
 
+// informar ganho (envio de email de ganho)
+router.post('/:CODOS/informar-ganho', OpportunityController.sendSoldOpportunityEmail);
+
 
 module.exports = router;

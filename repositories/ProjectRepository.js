@@ -9,7 +9,7 @@ class ProjectRepository {
 
     async getById(ID) {
         return await prisma.pROJETOS.findUnique({
-          where: { ID: Number(ID) },
+            where: { ID: Number(ID) },
         });
     }
 
@@ -73,6 +73,15 @@ class ProjectRepository {
         return prisma.web_seguidores_projeto.findMany({ 
             where: {codpessoa: Number(COPESSOA)},
         })
+    }
+
+    async isUserProjectCoordinator(CODPESSOA) {
+        return await prisma.pROJETOS.findMany({
+            where: {
+                ID_RESPONSAVEL: Number(CODPESSOA),
+                ATIVO: 1
+            }
+        });
     }
 }
 
