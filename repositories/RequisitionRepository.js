@@ -8,10 +8,7 @@ class RequisitionRepository {
         : {};
     const filters = this.buildFilters(extraFilters);
 
-    console.log("doneReqFilter:", doneReqFilter , typeof doneReqFilter);
-    console.log("cancelledReqFilter:", cancelledReqFilter , typeof cancelledReqFilter); 
-
-    const query ={
+    const query = {
       where: {
         AND: [
           { ...kanbanFilters },
