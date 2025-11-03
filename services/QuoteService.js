@@ -150,6 +150,10 @@ class QuoteService {
 
   async calculateItemsTotal() {}
 
+  async getAllQuotesByReq(id_requisicao) {
+    return await QuoteRepository.getAllQuotesByReq(id_requisicao);
+  }
+
   //funções auxiliares
 }
 

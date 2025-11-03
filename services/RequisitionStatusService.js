@@ -300,7 +300,7 @@ class RequisitionStatusService {
       return null;
     }
 
-    return statusChanges[1];
+    return statusChanges[0];
   }
 
   async getStatus(id_requisicao) {

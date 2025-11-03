@@ -27,10 +27,10 @@ class RequisitionService {
         kanbanStatusList
       );
 
-        const coordinatorProjects = await ProjectRepository.isUserProjectCoordinator(user.CODPESSOA);
-        const isCoordinator = coordinatorProjects.length > 0;
+      const coordinatorProjects = await ProjectRepository.isUserProjectCoordinator(user.CODPESSOA);
+      const isCoordinator = coordinatorProjects.length > 0;
 
-        // Regras adicionais para usuários que não são diretores
+      // Regras adicionais para usuários que não são diretores
       if (user.PERM_DIRETOR === '0' && !user.CODGERENTE && !isCoordinator) {
         //Caso o status seja a fazer, verificar se não é uma requisição que eu já iniciei
         if (Number(id_kanban_requisicao) === 1 || (Number(id_kanban_requisicao) === 3)) {

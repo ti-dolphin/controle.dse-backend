@@ -1,10 +1,10 @@
-
 var express = require("express");
 var router = express.Router();
 
 const QuoteController = require("../controllers/QuoteController");
-const { resourcesettings } = require("googleapis/build/src/apis/resourcesettings");
 
+// Corrige rota para evitar conflito de parâmetros
+router.get("/requisicao/:id_requisicao", QuoteController.getAllQuotesByReq);
 router.get("/", QuoteController.getMany);
 router.get("/:id_cotacao", QuoteController.getById);
 router.get("/cf/classificacoes-fiscais", QuoteController.getTaxClassifications);
