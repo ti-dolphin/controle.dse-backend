@@ -11,6 +11,10 @@ const RequisitionAttachmentService = require("./RequisitionAttachmentService");
 const QuoteItemService = require("./QuoteItemService");
 const RequisitionTrigger = require("../triggers/RequisitionTrigger");
 class RequisitionService {
+  async getAllFaturamentosTypes() {
+    return RequisitionRepository.getAllFaturamentosTypes();
+  }
+
   async getMany(user, params) {
     const { id_kanban_requisicao, searchTerm, filters, doneReqFilter, cancelledReqFilter, removeAdmView } = params;
 
@@ -70,7 +74,7 @@ class RequisitionService {
             arrReturn.push(reqId);
             break;
           } else {
-            const actualStatus = await RequisitionStatusService.getStatus(reqId);
+            const actualStatus = await RequisitionRepository.findById(reqId);
             if (actualStatus.id_status_requisicao === 2) {
               arrReturn.push(reqId);
               break;
@@ -135,7 +139,8 @@ class RequisitionService {
     normalizedData.data_alteracao = getNowISODate();
     normalizedData.criado_por = data.ID_RESPONSAVEL;
     normalizedData.alterado_por = data.ID_RESPONSAVEL;
-    normalizedData.id_escopo_requisicao = 2;
+    // Se vier do frontend, use o valor, senão default 2
+    normalizedData.id_escopo_requisicao = data.id_escopo_requisicao ?? 2;
     const newReq = await RequisitionRepository.create(normalizedData);
     await prisma.web_alteracao_req_status.create({
       data: {

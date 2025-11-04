@@ -1,7 +1,17 @@
 const { prisma } = require("../database");
 
 class RequisitionRepository {
-  findMany = (kanbanFilters, searchTerm, extraFilters, doneReqFilter, cancelledReqFilter) => {
+  getAllFaturamentosTypes = () => {
+    return prisma.web_tipo_faturamento.findMany();
+  };
+
+  findMany = (
+    kanbanFilters,
+    searchTerm,
+    extraFilters,
+    doneReqFilter,
+    cancelledReqFilter
+  ) => {
     const searchFilter =
       searchTerm && searchTerm.trim() !== ""
         ? this.buildSearchFilter(searchTerm)
@@ -16,9 +26,9 @@ class RequisitionRepository {
           filters,
           {
             web_status_requisicao: {
-              nome: { notIn: ["Concluído", "Cancelado"] }
-            }
-          }
+              nome: { notIn: ["Concluído", "Cancelado"] },
+            },
+          },
         ],
       },
       include: {
@@ -27,29 +37,29 @@ class RequisitionRepository {
       orderBy: {
         ID_REQUISICAO: "desc",
       },
-    }
+    };
 
-    if (doneReqFilter === 'true' && cancelledReqFilter === 'false') {
+    if (doneReqFilter === "true" && cancelledReqFilter === "false") {
       query.where.AND[3] = {
         web_status_requisicao: {
-          nome: { notIn: ["Cancelado"] }
-        }
-      };
-    }
-    
-    if (cancelledReqFilter === 'true' && doneReqFilter === 'false') {
-      query.where.AND[3] = {
-        web_status_requisicao: {
-          nome: { notIn: ["Concluído"] }
-        }
+          nome: { notIn: ["Cancelado"] },
+        },
       };
     }
 
-    if (doneReqFilter === 'true' && cancelledReqFilter === 'true') {
+    if (cancelledReqFilter === "true" && doneReqFilter === "false") {
       query.where.AND[3] = {
         web_status_requisicao: {
-          nome: { notIn: [] }
-        }
+          nome: { notIn: ["Concluído"] },
+        },
+      };
+    }
+
+    if (doneReqFilter === "true" && cancelledReqFilter === "true") {
+      query.where.AND[3] = {
+        web_status_requisicao: {
+          nome: { notIn: [] },
+        },
       };
     }
 
