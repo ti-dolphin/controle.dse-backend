@@ -7,6 +7,7 @@ const QuoteService = require("./QuoteService");
 const RequisitionItemService = require("./RequisitionItemService");
 const RequisitionCommentService = require("./RequisitionCommentService");
 const RequisitionStatusService = require("./RequisitionStatusService");
+const UserService = require("./UserService");
 const RequisitionAttachmentService = require("./RequisitionAttachmentService");
 const QuoteItemService = require("./QuoteItemService");
 const RequisitionTrigger = require("../triggers/RequisitionTrigger");
@@ -16,6 +17,7 @@ class RequisitionService {
   }
 
   async getMany(user, params) {
+    const userComplete = await UserService.getById(user.CODPESSOA);
     const { id_kanban_requisicao, searchTerm, filters, doneReqFilter, cancelledReqFilter, removeAdmView } = params;
 
     // Se não for o kanban "5", aplica regras de acesso e status
@@ -26,24 +28,28 @@ class RequisitionService {
         id_kanban_requisicao: Number(id_kanban_requisicao),
       });
       // Filtra as requisições permitidas para o usuário
-      reqs = await this.getReqsBykanban(
-        user,
-        kanbanStatusList
-      );
+      reqs = await this.getReqsBykanban(userComplete, kanbanStatusList);
 
       const coordinatorProjects = await ProjectRepository.isUserProjectCoordinator(user.CODPESSOA);
       const isCoordinator = coordinatorProjects.length > 0;
 
       // Regras adicionais para usuários que não são diretores
-      if (user.PERM_DIRETOR === '0' && !user.CODGERENTE && !isCoordinator) {
+      if (
+        userComplete.PERM_DIRETOR === "0" &&
+        !userComplete.CODGERENTE &&
+        !isCoordinator
+      ) {
         //Caso o status seja a fazer, verificar se não é uma requisição que eu já iniciei
-        if (Number(id_kanban_requisicao) === 1 || (Number(id_kanban_requisicao) === 3)) {
-          reqs = await this.initialFilterForMyReqs(user, reqs);
+        if (
+          Number(id_kanban_requisicao) === 1 ||
+          Number(id_kanban_requisicao) === 3
+        ) {
+          reqs = await this.initialFilterForMyReqs(userComplete, reqs);
         }
-  
+
         // Caso o status seja fazendo, filtra somente pelas que EU (usuario) estou fazendo
         if (Number(id_kanban_requisicao) === 2) {
-          reqs = await this.filterByOnlyMyReqs(user, reqs);
+          reqs = await this.filterByOnlyMyReqs(userComplete, reqs);
         }
       }
 
@@ -611,13 +617,14 @@ class RequisitionService {
     await RequisitionTrigger.beforeDelete(id_requisicao);
     return await RequisitionRepository.delete(id_requisicao);
   }
+
   async getAccessRulesByKanban(user, kanbanStatusList) {
     const profiles = await prisma.web_perfil_usuario.findMany();
     const statusByProfile = this.getStatusListByProfile(kanbanStatusList);
 
     return [
       {
-        // Administrador: acesso totalF
+        // Administrador
         check: () => Number(user.PERM_ADMINISTRADOR) === 1,
         statusList: () => null, // ignora status
         match: () => true,

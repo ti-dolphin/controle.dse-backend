@@ -78,7 +78,6 @@ class RequisitionRepository {
   };
 
   create = (data) => {
-    console.log("data: ", data);
     return prisma.wEB_REQUISICAO
       .create({
         data: data,
