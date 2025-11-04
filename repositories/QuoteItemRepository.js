@@ -1,4 +1,4 @@
-const  {prisma} = require('../database');
+const  { prisma } = require('../database');
 const { buildWhere } = require('../utils');
 const QuoteRepository = require('./QuoteRepository');
 const RequisitionItemRepository = require('./RequisitionItemRepository');
@@ -19,6 +19,7 @@ class QuoteItemRepository {
       ...item,
       produto: item.WEB_REQUISICAO_ITEMS?.produtos,
       produto_descricao: item.WEB_REQUISICAO_ITEMS?.produtos?.descricao,
+      observacao: item.WEB_REQUISICAO_ITEMS?.observacao,
       produto_codigo: item.WEB_REQUISICAO_ITEMS?.produtos?.codigo,
       produto_unidade: item.WEB_REQUISICAO_ITEMS?.produtos?.unidade,
     };
