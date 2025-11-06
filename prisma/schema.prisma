@@ -859,6 +859,7 @@ model PESSOA {
   PERM_DIRETOR                                         Int?                          @default(0) @db.TinyInt
   PERM_EDITAR_PRODUTOS                                 Int?                          @db.TinyInt
   PERM_ESTOQUE                                         Int?                          @db.TinyInt
+  PERM_COMPRADOR_OPERACIONAL                           Int?                          @db.TinyInt
   CLIENTE                                              CLIENTE[]
   HISTORICOSTATUS                                      HISTORICOSTATUS[]
   ORDEMSERVICO                                         ORDEMSERVICO[]

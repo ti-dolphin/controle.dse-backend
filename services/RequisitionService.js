@@ -655,6 +655,19 @@ class RequisitionService {
         profileId: 6,
       },
       {
+        // Comprador Operacional
+        check: () => Number(user.PERM_COMPRADOR_OPERACIONAL) === 1,
+        statusList: () => {
+          const profileId = profiles.find(
+            (p) => p.nome === "Comprador Operacional"
+          ).id_perfil_usuario;
+          return statusByProfile[profileId];
+        },
+        match: (req, user, statusList) =>
+          statusList && statusList.includes(Number(req.id_status_requisicao)),
+        profileId: 8,
+      },
+      {
         // Diretor
         check: () => Number(user.PERM_DIRETOR) === 1,
         statusList: () => {

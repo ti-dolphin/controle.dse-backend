@@ -49,10 +49,11 @@ class RequisitionStatusService {
     }
 
     const previousStatus = await this.getPreviousStatus(requisition.ID_REQUISICAO);
+
     
     if (!previousStatus) {
       return false;
-    }
+    } 
 
     const hasUserRole = await this._validateUserHasRoleInRequisition(user, requisition);
     if (!hasUserRole) {
@@ -80,6 +81,7 @@ class RequisitionStatusService {
     const kanbanStatusList = await KanbanStatusRequisitionRepository.getMany({
       id_status_requisicao: statusId,
     });
+
     
     const accessRules = await this.getAccessRulesByKanban(user, kanbanStatusList);
     
@@ -338,6 +340,7 @@ class RequisitionStatusService {
     return [
       this._createAdministratorRule(user),
       this._createCompradorRule(user, statusByProfile),
+      this._createCompradorOperacionalRule(user, statusByProfile),
       this._createDiretorRule(user, statusByProfile),
       this._createGerenteRule(statusByProfile),
       this._createCoordenadorRule(statusByProfile),
@@ -351,6 +354,16 @@ class RequisitionStatusService {
       statusList: () => null,
       match: () => true,
       profileId: 1,
+    };
+  }
+
+  _createCompradorOperacionalRule(user, statusByProfile) {
+    return {
+      check: () => this._isComprador(user) && Number(user.PERM_COMPRADOR_OPERACIONAL) === 1,
+      statusList: () => statusByProfile[8],
+      match: (req, user, statusList) =>
+        statusList && statusList.includes(Number(req.id_status_requisicao)),
+      profileId: 8,
     };
   }
 
