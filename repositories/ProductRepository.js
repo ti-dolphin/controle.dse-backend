@@ -2,6 +2,14 @@ const {prisma} = require('../database');
 
 class ProductRepository {
   async getMany(params, searchTerm) {
+    let newParams = { ...params };
+    let tipoFaturamento = null;
+    
+    if (newParams.tipoFaturamento) {
+      tipoFaturamento = Number(newParams.tipoFaturamento);
+      delete newParams.tipoFaturamento;
+    }
+    
     const generalFilter =
       searchTerm && searchTerm.trim() !== ""
         ? {
@@ -13,11 +21,20 @@ class ProductRepository {
           }
         : {};
 
+    // Se tipo_faturamento === 3, filtra apenas produtos específicos
+    const tipoFaturamentoFilter = tipoFaturamento === 3
+      ? {
+          codigo: {
+            in: ['07.002.01.0028', '07.002.01.0009']
+          }
+        }
+      : {};
 
     return await prisma.produtos.findMany({
       where: { 
-        ...params, 
-        ...generalFilter
+        ...newParams, 
+        ...generalFilter,
+        ...tipoFaturamentoFilter
       },
       include: { 
         web_anexos_produto: true
