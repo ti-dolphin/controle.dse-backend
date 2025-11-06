@@ -14,5 +14,5 @@ router.put("/:id_requisicao/status", RequisitionController.changeStatus);
 router.put("/:id_requisicao/status/revert", RequisitionController.revertToPreviousStatus);
 router.post("/:id_requisicao/atender", RequisitionController.attend);
 router.delete("/:id_requisicao", RequisitionController.delete);
-// router.get("/faturamentos/tipos", RequisitionController.getAllFaturamentosTypes);
+router.get("/faturamentos/tipos", RequisitionController.getAllFaturamentosTypes);
 module.exports = router;

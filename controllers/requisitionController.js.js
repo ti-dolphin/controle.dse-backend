@@ -165,15 +165,15 @@ class RequisitionController {
 
   // Controller para faturamento
 
-  // async getAllFaturamentosTypes(req, res) {
-  //   try {
-  //     const types = await RequisitionService.getAllFaturamentosTypes();
-  //     res.status(200).json(types);
-  //   } catch (error) {
-  //     console.error('Erro ao obter tipos de faturamento:', error);
-  //     res.status(500).json({ error: error.message });
-  //   }
-  // }
+  async getAllFaturamentosTypes(req, res) {
+    try {
+      const types = await RequisitionService.getAllFaturamentosTypes();
+      res.status(200).json(types);
+    } catch (error) {
+      console.error('Erro ao obter tipos de faturamento:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
 
 
 }

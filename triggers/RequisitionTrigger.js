@@ -85,7 +85,13 @@ class RequisitionTrigger {
       console.log("requisitionStatusisAdvancing", requisitionStatusisAdvancing);
     
       //mandando requisição para requisitado, vem a etapa de verificação do estoque s ehouver pelo menos um item no estoque
-    if (updatingToRequisitado && requisitionStatusisAdvancing) {
+      if (updatingToRequisitado && requisitionStatusisAdvancing) {
+        // Se tipo_faturamento for 2, pula toda a lógica de estoque e vai direto para compras
+        if (req.tipo_faturamento === 2) {
+          console.log("tipo_faturamento === 2: enviando requisição direto para compras, ignorando estoque");
+          return; // Não faz nenhuma alteração, deixa seguir o fluxo normal de compras
+        }
+
         const atLeastOneItemAvailable = products.some(
           (product) => (
             product.quantidade_estoque && product.quantidade_estoque > 0 && product.quantidade_disponivel > 0

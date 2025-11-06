@@ -21,48 +21,57 @@ class RequisitionService {
     const { id_kanban_requisicao, searchTerm, filters, doneReqFilter, cancelledReqFilter, removeAdmView } = params;
 
     // Se não for o kanban "5", aplica regras de acesso e status
-    if (Number(id_kanban_requisicao) !== 5) {
-      let reqs
-      // Busca os status do kanban selecionado
-      const kanbanStatusList = await KanbanStatusRequisitionRepository.getMany({
-        id_kanban_requisicao: Number(id_kanban_requisicao),
-      });
-      // Filtra as requisições permitidas para o usuário
-      reqs = await this.getReqsBykanban(userComplete, kanbanStatusList);
-
-      const coordinatorProjects = await ProjectRepository.isUserProjectCoordinator(user.CODPESSOA);
-      const isCoordinator = coordinatorProjects.length > 0;
-
-      // Regras adicionais para usuários que não são diretores
-      if (
-        userComplete.PERM_DIRETOR === "0" &&
-        !userComplete.CODGERENTE &&
-        !isCoordinator
-      ) {
-        //Caso o status seja a fazer, verificar se não é uma requisição que eu já iniciei
-        if (
-          Number(id_kanban_requisicao) === 1 ||
-          Number(id_kanban_requisicao) === 3
-        ) {
-          reqs = await this.initialFilterForMyReqs(userComplete, reqs);
-        }
-
-        // Caso o status seja fazendo, filtra somente pelas que EU (usuario) estou fazendo
-        if (Number(id_kanban_requisicao) === 2) {
-          reqs = await this.filterByOnlyMyReqs(userComplete, reqs);
-        }
-      }
-
-      // Busca as requisições filtradas por ID, termo de busca geral e filtros adicionais
+    if (Number(id_kanban_requisicao) === 5) {
       return await RequisitionRepository.findMany(
-        { ID_REQUISICAO: { in: reqs } },
-
+        {},
         searchTerm,
-        filters
+        filters,
+        doneReqFilter,
+        cancelledReqFilter
       );
     }
-    // Se for o kanban "5", retorna todas as requisições com filtros aplicados
-    return await RequisitionRepository.findMany({}, searchTerm, filters, doneReqFilter, cancelledReqFilter);
+
+    let reqs
+    // Busca os status do kanban selecionado
+    const kanbanStatusList = await KanbanStatusRequisitionRepository.getMany({
+      id_kanban_requisicao: Number(id_kanban_requisicao),
+    });
+
+    
+    // Filtra as requisições permitidas para o usuário
+    reqs = await this.getReqsBykanban(userComplete, kanbanStatusList);
+
+    const coordinatorProjects = await ProjectRepository.isUserProjectCoordinator(user.CODPESSOA);
+    const isCoordinator = coordinatorProjects.length > 0;
+
+    // Regras adicionais para usuários que não são diretores
+    if (
+      userComplete.PERM_DIRETOR === "0" &&
+      !userComplete.CODGERENTE &&
+      !isCoordinator
+    ) {
+      //Caso o status seja a fazer, verificar se não é uma requisição que eu já iniciei
+      if (
+        Number(id_kanban_requisicao) === 1 ||
+        Number(id_kanban_requisicao) === 3
+      ) {
+        reqs = await this.initialFilterForMyReqs(userComplete, reqs);
+      }
+
+      // Caso o status seja fazendo, filtra somente pelas que EU (usuario) estou fazendo
+      if (Number(id_kanban_requisicao) === 2) {
+        reqs = await this.filterByOnlyMyReqs(userComplete, reqs);
+      }
+    }
+
+    // Busca as requisições filtradas por ID, termo de busca geral e filtros adicionais
+    return await RequisitionRepository.findMany(
+      { ID_REQUISICAO: { in: reqs } },
+
+      searchTerm,
+      filters
+    );
+
   }
 
   async initialFilterForMyReqs(user, reqIds) {
@@ -104,6 +113,7 @@ class RequisitionService {
     const allStatusIds = kanbanStatusList.map(
       (item) => item.id_status_requisicao
     );
+
     const requisitions = await RequisitionRepository.findMany({
       id_status_requisicao: { in: allStatusIds },
     });
@@ -320,7 +330,7 @@ class RequisitionService {
       const req = await tx.wEB_REQUISICAO.findFirst({
         where: { ID_REQUISICAO: Number(id) },
       });
-      
+
       if (!req) {
         console.error("Requisition not found");
         throw new Error("Requisition not found");
@@ -569,6 +579,7 @@ class RequisitionService {
         where: { ID_REQUISICAO: id_requisicao },
         include: RequisitionRepository.buildInclude(),
       }).then((result) => RequisitionRepository.formatRequisition(result));
+
       let updatedReq = await RequisitionTrigger.beforeUpdateStatus(
         req,
         newStatusId,
