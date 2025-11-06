@@ -167,7 +167,11 @@ class RequisitionController {
 
   async getAllFaturamentosTypes(req, res) {
     try {
-      const types = await RequisitionService.getAllFaturamentosTypes();
+      // Corrigido: buscar em req.query.visivel
+      const { visivel } = req.query;1
+      const types = await RequisitionService.getAllFaturamentosTypes(
+        visivel !== undefined ? Number(visivel) : 1
+      );
       res.status(200).json(types);
     } catch (error) {
       console.error('Erro ao obter tipos de faturamento:', error);

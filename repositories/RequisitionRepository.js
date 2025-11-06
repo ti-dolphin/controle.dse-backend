@@ -1,8 +1,13 @@
 const { prisma } = require("../database");
 
 class RequisitionRepository {
-  getAllFaturamentosTypes = () => {
-    return prisma.web_tipo_faturamento.findMany();
+  getAllFaturamentosTypes = (visible) => {
+    console.log("Fetching faturamento types with visible:", visible);
+    return prisma.web_tipo_faturamento.findMany({
+      where: {
+        visivel: visible,
+      },
+    });
   };
 
   findMany = (

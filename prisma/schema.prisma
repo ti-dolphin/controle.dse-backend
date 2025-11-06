@@ -1132,4 +1132,5 @@ model web_tipo_faturamento {
   id               Int    @id @default(autoincrement())
   nome_faturamento String @default("0") @db.VarChar(50)
   escopo           Int    @default(0)
+  visivel          Int    @default(0)
 }

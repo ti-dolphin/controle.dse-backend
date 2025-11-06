@@ -12,8 +12,8 @@ const RequisitionAttachmentService = require("./RequisitionAttachmentService");
 const QuoteItemService = require("./QuoteItemService");
 const RequisitionTrigger = require("../triggers/RequisitionTrigger");
 class RequisitionService {
-  async getAllFaturamentosTypes() {
-    return RequisitionRepository.getAllFaturamentosTypes();
+  async getAllFaturamentosTypes(visible) {
+    return RequisitionRepository.getAllFaturamentosTypes(visible);
   }
 
   async getMany(user, params) {
