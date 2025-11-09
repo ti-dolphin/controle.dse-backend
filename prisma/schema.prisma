@@ -860,6 +860,7 @@ model PESSOA {
   PERM_EDITAR_PRODUTOS                                 Int?                          @db.TinyInt
   PERM_ESTOQUE                                         Int?                          @db.TinyInt
   PERM_COMPRADOR_OPERACIONAL                           Int?                          @db.TinyInt
+  PERM_MOVIMENTAR                                      Int?                          @db.TinyInt
   CLIENTE                                              CLIENTE[]
   HISTORICOSTATUS                                      HISTORICOSTATUS[]
   ORDEMSERVICO                                         ORDEMSERVICO[]
@@ -1129,8 +1130,9 @@ model WEB_REQUISICAO_ITEMS {
 }
 
 model web_tipo_faturamento {
-  id               Int    @id @default(autoincrement())
-  nome_faturamento String @default("0") @db.VarChar(50)
-  escopo           Int    @default(0)
-  visivel          Int    @default(0)
+  id               Int     @id @default(autoincrement())
+  nome_faturamento String  @default("0") @db.VarChar(100)
+  escopo           Int     @default(0)
+  visivel          Int     @default(0)
+  descricao        String? @db.VarChar(100)
 }
