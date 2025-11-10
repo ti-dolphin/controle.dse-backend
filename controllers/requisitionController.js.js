@@ -148,6 +148,28 @@ class RequisitionController {
     }
   }
 
+  async updateRequisitionType(req, res) {
+    try {
+      const { id_requisicao } = req.params;
+      const { id_tipo_faturamento, id_status_requisicao } = req.body;
+      
+      const updated = await RequisitionService.updateRequisitionType(
+        Number(id_requisicao),
+        Number(id_tipo_faturamento),
+        Number(id_status_requisicao)
+      );
+      
+      if (!updated) {
+        return res.status(404).json({ error: "Requisição não encontrada" });
+      }
+      
+      res.status(200).json(updated);
+    } catch (error) {
+      console.error('Erro ao atualizar tipo de faturamento:', error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async delete(req, res) {
     try {
       const deleted = await RequisitionService.delete(

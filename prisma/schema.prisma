@@ -861,6 +861,7 @@ model PESSOA {
   PERM_ESTOQUE                                         Int?                          @db.TinyInt
   PERM_COMPRADOR_OPERACIONAL                           Int?                          @db.TinyInt
   PERM_MOVIMENTAR                                      Int?                          @db.TinyInt
+  PERM_COMPRADOR_TI                                    Int?                          @db.TinyInt
   CLIENTE                                              CLIENTE[]
   HISTORICOSTATUS                                      HISTORICOSTATUS[]
   ORDEMSERVICO                                         ORDEMSERVICO[]
@@ -1135,4 +1136,15 @@ model web_tipo_faturamento {
   escopo           Int     @default(0)
   visivel          Int     @default(0)
   descricao        String? @db.VarChar(100)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model web_aux_troca_solicitacao {
+  id                   Int     @id @default(autoincrement())
+  id_status_requisicao Int?    @default(0)
+  tipo_faturamento     Int?    @default(0)
+  id_escopo_requisicao Int?    @default(0)
+  nome_status          String? @db.VarChar(50)
+  nome_faturamento     String? @db.VarChar(50)
+  aux_status           Int?    @default(0)
 }

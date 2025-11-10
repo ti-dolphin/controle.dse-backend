@@ -1,6 +1,30 @@
 const { prisma } = require("../database");
 
 class RequisitionRepository {
+  findAuxByRequisitionStatus = async (id_status_requisicao) => {
+    return prisma.web_aux_troca_solicitacao.findFirst({
+      where: { id_status_requisicao: Number(id_status_requisicao) },
+    });
+  };
+
+  findAuxByTipoFaturamentoAndStatusAux = async (
+    tipo_faturamento,
+    aux_status
+  ) => {
+    return prisma.web_aux_troca_solicitacao.findFirst({
+      where: {
+        tipo_faturamento: Number(tipo_faturamento),
+        aux_status: Number(aux_status),
+      },
+    });
+  };
+
+  findFaturamentoById = (id_tipo_faturamento) => {
+    return prisma.web_tipo_faturamento.findUnique({
+      where: { id: Number(id_tipo_faturamento) },
+    });
+  };
+
   getAllFaturamentosTypes = (visible) => {
     console.log("Fetching faturamento types with visible:", visible);
     return prisma.web_tipo_faturamento.findMany({

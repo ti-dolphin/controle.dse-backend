@@ -8,6 +8,7 @@ router.get("/:id_requisicao", RequisitionController.getById);
 router.post("/", RequisitionController.create);
 router.post('/parcial/create', RequisitionController.createFromOther);
 router.put("/:id_requisicao", RequisitionController.update);
+router.put("/:id_requisicao/tipo-faturamento", RequisitionController.updateRequisitionType);
 router.put("/:id_requisicao/cancelar", RequisitionController.cancel);
 router.put("/:id_requisicao/ativar", RequisitionController.activate);
 router.put("/:id_requisicao/status", RequisitionController.changeStatus);

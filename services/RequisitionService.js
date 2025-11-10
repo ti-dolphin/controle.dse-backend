@@ -12,13 +12,74 @@ const RequisitionAttachmentService = require("./RequisitionAttachmentService");
 const QuoteItemService = require("./QuoteItemService");
 const RequisitionTrigger = require("../triggers/RequisitionTrigger");
 class RequisitionService {
+  async updateRequisitionType(
+    id_requisicao,
+    id_tipo_faturamento,
+    id_status_requisicao
+  ) {
+
+    const requisition = await RequisitionRepository.findById(id_requisicao);
+    const tipoFaturamento = await RequisitionRepository.findFaturamentoById(
+      id_tipo_faturamento
+    );
+
+    if (!tipoFaturamento) {
+      throw new Error(
+        `Tipo de faturamento não encontrado: ${id_tipo_faturamento}`
+      );
+    }
+
+    let newTipoFaturamento = tipoFaturamento.id;
+
+    let newIdStatusRequisition = await this.getNewStatusRequisition(
+      requisition.id_status_requisicao,
+      newTipoFaturamento
+    );
+
+    const updatedRequisition = await RequisitionRepository.update(
+      requisition.id_requisicao,
+      {
+        id_status_requisicao: newIdStatusRequisition.id_status_requisicao,
+        id_tipo_faturamento: newIdStatusRequisition.tipo_faturamento,
+        id_escopo_requisicao: newIdStatusRequisition.id_escopo_requisicao,
+      }
+    );
+
+    return updatedRequisition;
+  }
+
+  async getNewStatusRequisition(id_status_requisicao, newTipoFaturamento) {
+    const actualStep = await RequisitionRepository.findAuxByRequisitionStatus(id_status_requisicao);
+
+    const newStep =
+      await RequisitionRepository.findAuxByTipoFaturamentoAndStatusAux(
+        newTipoFaturamento,
+        actualStep.aux_status
+      );
+
+      if (!newStep) {
+        throw new Error(
+          `Novo status de requisição não encontrado para: ${id_status_requisicao}, ${newTipoFaturamento}`
+        );
+      }
+
+    return newStep
+  }
+
   async getAllFaturamentosTypes(visible) {
     return RequisitionRepository.getAllFaturamentosTypes(visible);
   }
 
   async getMany(user, params) {
     const userComplete = await UserService.getById(user.CODPESSOA);
-    const { id_kanban_requisicao, searchTerm, filters, doneReqFilter, cancelledReqFilter, removeAdmView } = params;
+    const {
+      id_kanban_requisicao,
+      searchTerm,
+      filters,
+      doneReqFilter,
+      cancelledReqFilter,
+      removeAdmView,
+    } = params;
 
     // Se não for o kanban "5", aplica regras de acesso e status
     if (Number(id_kanban_requisicao) === 5) {
@@ -31,17 +92,17 @@ class RequisitionService {
       );
     }
 
-    let reqs
+    let reqs;
     // Busca os status do kanban selecionado
     const kanbanStatusList = await KanbanStatusRequisitionRepository.getMany({
       id_kanban_requisicao: Number(id_kanban_requisicao),
     });
 
-    
     // Filtra as requisições permitidas para o usuário
     reqs = await this.getReqsBykanban(userComplete, kanbanStatusList);
 
-    const coordinatorProjects = await ProjectRepository.isUserProjectCoordinator(user.CODPESSOA);
+    const coordinatorProjects =
+      await ProjectRepository.isUserProjectCoordinator(user.CODPESSOA);
     const isCoordinator = coordinatorProjects.length > 0;
 
     // Regras adicionais para usuários que não são diretores
@@ -71,13 +132,12 @@ class RequisitionService {
       searchTerm,
       filters
     );
-
   }
 
   async initialFilterForMyReqs(user, reqIds) {
     // Busca todos os status de todas as requisições em paralelo
     const statusesList = await Promise.all(
-      reqIds.map(reqId => RequisitionStatusService.getAllLastStatuses(reqId))
+      reqIds.map((reqId) => RequisitionStatusService.getAllLastStatuses(reqId))
     );
     const arrReturn = [];
     await Promise.all(
@@ -103,10 +163,12 @@ class RequisitionService {
 
   async filterByOnlyMyReqs(user, reqIds) {
     const validations = await Promise.all(
-      reqIds.map(reqId => RequisitionStatusService.getPreviousStatus(reqId))
-    )
+      reqIds.map((reqId) => RequisitionStatusService.getPreviousStatus(reqId))
+    );
 
-    return reqIds.filter((reqIds, i) => +validations[i]?.alterado_por === +user.CODPESSOA)
+    return reqIds.filter(
+      (reqIds, i) => +validations[i]?.alterado_por === +user.CODPESSOA
+    );
   }
 
   async getReqsBykanban(user, kanbanStatusList) {
@@ -135,13 +197,16 @@ class RequisitionService {
   }
 
   getStatusListByProfile(kanbanStatusList) {
-    return kanbanStatusList.reduce((statusByProfile, { perfil, id_status_requisicao }) => {
-      if (!statusByProfile[perfil]) {
-        statusByProfile[perfil] = [];
-      }
-      statusByProfile[perfil].push(id_status_requisicao);
-      return statusByProfile;
-    }, {});
+    return kanbanStatusList.reduce(
+      (statusByProfile, { perfil, id_status_requisicao }) => {
+        if (!statusByProfile[perfil]) {
+          statusByProfile[perfil] = [];
+        }
+        statusByProfile[perfil].push(id_status_requisicao);
+        return statusByProfile;
+      },
+      {}
+    );
   }
 
   async getById(id_requisicao) {
@@ -326,7 +391,6 @@ class RequisitionService {
 
   async attend(id, items) {
     return await prisma.$transaction(async (tx) => {
-
       const req = await tx.wEB_REQUISICAO.findFirst({
         where: { ID_REQUISICAO: Number(id) },
       });
@@ -353,7 +417,6 @@ class RequisitionService {
         productIdToProduct.set(product.ID, product);
       });
       if (await this.oneAttendedItem(items)) {
-
         if (this.allItemsAttended(items)) {
           const separacaoStatus = await tx.web_status_requisicao.findFirst({
             where: { nome: "Em Separação" },
@@ -372,22 +435,21 @@ class RequisitionService {
             .then((result) => {
               return RequisitionRepository.formatRequisition(result);
             });
-        
+
           for (let item of items) {
             const product = productIdToProduct.get(item.id_produto);
             const updatedProduct = await tx.produtos.update({
               where: { ID: item.id_produto },
               data: {
                 quantidade_estoque: {
-                  decrement: item.quantidade_atendida
+                  decrement: item.quantidade_atendida,
                 },
                 quantidade_reservada: {
-                  decrement: product.quantidade_reservada
+                  decrement: product.quantidade_reservada,
                 },
               },
             });
           }
-        
 
           return {
             estoque: updatedReq,
@@ -414,7 +476,7 @@ class RequisitionService {
           req,
           newComprasReq.ID_REQUISICAO,
           tx
-        )
+        );
         await RequisitionAttachmentService.cloneAttachments(
           req.ID_REQUISICAO,
           newComprasReq.ID_REQUISICAO,
@@ -427,20 +489,20 @@ class RequisitionService {
         );
         for (let item of items) {
           if (item.quantidade_atendida === item.quantidade) {
-          const product = productIdToProduct.get(item.id_produto);
-          const updatedProduct = await tx.produtos.update({
-            where: {
-              ID: item.id_produto,
-            },
-            data: {
-              quantidade_estoque: {
-                decrement: item.quantidade_atendida || 0,
+            const product = productIdToProduct.get(item.id_produto);
+            const updatedProduct = await tx.produtos.update({
+              where: {
+                ID: item.id_produto,
               },
-              quantidade_reservada: {
-                decrement: product.quantidade_reservada || 0,
+              data: {
+                quantidade_estoque: {
+                  decrement: item.quantidade_atendida || 0,
+                },
+                quantidade_reservada: {
+                  decrement: product.quantidade_reservada || 0,
+                },
               },
-            },
-          });
+            });
             stockItems.push(item);
             continue;
           }
@@ -455,14 +517,17 @@ class RequisitionService {
               data: { ativo: 0 },
             });
             const product = productIdToProduct.get(item.id_produto);
-            const quantityToDecrement = item.quantidade_disponivel > product.quantidade_reservada ? product.quantidade_reservada : item.quantidade_disponivel;
+            const quantityToDecrement =
+              item.quantidade_disponivel > product.quantidade_reservada
+                ? product.quantidade_reservada
+                : item.quantidade_disponivel;
             const updatedProduct = await tx.produtos.update({
               where: {
                 ID: item.id_produto,
               },
               data: {
                 quantidade_reservada: {
-                  decrement: quantityToDecrement
+                  decrement: quantityToDecrement,
                 },
               },
             });
@@ -575,10 +640,12 @@ class RequisitionService {
 
   async changeStatus(id_requisicao, newStatusId, alterado_por) {
     return await prisma.$transaction(async (tx) => {
-      const req = await tx.wEB_REQUISICAO.findFirst({
-        where: { ID_REQUISICAO: id_requisicao },
-        include: RequisitionRepository.buildInclude(),
-      }).then((result) => RequisitionRepository.formatRequisition(result));
+      const req = await tx.wEB_REQUISICAO
+        .findFirst({
+          where: { ID_REQUISICAO: id_requisicao },
+          include: RequisitionRepository.buildInclude(),
+        })
+        .then((result) => RequisitionRepository.formatRequisition(result));
 
       let updatedReq = await RequisitionTrigger.beforeUpdateStatus(
         req,
@@ -600,7 +667,8 @@ class RequisitionService {
         return updatedReq;
       }
       //não é status de verificação de estoque
-      updatedReq = await tx.wEB_REQUISICAO.update({
+      updatedReq = await tx.wEB_REQUISICAO
+        .update({
           where: { ID_REQUISICAO: id_requisicao },
           data: {
             id_status_requisicao: newStatusId,
