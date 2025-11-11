@@ -37,10 +37,10 @@ class RequisitionService {
     );
 
     const updatedRequisition = await RequisitionRepository.update(
-      requisition.id_requisicao,
+      id_requisicao,
       {
         id_status_requisicao: newIdStatusRequisition.id_status_requisicao,
-        id_tipo_faturamento: newIdStatusRequisition.tipo_faturamento,
+        tipo_faturamento: newIdStatusRequisition.tipo_faturamento,
         id_escopo_requisicao: newIdStatusRequisition.id_escopo_requisicao,
       }
     );

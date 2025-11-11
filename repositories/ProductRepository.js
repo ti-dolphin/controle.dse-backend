@@ -9,7 +9,7 @@ class ProductRepository {
       tipoFaturamento = Number(newParams.tipoFaturamento);
       delete newParams.tipoFaturamento;
     }
-    
+
     const generalFilter =
       searchTerm && searchTerm.trim() !== ""
         ? {
@@ -21,51 +21,35 @@ class ProductRepository {
           }
         : {};
 
-      let tipoFaturamentoFilter = {};
+    let tipoFaturamentoFilter = {};
 
-      if (tipoFaturamento === 3) {
-        tipoFaturamentoFilter = {
-          codigo: {
-            in: ['07.002.01.0028', '07.002.01.0009']
-          }
-        };
-      } else if (tipoFaturamento === 6) {
-        tipoFaturamentoFilter = {
-          codigo: {
-            in: [
-              "11.001.04.5001",
-              "11.001.04.5025",
-              "11.001.04.5003",
-              "11.001.04.5005",
-              "11.001.05.5013",
-              "11.001.05.5016",
-              "11.001.05.5032",
-              "11.001.04.5004",
-              "11.001.01.5032",
-              "11.001.01.5077",
-              "11.001.01.5078",
-              "11.001.04.5002",
-              "11.001.05.5001",
-              "11.001.05.5002",
-              "11.001.05.5006",
-              "11.001.05.5007",
-              "11.001.05.5008",
-              "11.001.05.5021",
-              "11.001.12.5015",
-              "11.001.05.5031",
-              "11.001.12.5019",
-              "11.001.03.5022",
-              "11.001.12.5003",
-              "11.001.10.5002",
-              "11.001.01.5093",
-              "11.001.05.5032",
-              "07.002.01.0019",
-              "07.002.01.0021"
-            ],
-          },
-        };
-      }
+    console.log("tipo de faturamento", tipoFaturamento, typeof tipoFaturamento);
 
+    switch (tipoFaturamento) {
+      case 1:
+        tipoFaturamentoFilter = {
+          perm_faturamento_dse: 1,
+        };
+        break;
+      case 2:
+        tipoFaturamentoFilter = {
+          perm_faturamento_direto: 1,
+        };
+        break;
+      case 3:
+        tipoFaturamentoFilter = {
+          perm_operacional: 1,
+        };
+        break;
+      case 6:
+        tipoFaturamentoFilter = {
+          perm_ti: 1
+        };
+        break;
+      default:
+        tipoFaturamentoFilter = {};
+    }
+    
     return await prisma.produtos.findMany({
       where: { 
         ...newParams, 

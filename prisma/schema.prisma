@@ -30,10 +30,10 @@ model produtos {
   quantidade_estoque      Int?                   @default(0)
   quantidade_reservada    Int?                   @default(0)
   quantidade_disponivel   Int?
-  perm_ti                 Int?
-  perm_operacional        Int?
-  perm_faturamento_direto Int?
-  perm_faturamento_dse    Int?
+  perm_ti                 Int?                   @default(0)
+  perm_operacional        Int?                   @default(0)
+  perm_faturamento_direto Int?                   @default(0)
+  perm_faturamento_dse    Int?                   @default(0)
   WEB_REQUISICAO_ITEMS    WEB_REQUISICAO_ITEMS[]
   web_anexos_produto      web_anexos_produto[]
   web_items_cotacao       web_items_cotacao[]
