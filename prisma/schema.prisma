@@ -14,26 +14,30 @@ model motivo_perdido {
 }
 
 model produtos {
-  ID                    Int                    @id
-  cod_coligada          Int                    @db.SmallInt
-  codigo                String?                @db.VarChar(30)
-  nome_fantasia         String?                @db.VarChar(120)
-  descricao             String?                @db.VarChar(240)
-  inativo               Int?                   @db.SmallInt
-  criado_por            String?                @db.VarChar(50)
-  data_criacao          DateTime?              @db.DateTime(0)
-  modificado_por        String?                @db.VarChar(50)
-  data_modificacao      DateTime?              @db.DateTime(0)
-  ultimo_nivel          Int                    @default(0) @db.SmallInt
-  unidade               String?                @db.VarChar(10)
-  familia               String?                @db.VarChar(9)
-  quantidade_estoque    Int?                   @default(0)
-  quantidade_reservada  Int?                   @default(0)
-  quantidade_disponivel Int?
-  WEB_REQUISICAO_ITEMS  WEB_REQUISICAO_ITEMS[]
-  web_anexos_produto    web_anexos_produto[]
-  web_items_cotacao     web_items_cotacao[]
-  web_patrimonio        web_patrimonio[]
+  ID                      Int                    @id
+  cod_coligada            Int                    @db.SmallInt
+  codigo                  String?                @db.VarChar(30)
+  nome_fantasia           String?                @db.VarChar(120)
+  descricao               String?                @db.VarChar(240)
+  inativo                 Int?                   @db.SmallInt
+  criado_por              String?                @db.VarChar(50)
+  data_criacao            DateTime?              @db.DateTime(0)
+  modificado_por          String?                @db.VarChar(50)
+  data_modificacao        DateTime?              @db.DateTime(0)
+  ultimo_nivel            Int                    @default(0) @db.SmallInt
+  unidade                 String?                @db.VarChar(10)
+  familia                 String?                @db.VarChar(9)
+  quantidade_estoque      Int?                   @default(0)
+  quantidade_reservada    Int?                   @default(0)
+  quantidade_disponivel   Int?
+  perm_ti                 Int?
+  perm_operacional        Int?
+  perm_faturamento_direto Int?
+  perm_faturamento_dse    Int?
+  WEB_REQUISICAO_ITEMS    WEB_REQUISICAO_ITEMS[]
+  web_anexos_produto      web_anexos_produto[]
+  web_items_cotacao       web_items_cotacao[]
+  web_patrimonio          web_patrimonio[]
 }
 
 model web_anexos_os {
@@ -861,7 +865,7 @@ model PESSOA {
   PERM_ESTOQUE                                         Int?                          @db.TinyInt
   PERM_COMPRADOR_OPERACIONAL                           Int?                          @db.TinyInt
   PERM_MOVIMENTAR                                      Int?                          @db.TinyInt
-  PERM_COMPRADOR_TI                                    Int?                          @db.TinyInt
+  PERM_TI                                              Int?                          @db.TinyInt
   CLIENTE                                              CLIENTE[]
   HISTORICOSTATUS                                      HISTORICOSTATUS[]
   ORDEMSERVICO                                         ORDEMSERVICO[]

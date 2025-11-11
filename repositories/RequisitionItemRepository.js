@@ -29,6 +29,7 @@ class RequistionItemRepository {
     return items.map(this.format);
   }
   async getAll(id_requisicao) {
+    console.log('RequisitionItemRepository getAll id_requisicao:', id_requisicao);
     return await prisma.wEB_REQUISICAO_ITEMS.findMany({
       where: { id_requisicao },
       include: this.include(),

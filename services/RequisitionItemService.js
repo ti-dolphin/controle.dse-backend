@@ -163,7 +163,7 @@ class RequisitionItemService {
 
   async requisitionHasOnlyOneItem(id_requisicao) {
     // Busca todos os itens (ativos e inativos) para verificar se é o último item ativo
-    const allItems = await RequisitionItemRepository.getAll({ id_requisicao });
+    const allItems = await RequisitionItemRepository.getAll({ id_requisicao: id_requisicao.id_requisicao });
     const activeItems = allItems.filter(item => item.ativo === 1);
     return activeItems.length === 1;
   }
@@ -174,7 +174,6 @@ class RequisitionItemService {
       id_item_requisicao: id_item_requisicao,
     });
     const { id_requisicao } = reqItem;
-
     //se houver itens de cotação relacionados ao item de requisição, exclui os itens de cotação
     if (matchingQuoteItems.length > 0) {
       for (const quoteItem of matchingQuoteItems) {
