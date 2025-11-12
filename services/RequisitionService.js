@@ -48,6 +48,168 @@ class RequisitionService {
     return updatedRequisition;
   }
 
+  async updateRequisitionTypeWithSplit(
+    id_requisicao,
+    id_tipo_faturamento,
+    id_status_requisicao,
+    validItemIds
+  ) {
+    return await prisma.$transaction(
+      async (tx) => {
+        // 1. Buscar requisição original
+        const originalReq = await tx.wEB_REQUISICAO.findUnique({
+          where: { ID_REQUISICAO: id_requisicao },
+          include: RequisitionRepository.buildInclude(),
+        }).then(result => RequisitionRepository.formatRequisition(result));
+
+        if (!originalReq) {
+          throw new Error(`Requisição não encontrada: ${id_requisicao}`);
+        }
+
+        // 2. Buscar tipo de faturamento
+        const tipoFaturamento = await RequisitionRepository.findFaturamentoById(
+          id_tipo_faturamento
+        );
+
+        if (!tipoFaturamento) {
+          throw new Error(
+            `Tipo de faturamento não encontrado: ${id_tipo_faturamento}`
+          );
+        }
+
+        // 3. Calcular novo status baseado no novo tipo
+        const newStatusInfo = await this.getNewStatusRequisition(
+          originalReq.id_status_requisicao,
+          tipoFaturamento.id
+        );
+
+        // 4. Buscar todos os itens da requisição
+        const allItems = await tx.wEB_REQUISICAO_ITEMS.findMany({
+          where: { id_requisicao: Number(id_requisicao), ativo: 1 },
+        });
+
+        // 5. Separar itens válidos e inválidos
+        const itemsToKeep = allItems.filter(item => 
+          !validItemIds.includes(item.id_item_requisicao)
+        );
+        const itemsToMove = allItems.filter(item => 
+          validItemIds.includes(item.id_item_requisicao)
+        );
+
+        if (itemsToMove.length === 0) {
+          throw new Error('Nenhum item válido para mover');
+        }
+
+        // 6. Criar nova requisição com novo tipo de faturamento
+        const newReq = await tx.wEB_REQUISICAO.create({
+          data: {
+            ID_RESPONSAVEL: originalReq.ID_RESPONSAVEL,
+            id_status_requisicao: newStatusInfo.id_status_requisicao,
+            DESCRIPTION: `${originalReq.DESCRIPTION} - ${tipoFaturamento.nome_faturamento}`,
+            TIPO: originalReq.TIPO,
+            ID_PROJETO: originalReq.ID_PROJETO,
+            id_escopo_requisicao: newStatusInfo.id_escopo_requisicao,
+            tipo_faturamento: newStatusInfo.tipo_faturamento,
+            data_criacao: getNowISODate(),
+            data_alteracao: getNowISODate(),
+            criado_por: originalReq.criado_por,
+            alterado_por: originalReq.alterado_por,
+            id_req_original: originalReq.ID_REQUISICAO,
+          },
+        });
+
+        // 7. Mover itens válidos para nova requisição
+        const movedItems = [];
+        for (const item of itemsToMove) {
+          const { id_item_requisicao, id_requisicao: oldReqId, ...itemData } = item;
+          
+          const newItem = await tx.wEB_REQUISICAO_ITEMS.create({
+            data: {
+              ...itemData,
+              id_requisicao: newReq.ID_REQUISICAO,
+            },
+          });
+          movedItems.push(newItem);
+
+          // Clonar anexos do item
+          const attachments = await tx.web_anexos_item_requisicao.findMany({
+            where: { id_item_requisicao: item.id_item_requisicao },
+          });
+
+          for (const attachment of attachments) {
+            const { id_anexo_item_requisicao, id_item_requisicao: oldItemId, ...attachData } = attachment;
+            await tx.web_anexos_item_requisicao.create({
+              data: {
+                ...attachData,
+                id_item_requisicao: newItem.id_item_requisicao,
+              },
+            });
+          }
+
+          // Desativar item original
+          await tx.wEB_REQUISICAO_ITEMS.update({
+            where: { id_item_requisicao: item.id_item_requisicao },
+            data: { ativo: 0 },
+          });
+        }
+
+        // 8. Clonar comentários
+        await RequisitionCommentService.cloneComments(
+          originalReq,
+          newReq.ID_REQUISICAO,
+          tx
+        );
+
+        // 9. Clonar anexos da requisição
+        await RequisitionAttachmentService.cloneAttachments(
+          originalReq.ID_REQUISICAO,
+          newReq.ID_REQUISICAO,
+          tx
+        );
+
+        // 10. Clonar histórico de status
+        await RequisitionStatusService.cloneStatusChanges(
+          originalReq.ID_REQUISICAO,
+          newReq.ID_REQUISICAO,
+          tx
+        );
+
+        // 11. Recalcular totais da requisição original
+        await RequisitionItemService.updateRequisitionWithNewTotals(
+          originalReq.ID_REQUISICAO,
+          itemsToKeep,
+          tx
+        );
+
+        // 12. Calcular totais da nova requisição
+        await RequisitionItemService.updateRequisitionWithNewTotals(
+          newReq.ID_REQUISICAO,
+          movedItems,
+          tx
+        );
+
+        // 13. Buscar requisições atualizadas para retorno
+        const updatedOriginal = await tx.wEB_REQUISICAO.findUnique({
+          where: { ID_REQUISICAO: originalReq.ID_REQUISICAO },
+          include: RequisitionRepository.buildInclude(),
+        }).then(result => RequisitionRepository.formatRequisition(result));
+
+        const updatedNew = await tx.wEB_REQUISICAO.findUnique({
+          where: { ID_REQUISICAO: newReq.ID_REQUISICAO },
+          include: RequisitionRepository.buildInclude(),
+        }).then(result => RequisitionRepository.formatRequisition(result));
+
+        return {
+          originalRequisition: updatedOriginal,
+          newRequisition: updatedNew,
+          movedItemsCount: itemsToMove.length,
+          keptItemsCount: itemsToKeep.length,
+        };
+      },
+      { timeout: 120000 }
+    );
+  }
+
   async getNewStatusRequisition(id_status_requisicao, newTipoFaturamento) {
     const actualStep = await RequisitionRepository.findAuxByRequisitionStatus(id_status_requisicao);
 

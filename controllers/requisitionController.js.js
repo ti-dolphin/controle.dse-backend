@@ -170,6 +170,25 @@ class RequisitionController {
     }
   }
 
+  async updateRequisitionTypeWithSplit(req, res) {
+    try {
+      const { id_requisicao } = req.params;
+      const { id_tipo_faturamento, id_status_requisicao, validItemIds } = req.body;
+      
+      const result = await RequisitionService.updateRequisitionTypeWithSplit(
+        Number(id_requisicao),
+        Number(id_tipo_faturamento),
+        Number(id_status_requisicao),
+        validItemIds
+      );
+      
+      res.status(200).json(result);
+    } catch (error) {
+      console.error('Erro ao atualizar tipo de faturamento com divisão:', error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async delete(req, res) {
     try {
       const deleted = await RequisitionService.delete(
