@@ -856,7 +856,7 @@ class RequisitionService {
 
   async delete(id_requisicao) {
     await RequisitionTrigger.beforeDelete(id_requisicao);
-    return await RequisitionRepository.delete(id_requisicao);
+      return await RequisitionRepository.delete(id_requisicao);
   }
 
   async getAccessRulesByKanban(user, kanbanStatusList) {
