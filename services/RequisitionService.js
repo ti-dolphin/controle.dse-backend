@@ -242,6 +242,9 @@ class RequisitionService {
       cancelledReqFilter,
       removeAdmView,
     } = params;
+    if (removeAdmView) {
+      userComplete.PERM_ADMINISTRADOR = '0'
+    }
 
     // Se não for o kanban "5", aplica regras de acesso e status
     if (Number(id_kanban_requisicao) === 5) {
