@@ -42,6 +42,7 @@ class OpportunityService {
   }
 
   async update(CODOS, data, user) {
+    console.log(data, 'DATA AAAAA DATA AAAAA')
     // if (data.VALORFATDOLPHIN && data.VALORFATDIRETO && data.VALOR_COMISSAO){
     data.VALORFATDOLPHIN =
       data.VALORFATDOLPHIN !== "" ? data.VALORFATDOLPHIN : 0;
@@ -53,6 +54,7 @@ class OpportunityService {
       // Verifica se não houve erro antes de enviar o email de ganho
       if (updatedOpportunity && !updatedOpportunity.error) {
         if (updatedOpportunity.status.CODSTATUS === 11) {
+          //VALIDAR SE JÁ NÃO FOI ENVIADO O E-MAIL ANTERIORMENTE
           await this.sendSoldOpportunityEmail(CODOS, data, user);
         } 
       }
@@ -203,8 +205,15 @@ class OpportunityService {
         VALORFATDIRETO: true,
         VALORFATDOLPHIN: true,
         FK_CODCLIENTE: true,
+        EMAIL_VENDA_ENVIADO: true,
+        DESCRICAO_VENDA: true,
       },
     });
+    console.log(os.EMAIL_VENDA_ENVIADO, 'EMAIL_VENDA_ENVIADO')
+    
+    if (os.EMAIL_VENDA_ENVIADO) {
+      return;
+    }
 
     const adicional = await prisma.aDICIONAIS.findFirst({
       where: { ID: os.ID_ADICIONAL },
@@ -224,7 +233,7 @@ class OpportunityService {
       nome: os.NOME,
       valorFatDireto: os.VALORFATDIRETO,
       valorFatDolphin: os.VALORFATDOLPHIN,
-      descricaoVenda: os.DESCRICAOVENDA,
+      descricaoVenda: os.DESCRICAO_VENDA,
     };
 
     const clientName = client?.NOMEFANTASIA || "N/A";
@@ -235,9 +244,11 @@ class OpportunityService {
       clientName
     );
     try {
+      let emailSent = false;
+      
       if (opportunity.isAdicional) {
         //cliente   //projeto.adicional
-        await EmailService.sendEmail(
+        emailSent = await EmailService.sendEmail(
           "comuvendas@dse.com.br",
           `Adicional Vendido: ${clientName} - ${opportunity.idProjeto}.${opportunity.numeroAdicional} - ${opportunity.nome}`,
           htmlContent,
@@ -245,14 +256,22 @@ class OpportunityService {
         );
       }
       if (!opportunity.isAdicional) {
-        await EmailService.sendEmail(
+        emailSent = await EmailService.sendEmail(
           "comuvendas@dse.com.br",
           `Projeto Vendido: ${clientName} - ${opportunity.idProjeto}.${opportunity.numeroAdicional} - ${opportunity.nome}`,
           htmlContent,
           ["ti.dse01@dse.com.br"]
         );
       }
+
+      if (emailSent) {
+        await prisma.oRDEMSERVICO.update({
+          where: { CODOS },
+          data: { EMAIL_VENDA_ENVIADO: true }
+        });
+      }
     } catch (e) {
+      console.error('Erro ao enviar e-mail de venda:', e);
       throw new Error(e);
     }
     return;
