@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
- const PatrimonyController = require('../controllers/PatrimonyController');
+const PatrimonyController = require('../controllers/PatrimonyController');
 
 
 router.get("/", PatrimonyController.getMany)

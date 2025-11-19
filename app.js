@@ -31,6 +31,7 @@ var patrimonyRouter = require('./routes/patrimonyRouter');
 var patrimonyAccessoryRouter = require('./routes/patrimonyAccessoryRouter');
 var movementationRouter = require('./routes/movementationRouter');
 var patrimonyFileRouter = require('./routes/patrimonyFileRouter');
+var patrimonyAttachmentRouter = require("./routes/patrimonyAttachmentRouter");
 // Entidade: Produtos
 var productsRouter = require('./routes/productsRouter');
 var productAttachmentRouter = require('./routes/productAttachmentRouter');
@@ -88,6 +89,7 @@ app.use('/movimentacao_patrimonio',  authorize, movementationRouter);
 // Rotas de Patrimônio
 app.use("/patrimonios",  authorize, patrimonyRouter);
 app.use("/acessorio_patrimonio", authorize, patrimonyAccessoryRouter);
+app.use("/anexos-patrimonio", authorize, patrimonyAttachmentRouter);
 
 // Rotas de Produtos
 app.use('/produtos',  authorize, productsRouter);
