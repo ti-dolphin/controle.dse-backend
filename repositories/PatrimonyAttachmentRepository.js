@@ -40,7 +40,6 @@ class PatrimonyAttachmentRepository {
   }
 
   async delete(id_anexo_patrimonio) {
-    console.log('Deleting attachment with ID:', id_anexo_patrimonio);
     return await prisma.web_anexos_patrimonio.delete({
       where: { id_anexo_patrimonio: Number(id_anexo_patrimonio) },
     });
