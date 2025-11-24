@@ -445,17 +445,24 @@ class RequisitionService {
               data: { ativo: 0 },
             });
             const product = productIdToProduct.get(item.id_produto);
-            const quantityToDecrement = item.quantidade_disponivel > product.quantidade_reservada ? product.quantidade_reservada : item.quantidade_disponivel;
-            const updatedProduct = await tx.produtos.update({
-              where: {
-                ID: item.id_produto,
-              },
-              data: {
-                quantidade_reservada: {
-                  decrement: quantityToDecrement
+            const quantidadeDisponivel = Number(item.quantidade_disponivel) || 0;
+            const quantidadeReservada = Number(product?.quantidade_reservada) || 0;
+            const quantityToDecrement = quantidadeDisponivel > quantidadeReservada 
+              ? quantidadeReservada 
+              : quantidadeDisponivel;
+            
+            if (quantityToDecrement > 0) {
+              await tx.produtos.update({
+                where: {
+                  ID: item.id_produto,
                 },
-              },
-            });
+                data: {
+                  quantidade_reservada: {
+                    decrement: quantityToDecrement
+                  },
+                },
+              });
+            }
             comprasItems.push(newComprasReqItem);
             continue;
           }
