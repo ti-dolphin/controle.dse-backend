@@ -831,6 +831,29 @@ class RequisitionService {
 
         return updatedReq;
       }
+      
+      // Verifica se o valor aumentou mais de R$10 após aprovação da diretoria
+      const requisitionAfterUpdate = {
+        ...req,
+        id_status_requisicao: newStatusId
+      };
+      
+      const valueCheckResult = await RequisitionTrigger.checkValueChangeAfterApproval(
+        req,
+        requisitionAfterUpdate,
+        tx
+      );
+      
+      if (valueCheckResult && valueCheckResult.shouldRevert) {
+        const error = new Error('Valor da requisição excedeu o limite aprovado');
+        error.code = 'VALUE_INCREASE_REQUIRES_APPROVAL';
+        error.details = {
+          difference: valueCheckResult.difference,
+          approvalStatusId: valueCheckResult.approvalStatusId
+        };
+        throw error;
+      }
+      
       //não é status de verificação de estoque
       updatedReq = await tx.wEB_REQUISICAO
         .update({

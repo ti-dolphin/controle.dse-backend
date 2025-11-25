@@ -56,45 +56,60 @@ class RequisitionItemService {
   //atualiza a relação de items da reuquisição com itens da cotação selecionados
   async updateQuoteItemsSelected(id_requisicao, quoteItemsSelectedMap) {
     try{ 
-        const { updatedItems, updatedRequisition } = await prisma.$transaction(
-          async (tx) => {
-            const requisitionItems = await tx.wEB_REQUISICAO_ITEMS.findMany({
-              where: { 
-                id_requisicao: Number(id_requisicao),
-                ativo: 1
-              },
-            });
-            const updatedItems = [];
-            for (const reqItem of requisitionItems) {
-              const id_item_cotacao = quoteItemsSelectedMap[
-                reqItem.id_item_requisicao
-              ]
-                ? Number(quoteItemsSelectedMap[reqItem.id_item_requisicao])
-                : null;
+      const { updatedItems, updatedRequisition } = await prisma.$transaction(
+        async (tx) => {
+          // Busca requisição antes da atualização
+          const reqBefore = await tx.wEB_REQUISICAO.findUnique({
+            where: { ID_REQUISICAO: Number(id_requisicao) },
+            include: RequisitionRepository.buildInclude()
+          }).then(result => RequisitionRepository.formatRequisition(result));
 
-              const updatedItem = await tx.wEB_REQUISICAO_ITEMS.update({
-                  where: { id_item_requisicao: reqItem.id_item_requisicao },
-                  data: { id_item_cotacao },
-                  include: RequisitionItemRepository.include()
-                })
-                .then((result) => RequisitionItemRepository.format(result));
-              updatedItems.push(updatedItem);
-            }
-            const { shippingTotal, itemsTotal } = await this.updateRequisitionWithNewTotals(
-                id_requisicao,
-                updatedItems,
-                tx
-              );
-            const updatedRequisition = await tx.wEB_REQUISICAO
-              .findUnique({
-                where: { ID_REQUISICAO: Number(id_requisicao) },
-                include: RequisitionRepository.buildInclude(),
-              }).then((result) => RequisitionRepository.formatRequisition(result));
-            updatedRequisition.custo_total =  Number(updatedRequisition.custo_total_itens) + shippingTotal;
-            return { updatedItems, updatedRequisition };
+          const requisitionItems = await tx.wEB_REQUISICAO_ITEMS.findMany({
+            where: { 
+              id_requisicao: Number(id_requisicao),
+              ativo: 1
+            },
+          });
+          const updatedItems = [];
+          for (const reqItem of requisitionItems) {
+            const id_item_cotacao = quoteItemsSelectedMap[
+              reqItem.id_item_requisicao
+            ]
+              ? Number(quoteItemsSelectedMap[reqItem.id_item_requisicao])
+              : null;
+
+            const updatedItem = await tx.wEB_REQUISICAO_ITEMS.update({
+                where: { id_item_requisicao: reqItem.id_item_requisicao },
+                data: { id_item_cotacao },
+                include: RequisitionItemRepository.include()
+              })
+              .then((result) => RequisitionItemRepository.format(result));
+            updatedItems.push(updatedItem);
           }
-        );
-        return { updatedItems, updatedRequisition };
+          const { shippingTotal, itemsTotal } = await this.updateRequisitionWithNewTotals(
+              id_requisicao,
+              updatedItems,
+              tx
+            );
+          
+          let updatedRequisition = await tx.wEB_REQUISICAO
+            .findUnique({
+              where: { ID_REQUISICAO: Number(id_requisicao) },
+              include: RequisitionRepository.buildInclude(),
+            }).then((result) => RequisitionRepository.formatRequisition(result));
+          
+          updatedRequisition.custo_total = Number(updatedRequisition.custo_total_itens) + shippingTotal;
+
+          // NOTA: A verificação de valor aprovado foi removida daqui porque a seleção de fornecedor
+          // não deve disparar retorno para aprovação. A escolha entre fornecedores cotados é uma
+          // decisão operacional de compras, não uma mudança de escopo que justifique nova aprovação.
+          // A verificação de valor continua ativa em outros fluxos onde há mudança real de escopo
+          // (ex: adição de itens, mudança de quantidades, etc.)
+
+          return { updatedItems, updatedRequisition };
+        }
+      );
+      return { updatedItems, updatedRequisition };
     }catch(e){ 
       console.log(e);
       return null;

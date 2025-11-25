@@ -1091,6 +1091,7 @@ model WEB_REQUISICAO {
   custo_total_itens                            Decimal?                    @default(0.00) @db.Decimal(10, 2)
   custo_total_frete                            Decimal?                    @default(0.00) @db.Decimal(10, 2)
   custo_total                                  Decimal?                    @db.Decimal(10, 2)
+  valor_aprovado_diretoria                     Decimal?                    @db.Decimal(10, 2)
   PROJETOS                                     PROJETOS?                   @relation(fields: [ID_PROJETO], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "ID_PROJETO")
   PESSOA_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA PESSOA?                     @relation("WEB_REQUISICAO_ID_RESPONSAVELToPESSOA", fields: [ID_RESPONSAVEL], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "ID_RESPONSAVEL")
   PESSOA_WEB_REQUISICAO_alterado_porToPESSOA   PESSOA?                     @relation("WEB_REQUISICAO_alterado_porToPESSOA", fields: [alterado_por], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "alterado")
@@ -1125,6 +1126,7 @@ model WEB_REQUISICAO_ITEMS {
   id_item_cotacao             Int?
   id_req_original             Int?
   quantidade_disponivel       Int?
+  data_necessidade            DateTime?                    @db.DateTime(0)
   produtos                    produtos?                    @relation(fields: [id_produto], references: [ID], onDelete: NoAction, onUpdate: NoAction, map: "produto_associado")
   WEB_REQUISICAO              WEB_REQUISICAO               @relation(fields: [id_requisicao], references: [ID_REQUISICAO], onDelete: Cascade, map: "requisicao")
   web_anexos_item_requisicao  web_anexos_item_requisicao[]

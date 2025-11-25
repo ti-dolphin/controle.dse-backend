@@ -100,6 +100,16 @@ class RequisitionController {
       res.status(200).json(updated);
     } catch (error) {
       console.error(error);
+      
+      // Retorna erro estruturado para aumento de valor
+      if (error.code === 'VALUE_INCREASE_REQUIRES_APPROVAL') {
+        return res.status(400).json({ 
+          code: error.code,
+          message: error.message,
+          details: error.details
+        });
+      }
+      
       res.status(400).json({ error: error.message });
     }
   }

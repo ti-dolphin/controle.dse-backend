@@ -210,7 +210,7 @@ class RequisitionRepository {
       responsavel_projeto:
         item.PROJETOS?.PESSOA_PROJETOS_ID_RESPONSAVELToPESSOA,
       status: item.web_status_requisicao,
-      alterado_por: item.PESSOA_wEB_REQUISICAO_alterado_porToPESSOA,
+      alterado_por: item.PESSOA_wEB_REQUISICAO_alterado_porToPESSOA || item.alterado_por,
       criado_por: item.PESSOA_wEB_REQUISICAO_criado_porToPESSOA,
     };
     if (requisition.projeto) {
