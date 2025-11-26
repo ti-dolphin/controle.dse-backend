@@ -11,6 +11,8 @@ const UserService = require("./UserService");
 const RequisitionAttachmentService = require("./RequisitionAttachmentService");
 const QuoteItemService = require("./QuoteItemService");
 const RequisitionTrigger = require("../triggers/RequisitionTrigger");
+const NotificationService = require("./NotificationService");
+
 class RequisitionService {
   async updateRequisitionType(
     id_requisicao,
@@ -812,6 +814,8 @@ class RequisitionService {
         })
         .then((result) => RequisitionRepository.formatRequisition(result));
 
+        const requisitante = req.responsavel.CODPESSOA
+
       let updatedReq = await RequisitionTrigger.beforeUpdateStatus(
         req,
         newStatusId,
@@ -874,8 +878,17 @@ class RequisitionService {
           data_alteracao: getNowISODate(),
         },
       });
-      // cria histórico
-      // throw new Error("not implemented");
+
+      // Criar notificação para o requisitante
+      await NotificationService.createNotification(
+        requisitante,
+        alterado_por,
+        id_requisicao,
+        req.id_status_requisicao,
+        newStatusId,
+        tx
+      );
+
       return updatedReq;
     });
   }

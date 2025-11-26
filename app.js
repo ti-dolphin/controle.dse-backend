@@ -50,6 +50,10 @@ var quoteRouter = require('./routes/quoteRouter');
 var quoteItemRouter = require("./routes/quoteItemRouter");
 var quoteFileRouter = require("./routes/quoteFIleRouter");
 var requisitionCommentRouter = require("./routes/requisitionCommentRouter.js");
+
+// Entidade: Notificações
+var notificationRouter = require('./routes/notifications');
+
 // Middlewares e Schedulers
 
 const authorizationRouter = require('./routes/authorizationRouter.js');
@@ -116,6 +120,8 @@ app.use("/projetos",  authorize, projectRouter);
 // Rotas de Cotações
 app.use("/cotacoes",  authorize, quoteRouter);
 
+// Rotas de Notificações
+app.use("/notifications",  authorize, notificationRouter);
 
 app.use("/authorization", authorizationRouter);
 

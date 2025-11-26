@@ -300,6 +300,8 @@ model web_status_requisicao {
   ativo                                                                                 Int?                       @db.TinyInt
   WEB_REQUISICAO                                                                        WEB_REQUISICAO[]
   web_alteracao_req_status                                                              web_alteracao_req_status[]
+  web_avisos_sino_web_avisos_sino_id_status_anteriorToweb_status_requisicao             web_avisos_sino[]          @relation("web_avisos_sino_id_status_anteriorToweb_status_requisicao")
+  web_avisos_sino_web_avisos_sino_id_status_novoToweb_status_requisicao                 web_avisos_sino[]          @relation("web_avisos_sino_id_status_novoToweb_status_requisicao")
   web_escopo_requisicao                                                                 web_escopo_requisicao?     @relation(fields: [id_escopo_requisicao], references: [id_escopo_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "escopo")
   web_transicao_status_web_transicao_status_id_status_anteriorToweb_status_requisicao   web_transicao_status[]     @relation("web_transicao_status_id_status_anteriorToweb_status_requisicao")
   web_transicao_status_web_transicao_status_id_status_requisicaoToweb_status_requisicao web_transicao_status[]     @relation("web_transicao_status_id_status_requisicaoToweb_status_requisicao")
@@ -819,72 +821,74 @@ model ORDEMSERVICO_CRITERIOS {
 }
 
 model PESSOA {
-  CODPESSOA                                            Int                           @id @default(autoincrement())
-  NOME                                                 String                        @db.VarChar(60)
-  LOGIN                                                String?                       @db.VarChar(255)
-  SENHA                                                String?                       @db.VarChar(255)
-  SOLICITANTE                                          Boolean
-  RESPONSAVEL                                          Boolean
-  LIDER                                                Boolean
-  PERM_LOGIN                                           Boolean
-  PERM_EPI                                             Boolean
-  PERM_AUTENTICACAO                                    Boolean
-  PERM_OS                                              Boolean
-  PERM_TIPO                                            Boolean
-  PERM_STATUS                                          Boolean
-  PERM_APONT                                           Boolean
-  PERM_STATUS_APONT                                    Boolean
-  PERM_PESSOAS                                         Boolean
-  PERM_COMENT_OS                                       Boolean
-  PERM_COMENT_APONT                                    Boolean
-  CODGERENTE                                           Int?                          @unique(map: "CODGERENTE_UNIQUE")
-  ATIVO                                                Boolean                       @default(true)
-  EMAIL                                                String?                       @db.VarChar(255)
-  PERM_PONTO                                           Boolean                       @default(false)
-  PERM_VENDA                                           Boolean                       @default(false)
-  PERM_CADEPI                                          Boolean?                      @default(false)
-  PERM_DESCONTADO                                      Boolean?                      @default(false)
-  PERM_GESTAO_PESSOAS                                  Boolean?
-  PERM_CONTROLE_RECESSO                                Boolean?
-  PERM_CUSTO                                           Boolean?                      @default(false)
-  PERM_FERRAMENTAS                                     Boolean                       @default(false)
-  PERM_CHECKLIST                                       Boolean                       @default(false)
-  PERM_PROSPECCAO                                      Boolean                       @default(false)
-  PERM_APONTAMENTO_PONTO                               Boolean
-  PERM_APONTAMENTO_PONTO_JUSTIFICATIVA                 Boolean
-  PERM_BANCO_HORAS                                     Boolean                       @default(false)
-  PERM_FOLGA                                           Boolean                       @default(false)
-  ULTIMO_LOGIN                                         DateTime?                     @db.Date
-  PERM_REQUISITAR                                      Int?                          @db.TinyInt
-  PERM_COMPRADOR                                       Int?                          @default(0) @db.TinyInt
-  PERM_CADASTRAR_PAT                                   Int?                          @db.TinyInt
-  PERM_ADMINISTRADOR                                   Int?                          @db.TinyInt
-  PERM_COMERCIAL                                       Int?                          @default(0) @db.TinyInt
-  PERM_DIRETOR                                         Int?                          @default(0) @db.TinyInt
-  PERM_EDITAR_PRODUTOS                                 Int?                          @db.TinyInt
-  PERM_ESTOQUE                                         Int?                          @db.TinyInt
-  PERM_COMPRADOR_OPERACIONAL                           Int?                          @db.TinyInt
-  PERM_MOVIMENTAR                                      Int?                          @db.TinyInt
-  PERM_TI                                              Int?                          @db.TinyInt
-  CLIENTE                                              CLIENTE[]
-  HISTORICOSTATUS                                      HISTORICOSTATUS[]
-  ORDEMSERVICO                                         ORDEMSERVICO[]
-  PESSOA_GRUPOS                                        PESSOA_GRUPOS[]
-  PESSOA_RESPONSAVEL                                   PESSOA_RESPONSAVEL[]
-  PESSOA_TIPO                                          PESSOA_TIPO[]
-  PROJETOS_PROJETOS_CODGERENTEToPESSOA                 PROJETOS[]                    @relation("PROJETOS_CODGERENTEToPESSOA")
-  PROJETOS_PROJETOS_ID_RESPONSAVELToPESSOA             PROJETOS[]                    @relation("PROJETOS_ID_RESPONSAVELToPESSOA")
-  WEB_REQUISICAO_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA WEB_REQUISICAO[]              @relation("WEB_REQUISICAO_ID_RESPONSAVELToPESSOA")
-  WEB_REQUISICAO_WEB_REQUISICAO_alterado_porToPESSOA   WEB_REQUISICAO[]              @relation("WEB_REQUISICAO_alterado_porToPESSOA")
-  WEB_REQUISICAO_WEB_REQUISICAO_criado_porToPESSOA     WEB_REQUISICAO[]              @relation("WEB_REQUISICAO_criado_porToPESSOA")
-  web_alteracao_req_status                             web_alteracao_req_status[]
-  web_anexos_os                                        web_anexos_os[]
-  web_anexos_requisicao                                web_anexos_requisicao[]
-  web_comentarios_requsicao                            web_comentarios_requsicao[]
-  web_cotacao                                          web_cotacao[]
-  web_email_logs                                       web_email_logs[]
-  web_movimentacao_patrimonio                          web_movimentacao_patrimonio[]
-  web_seguidores_projeto                               web_seguidores_projeto[]
+  CODPESSOA                                                       Int                           @id @default(autoincrement())
+  NOME                                                            String                        @db.VarChar(60)
+  LOGIN                                                           String?                       @db.VarChar(255)
+  SENHA                                                           String?                       @db.VarChar(255)
+  SOLICITANTE                                                     Boolean
+  RESPONSAVEL                                                     Boolean
+  LIDER                                                           Boolean
+  PERM_LOGIN                                                      Boolean
+  PERM_EPI                                                        Boolean
+  PERM_AUTENTICACAO                                               Boolean
+  PERM_OS                                                         Boolean
+  PERM_TIPO                                                       Boolean
+  PERM_STATUS                                                     Boolean
+  PERM_APONT                                                      Boolean
+  PERM_STATUS_APONT                                               Boolean
+  PERM_PESSOAS                                                    Boolean
+  PERM_COMENT_OS                                                  Boolean
+  PERM_COMENT_APONT                                               Boolean
+  CODGERENTE                                                      Int?                          @unique(map: "CODGERENTE_UNIQUE")
+  ATIVO                                                           Boolean                       @default(true)
+  EMAIL                                                           String?                       @db.VarChar(255)
+  PERM_PONTO                                                      Boolean                       @default(false)
+  PERM_VENDA                                                      Boolean                       @default(false)
+  PERM_CADEPI                                                     Boolean?                      @default(false)
+  PERM_DESCONTADO                                                 Boolean?                      @default(false)
+  PERM_GESTAO_PESSOAS                                             Boolean?
+  PERM_CONTROLE_RECESSO                                           Boolean?
+  PERM_CUSTO                                                      Boolean?                      @default(false)
+  PERM_FERRAMENTAS                                                Boolean                       @default(false)
+  PERM_CHECKLIST                                                  Boolean                       @default(false)
+  PERM_PROSPECCAO                                                 Boolean                       @default(false)
+  PERM_APONTAMENTO_PONTO                                          Boolean
+  PERM_APONTAMENTO_PONTO_JUSTIFICATIVA                            Boolean
+  PERM_BANCO_HORAS                                                Boolean                       @default(false)
+  PERM_FOLGA                                                      Boolean                       @default(false)
+  ULTIMO_LOGIN                                                    DateTime?                     @db.Date
+  PERM_REQUISITAR                                                 Int?                          @db.TinyInt
+  PERM_COMPRADOR                                                  Int?                          @default(0) @db.TinyInt
+  PERM_CADASTRAR_PAT                                              Int?                          @db.TinyInt
+  PERM_ADMINISTRADOR                                              Int?                          @db.TinyInt
+  PERM_COMERCIAL                                                  Int?                          @default(0) @db.TinyInt
+  PERM_DIRETOR                                                    Int?                          @default(0) @db.TinyInt
+  PERM_EDITAR_PRODUTOS                                            Int?                          @db.TinyInt
+  PERM_ESTOQUE                                                    Int?                          @db.TinyInt
+  PERM_COMPRADOR_OPERACIONAL                                      Int?                          @db.TinyInt
+  PERM_MOVIMENTAR                                                 Int?                          @db.TinyInt
+  PERM_TI                                                         Int?                          @db.TinyInt
+  CLIENTE                                                         CLIENTE[]
+  HISTORICOSTATUS                                                 HISTORICOSTATUS[]
+  ORDEMSERVICO                                                    ORDEMSERVICO[]
+  PESSOA_GRUPOS                                                   PESSOA_GRUPOS[]
+  PESSOA_RESPONSAVEL                                              PESSOA_RESPONSAVEL[]
+  PESSOA_TIPO                                                     PESSOA_TIPO[]
+  PROJETOS_PROJETOS_CODGERENTEToPESSOA                            PROJETOS[]                    @relation("PROJETOS_CODGERENTEToPESSOA")
+  PROJETOS_PROJETOS_ID_RESPONSAVELToPESSOA                        PROJETOS[]                    @relation("PROJETOS_ID_RESPONSAVELToPESSOA")
+  WEB_REQUISICAO_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA            WEB_REQUISICAO[]              @relation("WEB_REQUISICAO_ID_RESPONSAVELToPESSOA")
+  WEB_REQUISICAO_WEB_REQUISICAO_alterado_porToPESSOA              WEB_REQUISICAO[]              @relation("WEB_REQUISICAO_alterado_porToPESSOA")
+  WEB_REQUISICAO_WEB_REQUISICAO_criado_porToPESSOA                WEB_REQUISICAO[]              @relation("WEB_REQUISICAO_criado_porToPESSOA")
+  web_alteracao_req_status                                        web_alteracao_req_status[]
+  web_anexos_os                                                   web_anexos_os[]
+  web_anexos_requisicao                                           web_anexos_requisicao[]
+  web_avisos_sino_web_avisos_sino_id_usuario_destinatarioToPESSOA web_avisos_sino[]             @relation("web_avisos_sino_id_usuario_destinatarioToPESSOA")
+  web_avisos_sino_web_avisos_sino_id_usuario_remetenteToPESSOA    web_avisos_sino[]             @relation("web_avisos_sino_id_usuario_remetenteToPESSOA")
+  web_comentarios_requsicao                                       web_comentarios_requsicao[]
+  web_cotacao                                                     web_cotacao[]
+  web_email_logs                                                  web_email_logs[]
+  web_movimentacao_patrimonio                                     web_movimentacao_patrimonio[]
+  web_seguidores_projeto                                          web_seguidores_projeto[]
 
   @@index([CODGERENTE], map: "CODGERENTE")
 }
@@ -1100,6 +1104,7 @@ model WEB_REQUISICAO {
   web_tipo_requisicao                          web_tipo_requisicao?        @relation(fields: [TIPO], references: [id_tipo_requisicao], onDelete: NoAction, onUpdate: NoAction, map: "tipo_requisicao")
   WEB_REQUISICAO_ITEMS                         WEB_REQUISICAO_ITEMS[]
   web_alteracao_req_status                     web_alteracao_req_status[]
+  web_avisos_sino                              web_avisos_sino[]
   web_comentarios_requsicao                    web_comentarios_requsicao[]
   web_cotacao                                  web_cotacao[]
 
@@ -1153,4 +1158,29 @@ model web_aux_troca_solicitacao {
   nome_status          String? @db.VarChar(50)
   nome_faturamento     String? @db.VarChar(50)
   aux_status           Int?    @default(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model web_avisos_sino {
+  id_aviso                                                                        Int                   @id @default(autoincrement())
+  id_requisicao                                                                   Int
+  id_usuario_destinatario                                                         Int
+  id_usuario_remetente                                                            Int
+  id_status_anterior                                                              Int
+  id_status_novo                                                                  Int
+  nome_transicao                                                                  String?               @db.VarChar(100)
+  visto                                                                           Boolean               @default(false)
+  data_criacao                                                                    DateTime              @db.DateTime(0)
+  data_visto                                                                      DateTime?             @db.DateTime(0)
+  PESSOA_web_avisos_sino_id_usuario_destinatarioToPESSOA                          PESSOA                @relation("web_avisos_sino_id_usuario_destinatarioToPESSOA", fields: [id_usuario_destinatario], references: [CODPESSOA], onUpdate: Restrict, map: "fk_aviso_destinatario")
+  PESSOA_web_avisos_sino_id_usuario_remetenteToPESSOA                             PESSOA                @relation("web_avisos_sino_id_usuario_remetenteToPESSOA", fields: [id_usuario_remetente], references: [CODPESSOA], onUpdate: Restrict, map: "fk_aviso_remetente")
+  WEB_REQUISICAO                                                                  WEB_REQUISICAO        @relation(fields: [id_requisicao], references: [ID_REQUISICAO], onDelete: Cascade, onUpdate: Restrict, map: "fk_aviso_requisicao")
+  web_status_requisicao_web_avisos_sino_id_status_anteriorToweb_status_requisicao web_status_requisicao @relation("web_avisos_sino_id_status_anteriorToweb_status_requisicao", fields: [id_status_anterior], references: [id_status_requisicao], onUpdate: Restrict, map: "fk_aviso_status_anterior")
+  web_status_requisicao_web_avisos_sino_id_status_novoToweb_status_requisicao     web_status_requisicao @relation("web_avisos_sino_id_status_novoToweb_status_requisicao", fields: [id_status_novo], references: [id_status_requisicao], onUpdate: Restrict, map: "fk_aviso_status_novo")
+
+  @@index([id_usuario_remetente], map: "fk_aviso_remetente")
+  @@index([id_status_anterior], map: "fk_aviso_status_anterior")
+  @@index([id_status_novo], map: "fk_aviso_status_novo")
+  @@index([id_usuario_destinatario, visto], map: "idx_destinatario_visto")
+  @@index([id_requisicao], map: "idx_requisicao")
 }
