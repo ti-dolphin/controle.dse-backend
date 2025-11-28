@@ -30,11 +30,12 @@ class ProductAttachmentController {
   }
 
   static async create(req, res) {
-    const { arquivo, id_produto } = req.body;
+    const { arquivo, id_produto, is_produto_padrao } = req.body;
     try {
       const newAttachment = await ProductAttachmentService.create({
         arquivo,
         id_produto,
+        ...(is_produto_padrao !== undefined && { is_produto_padrao }),
       });
       res.status(201).json(newAttachment);
     } catch (error) {
