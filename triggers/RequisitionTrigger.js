@@ -319,56 +319,105 @@ class RequisitionTrigger {
   }
 
   static async checkValueChangeAfterApproval(reqBefore, reqAfter, tx) {
-    // Mapeia escopo → status de aprovação, monitoramento e limite superior
-    const scopeStatusMap = {
-      2: { approval: 7, monitor: 8, maxStatus: 9 },      // Compras: até antes de "Comprar" (id 10)
-      3: { approval: 110, monitor: 111, maxStatus: 112 }, // Faturamento: até antes de fase operacional
-      5: { approval: 118, monitor: 119, maxStatus: 120 }  // Contratos: até antes de fase operacional
-    };
-    
-    const scopeConfig = scopeStatusMap[reqBefore.id_escopo_requisicao];
+    console.log(reqBefore.id_status_requisicao, 'before status');
+    console.log(reqAfter.id_status_requisicao, 'after status');
+    const scopeConfig = this._getScopeApprovalConfig(reqBefore.id_escopo_requisicao);
     
     if (!scopeConfig) {
       console.log(`[RequisitionTrigger] Escopo ${reqBefore.id_escopo_requisicao} não possui configuração de aprovação`);
       return false;
     }
 
-    // Se está atualmente no status de aprovação, não verifica (aprovador pode estar aprovando valor maior)
-    if (Number(reqAfter.id_status_requisicao) === scopeConfig.approval) {
-      console.log(`[RequisitionTrigger] Requisição ${reqBefore.ID_REQUISICAO} está em aprovação. Não verifica excesso de valor.`);
+
+    console.log(this._isMovingToApprovalStatus(reqAfter.id_status_requisicao, scopeConfig.approval), 'isMovingToApprovalStatus');
+    if (this._isMovingToApprovalStatus(reqAfter.id_status_requisicao, scopeConfig.approval)) {
+      console.log(`[RequisitionTrigger] Requisição ${reqBefore.ID_REQUISICAO} está indo para aprovação. Não verifica excesso de valor.`);
       return false;
     }
 
-    // Se já passou da fase de cotação/monitoramento, não volta mais (já está em comprar, receber, etc)
-    if (Number(reqAfter.id_status_requisicao) > scopeConfig.maxStatus) {
-      console.log(`[RequisitionTrigger] Requisição ${reqBefore.ID_REQUISICAO} já está em fase operacional (status ${reqAfter.id_status_requisicao}). Não retorna para aprovação.`);
+    console.log(this._isAfterVerificationWindow(reqBefore.id_status_requisicao, scopeConfig.lastCheck), 'isAfterVerificationWindow');
+    if (this._isAfterVerificationWindow(reqBefore.id_status_requisicao, scopeConfig.lastCheck)) {
+      console.log(`[RequisitionTrigger] Requisição ${reqBefore.ID_REQUISICAO} já passou da fase de verificação (status ${reqBefore.id_status_requisicao}). Não retorna para aprovação.`);
       return false;
     }
 
-    // Verifica se já passou por aprovação da diretoria
+    const hasPassedThroughApproval = await this._hasPassedThroughApproval(
+      reqBefore.ID_REQUISICAO, 
+      scopeConfig.approval, 
+      tx
+    );
+    console.log('hasPassedThroughApproval', hasPassedThroughApproval);
+
+    if (!hasPassedThroughApproval) {
+      return false;
+    }
+
+    const isWithinVerificationWindow = Number(reqBefore.id_status_requisicao) === scopeConfig.lastCheck;
+
+    console.log('isWithinVerificationWindow', isWithinVerificationWindow);
+
+    if (!isWithinVerificationWindow) {
+      return false;
+    }
+
+    return this._checkValueExceedsApprovedAmount(reqBefore, reqAfter, scopeConfig.approval);
+  }
+
+  static _getScopeApprovalConfig(scopeId) {
+    const SCOPE_STATUS_CONFIG = {
+      2: { approval: 7, lastCheck: 8 },      // Compras: Aprovação Diretoria (7), verifica até Comprar (9)
+      3: { approval: 110, lastCheck: 111 },  // Faturamento
+      5: { approval: 118, lastCheck: 119 }   // Contratos
+    };
+    
+    return SCOPE_STATUS_CONFIG[scopeId];
+  }
+
+  static _isMovingToApprovalStatus(currentStatusId, approvalStatusId) {
+    return Number(currentStatusId) === approvalStatusId;
+  }
+
+  static _isAfterVerificationWindow(currentStatusId, lastCheckStatusId) {
+    return Number(currentStatusId) > lastCheckStatusId;
+  }
+
+  static async _hasPassedThroughApproval(requisitionId, approvalStatusId, tx) {
     const statusHistory = await tx.web_alteracao_req_status.findMany({
       where: {
-        id_requisicao: reqBefore.ID_REQUISICAO,
-        id_status_requisicao: scopeConfig.approval
+        id_requisicao: requisitionId,
+        id_status_requisicao: approvalStatusId
       }
     });
 
-    console.log(statusHistory, 'statusHistory');
+    console.log(`[RequisitionTrigger] Histórico de aprovação da requisição ${requisitionId}:`, statusHistory.length > 0);
+    return statusHistory.length > 0;
+  }
 
-    const jaPassouPorAprovacaoDiretoria = statusHistory.length > 0;
-    const estaAposMonitoramento = Number(reqAfter.id_status_requisicao) >= scopeConfig.monitor;
+  static _checkValueExceedsApprovedAmount(reqBefore, reqAfter, approvalStatusId) {
+    const TOLERANCE_THRESHOLD = 10;
+    
+    const approvedValue = Number(reqBefore.valor_aprovado_diretoria) || 0;
+    const currentValue = Number(reqAfter.custo_total) || 0;
+    const valueDifference = currentValue - approvedValue;
 
-    // Verifica apenas se está entre Monitoramento e o limite superior (antes de Comprar)
-    if (jaPassouPorAprovacaoDiretoria && estaAposMonitoramento) {
-      const valorAprovado = Number(reqBefore.valor_aprovado_diretoria) || 0;
-      const valorAtual = Number(reqAfter.custo_total) || 0;
-      console.log(`[RequisitionTrigger] Requisição ${reqBefore.ID_REQUISICAO}: Valor aprovado R$ ${valorAprovado.toFixed(2)}, valor atual R$ ${valorAtual.toFixed(2)}`);
-      const diferencaValor = valorAtual - valorAprovado;
+    console.log(
+      `[RequisitionTrigger] Requisição ${reqBefore.ID_REQUISICAO}: ` +
+      `Valor aprovado R$ ${approvedValue.toFixed(2)}, ` +
+      `valor atual R$ ${currentValue.toFixed(2)}`
+    );
 
-      if (diferencaValor > 10) {
-        console.log(`[RequisitionTrigger] Requisição ${reqBefore.ID_REQUISICAO}: Valor aumentou R$ ${diferencaValor.toFixed(2)}. Deve retornar para Aprovação Diretoria (status ${scopeConfig.approval}).`);
-        return { shouldRevert: true, approvalStatusId: scopeConfig.approval, difference: diferencaValor };
-      }
+    if (valueDifference > TOLERANCE_THRESHOLD) {
+      console.log(
+        `[RequisitionTrigger] Requisição ${reqBefore.ID_REQUISICAO}: ` +
+        `Valor aumentou R$ ${valueDifference.toFixed(2)}. ` +
+        `Deve retornar para Aprovação Diretoria (status ${approvalStatusId}).`
+      );
+      
+      return { 
+        shouldRevert: true, 
+        approvalStatusId, 
+        difference: valueDifference 
+      };
     }
 
     return false;
