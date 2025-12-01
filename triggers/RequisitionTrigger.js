@@ -319,8 +319,6 @@ class RequisitionTrigger {
   }
 
   static async checkValueChangeAfterApproval(reqBefore, reqAfter, tx) {
-    console.log(reqBefore.id_status_requisicao, 'before status');
-    console.log(reqAfter.id_status_requisicao, 'after status');
     const scopeConfig = this._getScopeApprovalConfig(reqBefore.id_escopo_requisicao);
     
     if (!scopeConfig) {
@@ -329,13 +327,11 @@ class RequisitionTrigger {
     }
 
 
-    console.log(this._isMovingToApprovalStatus(reqAfter.id_status_requisicao, scopeConfig.approval), 'isMovingToApprovalStatus');
     if (this._isMovingToApprovalStatus(reqAfter.id_status_requisicao, scopeConfig.approval)) {
       console.log(`[RequisitionTrigger] Requisição ${reqBefore.ID_REQUISICAO} está indo para aprovação. Não verifica excesso de valor.`);
       return false;
     }
 
-    console.log(this._isAfterVerificationWindow(reqBefore.id_status_requisicao, scopeConfig.lastCheck), 'isAfterVerificationWindow');
     if (this._isAfterVerificationWindow(reqBefore.id_status_requisicao, scopeConfig.lastCheck)) {
       console.log(`[RequisitionTrigger] Requisição ${reqBefore.ID_REQUISICAO} já passou da fase de verificação (status ${reqBefore.id_status_requisicao}). Não retorna para aprovação.`);
       return false;
@@ -346,15 +342,12 @@ class RequisitionTrigger {
       scopeConfig.approval, 
       tx
     );
-    console.log('hasPassedThroughApproval', hasPassedThroughApproval);
 
     if (!hasPassedThroughApproval) {
       return false;
     }
 
     const isWithinVerificationWindow = Number(reqBefore.id_status_requisicao) === scopeConfig.lastCheck;
-
-    console.log('isWithinVerificationWindow', isWithinVerificationWindow);
 
     if (!isWithinVerificationWindow) {
       return false;
