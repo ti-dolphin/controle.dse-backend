@@ -35,7 +35,7 @@ class RequisitionService {
 
       // Regras adicionais para usuários que não são diretores
       if (
-        userComplete.PERM_DIRETOR === "0" &&
+        +userComplete.PERM_DIRETOR === 0 &&
         !userComplete.CODGERENTE &&
         !isCoordinator
       ) {
