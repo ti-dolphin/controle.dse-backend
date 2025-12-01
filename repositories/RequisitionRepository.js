@@ -26,7 +26,6 @@ class RequisitionRepository {
   };
 
   getAllFaturamentosTypes = (visible) => {
-    console.log("Fetching faturamento types with visible:", visible);
     return prisma.web_tipo_faturamento.findMany({
       where: {
         visivel: visible,
@@ -200,7 +199,6 @@ class RequisitionRepository {
   };
 
   formatRequisition = (item) => {
-    console.log("Formatting requisition:", item);
     const requisition = {
       ...item,
       tipo_requisicao: item.web_tipo_requisicao,

@@ -268,13 +268,11 @@ class RequisitionService {
     // Filtra as requisições permitidas para o usuário
     reqs = await this.getReqsBykanban(userComplete, kanbanStatusList);
 
-    const coordinatorProjects =
-      await ProjectRepository.isUserProjectCoordinator(user.CODPESSOA);
+    const coordinatorProjects =  await ProjectRepository.isUserProjectCoordinator(user.CODPESSOA);
     const isCoordinator = coordinatorProjects.length > 0;
-
     // Regras adicionais para usuários que não são diretores
     if (
-      userComplete.PERM_DIRETOR === "0" &&
+      +userComplete.PERM_DIRETOR === 0 &&
       !userComplete.CODGERENTE &&
       !isCoordinator
     ) {
@@ -301,7 +299,7 @@ class RequisitionService {
     );
   }
 
-  async initialFilterForMyReqs(user, reqIds) {
+  async   initialFilterForMyReqs(user, reqIds) {
     // Busca todos os status de todas as requisições em paralelo
     const statusesList = await Promise.all(
       reqIds.map((reqId) => RequisitionStatusService.getAllLastStatuses(reqId))
