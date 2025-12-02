@@ -114,7 +114,9 @@ class RequisitionTrigger {
           await tx.produtos.update({
             where: { ID: product.ID },
             data: {
-              quantidade_reservada: product.quantidade_disponivel,
+              quantidade_reservada: {
+                increment: product.quantidade_disponivel,
+              },
             },
           });
           continue;
@@ -130,7 +132,9 @@ class RequisitionTrigger {
           await tx.produtos.update({
             where: { ID: product.ID },
             data: {
-              quantidade_reservada: item.quantidade,
+              quantidade_reservada: {
+                increment: item.quantidade,
+              },
             },
           });
         }
