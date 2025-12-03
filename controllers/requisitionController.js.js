@@ -87,12 +87,12 @@ class RequisitionController {
   async changeStatus(req, res){ 
     try {
       const { id_requisicao } = req.params;
-      const { alterado_por, id_status_requisicao } = req.body;
+      const { alterado_por, id_status_requisicao, is_reverting } = req.body;
       const updated = await RequisitionService.changeStatus(
         Number(id_requisicao),
         Number(id_status_requisicao),
         Number(alterado_por),
-
+        Boolean(is_reverting)
       );
       if (!updated) {
         return res.status(404).json({ error: "Requisição não encontrada" });

@@ -803,7 +803,7 @@ class RequisitionService {
     return newItem;
   }
 
-  async changeStatus(id_requisicao, newStatusId, alterado_por) {
+  async changeStatus(id_requisicao, newStatusId, alterado_por, isReverting = false) {
     return await prisma.$transaction(async (tx) => {
       const req = await tx.wEB_REQUISICAO
         .findFirst({
@@ -814,12 +814,16 @@ class RequisitionService {
 
         const requisitante = req.responsavel.CODPESSOA
 
-      let updatedReq = await RequisitionTrigger.beforeUpdateStatus(
-        req,
-        newStatusId,
-        alterado_por,
-        tx
-      );
+      // Pula validações do trigger se for retrocesso
+      let updatedReq = null;
+      if (!isReverting) {
+        updatedReq = await RequisitionTrigger.beforeUpdateStatus(
+          req,
+          newStatusId,
+          alterado_por,
+          tx
+        );
+      }
       if (updatedReq) {
         await tx.web_alteracao_req_status.create({
           data: {
@@ -834,26 +838,28 @@ class RequisitionService {
         return updatedReq;
       }
       
-      // Verifica se o valor aumentou mais de R$10 após aprovação da diretoria
-      const requisitionAfterUpdate = {
-        ...req,
-        id_status_requisicao: newStatusId
-      };
-      
-      const valueCheckResult = await RequisitionTrigger.checkValueChangeAfterApproval(
-        req,
-        requisitionAfterUpdate,
-        tx
-      );
-      
-      if (valueCheckResult && valueCheckResult.shouldRevert) {
-        const error = new Error('Valor da requisição excedeu o limite aprovado');
-        error.code = 'VALUE_INCREASE_REQUIRES_APPROVAL';
-        error.details = {
-          difference: valueCheckResult.difference,
-          approvalStatusId: valueCheckResult.approvalStatusId
+      // Verifica se o valor aumentou mais de R$10 após aprovação da diretoria (apenas se NÃO for retrocesso)
+      if (!isReverting) {
+        const requisitionAfterUpdate = {
+          ...req,
+          id_status_requisicao: newStatusId
         };
-        throw error;
+        
+        const valueCheckResult = await RequisitionTrigger.checkValueChangeAfterApproval(
+          req,
+          requisitionAfterUpdate,
+          tx
+        );
+        
+        if (valueCheckResult && valueCheckResult.shouldRevert) {
+          const error = new Error('Valor da requisição excedeu o limite aprovado');
+          error.code = 'VALUE_INCREASE_REQUIRES_APPROVAL';
+          error.details = {
+            difference: valueCheckResult.difference,
+            approvalStatusId: valueCheckResult.approvalStatusId
+          };
+          throw error;
+        }
       }
       
       //não é status de verificação de estoque

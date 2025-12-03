@@ -166,7 +166,7 @@ class RequisitionTrigger {
       const approvalStatusByScope = {
         2: 7,
         3: 110,
-        5: 118
+        5: 120
       };
       
       const approvalStatusId = approvalStatusByScope[req.id_escopo_requisicao];
@@ -364,7 +364,7 @@ class RequisitionTrigger {
     const SCOPE_STATUS_CONFIG = {
       2: { approval: 7, lastCheck: 8 },      // Compras: Aprovação Diretoria (7), verifica até Comprar (9)
       3: { approval: 110, lastCheck: 111 },  // Faturamento
-      5: { approval: 118, lastCheck: 119 }   // Contratos
+      5: { approval: 120, lastCheck: 121 }   // Contratos
     };
     
     return SCOPE_STATUS_CONFIG[scopeId];
