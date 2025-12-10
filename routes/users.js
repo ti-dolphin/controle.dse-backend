@@ -15,6 +15,8 @@ router.post("/register", UserController.register);
 
 router.put("/:CODPESSOA", UserController.update);
 
+router.put("/:CODPESSOA/change-password", UserController.changePassword);
+
 router.delete("/:CODPESSOA", UserController.delete);
 
 
