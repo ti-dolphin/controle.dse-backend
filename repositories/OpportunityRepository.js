@@ -145,6 +145,23 @@ class OpportunityRepository {
     if (payload?.user) {
       delete payload.user
     }
+    
+    // Remove campos de data vazios ou undefined para evitar erro no Prisma
+    const dateFields = ['DATASOLICITACAO', 'DATAINICIO', 'DATAENTREGA', 'DATAINTERACAO', 'DATAFIM'];
+    dateFields.forEach(field => {
+      if (payload[field] === '' || payload[field] === undefined || payload[field] === null) {
+        delete payload[field];
+      }
+    });
+    
+    // Remove campos numéricos undefined
+    const numericFields = ['VALORFATDOLPHIN', 'VALORFATDIRETO', 'VALOR_COMISSAO'];
+    numericFields.forEach(field => {
+      if (payload[field] === undefined || payload[field] === null || payload[field] === '') {
+        delete payload[field];
+      }
+    });
+    
     return await prisma.oRDEMSERVICO
       .update({
         where: { CODOS },

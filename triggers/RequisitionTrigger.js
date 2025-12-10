@@ -27,7 +27,7 @@ class RequisitionTrigger {
             id_req_original: ID_REQUISICAO,
           },
         });
-        console.log("After create trigger executed", updatedReq);
+
         return updatedReq;
       });
     } catch (error) {
