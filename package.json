@@ -28,6 +28,7 @@
     "mysql2": "^3.9.7",
     "nodemailer": "^6.9.15",
     "pug": "2.0.0-beta11",
+    "react-number-format": "^5.4.4",
     "requisicoesportal": "file:",
     "uuid": "^10.0.0"
   },

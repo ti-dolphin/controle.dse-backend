@@ -42,7 +42,6 @@ class OpportunityService {
   }
 
   async update(CODOS, data, user) {
-    console.log(data, 'DATA AAAAA DATA AAAAA')
     // if (data.VALORFATDOLPHIN && data.VALORFATDIRETO && data.VALOR_COMISSAO){
     data.VALORFATDOLPHIN =
       data.VALORFATDOLPHIN !== "" ? data.VALORFATDOLPHIN : 0;

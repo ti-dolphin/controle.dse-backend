@@ -75,28 +75,32 @@ class OpportunityRepository {
     let total = 0;
     let totalFatDolphin = 0;
     let totalFatDireto = 0;
+    const where = {
+      AND: [
+        { CODTIPOOS: 21 },
+        {
+          PROJETOS: {
+            ATIVO: 1,
+            ID: UserService.isAdmin(user)
+              ? {}
+              : { in: projectsFollowedByUser },
+          },
+        },
+        // Ajuste: se finalizados for true, não filtra por STATUS.ACAO, senão filtra apenas abertos
+        ...(finalizados
+          ? []
+          : [{ STATUS: { ACAO: 0 } }]),
+        searchFilter,
+        composedFilters,
+      ],
+    };
     const opps = await prisma.oRDEMSERVICO
       .findMany({
-        where: {
-          AND: [
-            { CODTIPOOS: 21 },
-            {
-              PROJETOS: {
-                ATIVO: 1,
-                ID: UserService.isAdmin(user)
-                  ? {}
-                  : { in: projectsFollowedByUser },
-              },
-            },
-            // Ajuste: se finalizados for true, não filtra por STATUS.ACAO, senão filtra apenas abertos
-            ...(finalizados
-              ? []
-              : [{ STATUS: { ACAO: 0 } }]),
-            searchFilter,
-            composedFilters,
-          ],
-        },
+        where,
         include: this.include(),
+        orderBy: {
+          ID_PROJETO: 'desc' // Default sort by project descending
+        }
       })
       .then((opps) =>
         opps.map((opportunity) => {
