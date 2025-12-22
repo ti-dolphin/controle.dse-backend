@@ -208,7 +208,7 @@ class OpportunityRepository {
     const expired = dateReceived < now;
     const toExpire = dateReceived > now && dateReceived < fiveDaysFromNow;
     const closed = opp.STATUS.ACAO === 1;
-    if(closed) return "fechada";
+    if (closed) return "fechada";
     if (expired) return "expirada";
     if (toExpire) return "expirando";
     if (!expired && !toExpire) return "ativa";

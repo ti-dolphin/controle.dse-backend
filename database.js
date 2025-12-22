@@ -19,8 +19,6 @@ const pool = mysql.createPool({
   multipleStatements: true,
 });
 
-
-
 async function testConnection() {
   try {
     await prisma.$connect();
