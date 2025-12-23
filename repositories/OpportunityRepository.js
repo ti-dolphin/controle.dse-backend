@@ -30,7 +30,7 @@ class OpportunityRepository {
       ...opportunity,
       projeto: opportunity.PROJETOS,
       gerente: opportunity.PROJETOS.PESSOA_PROJETOS_CODGERENTEToPESSOA,
-      cliente : opportunity.CLIENTE,
+      cliente: opportunity.CLIENTE,
       responsavel: opportunity.PESSOA,
       adicional: opportunity.ADICIONAIS,
       status: opportunity.STATUS,
@@ -70,7 +70,10 @@ class OpportunityRepository {
     projectsFollowedByUser = projectsFollowedByUser.map(
       (project) => project.ID
     );
-    const searchFilter = searchTerm && searchTerm.trim() !== "" ? this.buildSearchFilters(searchTerm) : {};
+    const searchFilter =
+      searchTerm && searchTerm.trim() !== ""
+        ? this.buildSearchFilters(searchTerm)
+        : {};
     const composedFilters = this.buildFilters(filters);
     let total = 0;
     let totalFatDolphin = 0;
@@ -96,7 +99,23 @@ class OpportunityRepository {
     };
     const opps = await prisma.oRDEMSERVICO
       .findMany({
-        where,
+        where: {
+          AND: [
+            { CODTIPOOS: 21 },
+            {
+              PROJETOS: {
+                ATIVO: 1,
+                ID: UserService.isAdmin(user)
+                  ? {}
+                  : { in: projectsFollowedByUser },
+              },
+            },
+            // Ajuste: se finalizados for true, não filtra por STATUS.ACAO, senão filtra apenas abertos
+            ...(finalizados ? [] : [{ STATUS: { ACAO: 0 } }]),
+            searchFilter,
+            composedFilters,
+          ],
+        },
         include: this.include(),
         orderBy: {
           ID_PROJETO: 'desc' // Default sort by project descending
@@ -123,7 +142,7 @@ class OpportunityRepository {
     payload.CODTIPOOS = 21;
     payload.VALOR_COMISSAO = 0;
     payload.id_motivo_perdido = 1;
-    console.log('payload', payload);
+    console.log("payload", payload);
     const customer = await tx.cLIENTE.findFirst({
       where: {
         CODCLIENTE: payload.FK_CODCLIENTE,
@@ -147,25 +166,43 @@ class OpportunityRepository {
 
   static async update(CODOS, payload) {
     if (payload?.user) {
-      delete payload.user
+      delete payload.user;
     }
-    
+
     // Remove campos de data vazios ou undefined para evitar erro no Prisma
-    const dateFields = ['DATASOLICITACAO', 'DATAINICIO', 'DATAENTREGA', 'DATAINTERACAO', 'DATAFIM'];
-    dateFields.forEach(field => {
-      if (payload[field] === '' || payload[field] === undefined || payload[field] === null) {
+    const dateFields = [
+      "DATASOLICITACAO",
+      "DATAINICIO",
+      "DATAENTREGA",
+      "DATAINTERACAO",
+      "DATAFIM",
+    ];
+    dateFields.forEach((field) => {
+      if (
+        payload[field] === "" ||
+        payload[field] === undefined ||
+        payload[field] === null
+      ) {
         delete payload[field];
       }
     });
-    
+
     // Remove campos numéricos undefined
-    const numericFields = ['VALORFATDOLPHIN', 'VALORFATDIRETO', 'VALOR_COMISSAO'];
-    numericFields.forEach(field => {
-      if (payload[field] === undefined || payload[field] === null || payload[field] === '') {
+    const numericFields = [
+      "VALORFATDOLPHIN",
+      "VALORFATDIRETO",
+      "VALOR_COMISSAO",
+    ];
+    numericFields.forEach((field) => {
+      if (
+        payload[field] === undefined ||
+        payload[field] === null ||
+        payload[field] === ""
+      ) {
         delete payload[field];
       }
     });
-    
+
     return await prisma.oRDEMSERVICO
       .update({
         where: { CODOS },
@@ -388,15 +425,18 @@ class OpportunityRepository {
       },
     };
     const array = {};
-    array.AND = []
-    const prismaFilters =  Object.entries(filters).reduce((acc, [key, value]) => {
-      if (filterMap[key]) {
-        array.AND.push(filterMap[key](value));
-        return { ...acc, ...filterMap[key](value) };
-      }
-      return acc;
-    }, {});
-        return array;
+    array.AND = [];
+    const prismaFilters = Object.entries(filters).reduce(
+      (acc, [key, value]) => {
+        if (filterMap[key]) {
+          array.AND.push(filterMap[key](value));
+          return { ...acc, ...filterMap[key](value) };
+        }
+        return acc;
+      },
+      {}
+    );
+    return array;
   }
 }
 
