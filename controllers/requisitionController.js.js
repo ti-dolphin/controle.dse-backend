@@ -87,12 +87,12 @@ class RequisitionController {
   async changeStatus(req, res){ 
     try {
       const { id_requisicao } = req.params;
-      const { alterado_por, id_status_requisicao } = req.body;
+      const { alterado_por, id_status_requisicao, is_reverting } = req.body;
       const updated = await RequisitionService.changeStatus(
         Number(id_requisicao),
         Number(id_status_requisicao),
         Number(alterado_por),
-
+        Boolean(is_reverting)
       );
       if (!updated) {
         return res.status(404).json({ error: "Requisição não encontrada" });
@@ -100,6 +100,16 @@ class RequisitionController {
       res.status(200).json(updated);
     } catch (error) {
       console.error(error);
+      
+      // Retorna erro estruturado para aumento de valor
+      if (error.code === 'VALUE_INCREASE_REQUIRES_APPROVAL') {
+        return res.status(400).json({ 
+          code: error.code,
+          message: error.message,
+          details: error.details
+        });
+      }
+      
       res.status(400).json({ error: error.message });
     }
   }
@@ -148,6 +158,47 @@ class RequisitionController {
     }
   }
 
+  async updateRequisitionType(req, res) {
+    try {
+      const { id_requisicao } = req.params;
+      const { id_tipo_faturamento, id_status_requisicao } = req.body;
+      
+      const updated = await RequisitionService.updateRequisitionType(
+        Number(id_requisicao),
+        Number(id_tipo_faturamento),
+        Number(id_status_requisicao)
+      );
+      
+      if (!updated) {
+        return res.status(404).json({ error: "Requisição não encontrada" });
+      }
+      
+      res.status(200).json(updated);
+    } catch (error) {
+      console.error('Erro ao atualizar tipo de faturamento:', error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async updateRequisitionTypeWithSplit(req, res) {
+    try {
+      const { id_requisicao } = req.params;
+      const { id_tipo_faturamento, id_status_requisicao, validItemIds } = req.body;
+      
+      const result = await RequisitionService.updateRequisitionTypeWithSplit(
+        Number(id_requisicao),
+        Number(id_tipo_faturamento),
+        Number(id_status_requisicao),
+        validItemIds
+      );
+      
+      res.status(200).json(result);
+    } catch (error) {
+      console.error('Erro ao atualizar tipo de faturamento com divisão:', error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async delete(req, res) {
     try {
       const deleted = await RequisitionService.delete(
@@ -165,15 +216,19 @@ class RequisitionController {
 
   // Controller para faturamento
 
-  // async getAllFaturamentosTypes(req, res) {
-  //   try {
-  //     const types = await RequisitionService.getAllFaturamentosTypes();
-  //     res.status(200).json(types);
-  //   } catch (error) {
-  //     console.error('Erro ao obter tipos de faturamento:', error);
-  //     res.status(500).json({ error: error.message });
-  //   }
-  // }
+  async getAllFaturamentosTypes(req, res) {
+    try {
+      // Corrigido: buscar em req.query.visivel
+      const { visivel } = req.query;1
+      const types = await RequisitionService.getAllFaturamentosTypes(
+        visivel !== undefined ? Number(visivel) : 1
+      );
+      res.status(200).json(types);
+    } catch (error) {
+      console.error('Erro ao obter tipos de faturamento:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
 
 
 }

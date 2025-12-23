@@ -12,47 +12,62 @@ class MovementationRepository {
   async getMany(search, filters, id_patrimonio, from) {
     let searchFilter = {};
     let composedFilters = {};
+    
+    // Normaliza filtros para garantir que nserie seja tratado como string
+    if (filters && filters.length > 0) {
+      const normalizedFilters = filters.map(filter => {
+        // Se o filtro é para web_patrimonio.nserie
+        if (filter.web_patrimonio?.nserie) {
+          return {
+            ...filter,
+            web_patrimonio: {
+              ...filter.web_patrimonio,
+              nserie: {
+                contains: String(filter.web_patrimonio.nserie.contains || filter.web_patrimonio.nserie)
+              }
+            }
+          };
+        }
+        return filter;
+      });
+      composedFilters = { AND: normalizedFilters };
+    }
+    
     if (search && search.trim() !== "") {
+      const searchString = String(search);
+      
       searchFilter = {
         OR: [
-          { web_patrimonio: { nserie: { contains: search } } },
-          { web_patrimonio: { nome: { contains: search } } },
+          { web_patrimonio: { nserie: { contains: searchString } } },
+          { web_patrimonio: { nome: { contains: searchString } } },
           {
             web_patrimonio: {
-              web_tipo_patrimonio: { nome_tipo: { contains: search } },
+              web_tipo_patrimonio: { nome_tipo: { contains: searchString } },
             },
           },
-          { web_patrimonio: { descricao: { contains: search } } },
-          { pessoa: { NOME: { contains: search } } },
-          { projetos: { DESCRICAO: { contains: search } } },
+          { web_patrimonio: { descricao: { contains: searchString } } },
+          { pessoa: { NOME: { contains: searchString } } },
+          { projetos: { DESCRICAO: { contains: searchString } } },
           {
             projetos: {
               PESSOA_PROJETOS_CODGERENTEToPESSOA: {
-                NOME: { contains: search },
+                NOME: { contains: searchString },
               },
             },
           },
         ],
       };
     }
-    if (filters && filters.length > 0) {
-      composedFilters = { AND: filters };
-    }
+    
     let movs = await prisma.web_movimentacao_patrimonio
       .findMany({
-        // where: {
-
-        //   AND: [searchFilter, composedFilters],
-        // },
         include: this._includeObject(),
         orderBy: [
-          { data: "desc" }, // Primary: Most recent date first (globally)
-          { id_movimentacao: "desc" }, // Secondary: For ties on date, take the highest ID (most recent insertion)
-          // Remove { id_patrimonio: "desc" } unless you have a specific reason for sorting patrimonios when dates/IDs tie
+          { data: "desc" },
+          { id_movimentacao: "desc" },
         ],
       })
       .then((movimentacoes) => movimentacoes.map(this._formatMovimentacao));
-     
 
     if (from === "patrimonios") {
       const mostRecenetMovByPatrimonyId = new Map();

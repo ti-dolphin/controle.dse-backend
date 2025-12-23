@@ -1,8 +1,36 @@
 const { prisma } = require("../database");
 
 class RequisitionRepository {
-  getAllFaturamentosTypes = () => {
-    return prisma.web_tipo_faturamento.findMany();
+  findAuxByRequisitionStatus = async (id_status_requisicao) => {
+    return prisma.web_aux_troca_solicitacao.findFirst({
+      where: { id_status_requisicao: Number(id_status_requisicao) },
+    });
+  };
+
+  findAuxByTipoFaturamentoAndStatusAux = async (
+    tipo_faturamento,
+    aux_status
+  ) => {
+    return prisma.web_aux_troca_solicitacao.findFirst({
+      where: {
+        tipo_faturamento: Number(tipo_faturamento),
+        aux_status: Number(aux_status),
+      },
+    });
+  };
+
+  findFaturamentoById = (id_tipo_faturamento) => {
+    return prisma.web_tipo_faturamento.findUnique({
+      where: { id: Number(id_tipo_faturamento) },
+    });
+  };
+
+  getAllFaturamentosTypes = (visible) => {
+    return prisma.web_tipo_faturamento.findMany({
+      where: {
+        visivel: visible,
+      },
+    });
   };
 
   findMany = (
@@ -180,7 +208,7 @@ class RequisitionRepository {
       responsavel_projeto:
         item.PROJETOS?.PESSOA_PROJETOS_ID_RESPONSAVELToPESSOA,
       status: item.web_status_requisicao,
-      alterado_por: item.PESSOA_wEB_REQUISICAO_alterado_porToPESSOA,
+      alterado_por: item.PESSOA_wEB_REQUISICAO_alterado_porToPESSOA || item.alterado_por,
       criado_por: item.PESSOA_wEB_REQUISICAO_criado_porToPESSOA,
     };
     if (requisition.projeto) {

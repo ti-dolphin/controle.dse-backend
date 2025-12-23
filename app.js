@@ -31,6 +31,7 @@ var patrimonyRouter = require('./routes/patrimonyRouter');
 var patrimonyAccessoryRouter = require('./routes/patrimonyAccessoryRouter');
 var movementationRouter = require('./routes/movementationRouter');
 var patrimonyFileRouter = require('./routes/patrimonyFileRouter');
+var patrimonyAttachmentRouter = require("./routes/patrimonyAttachmentRouter");
 // Entidade: Produtos
 var productsRouter = require('./routes/productsRouter');
 var productAttachmentRouter = require('./routes/productAttachmentRouter');
@@ -49,6 +50,10 @@ var quoteRouter = require('./routes/quoteRouter');
 var quoteItemRouter = require("./routes/quoteItemRouter");
 var quoteFileRouter = require("./routes/quoteFIleRouter");
 var requisitionCommentRouter = require("./routes/requisitionCommentRouter.js");
+
+// Entidade: Notificações
+var notificationRouter = require('./routes/notifications');
+
 // Middlewares e Schedulers
 
 const authorizationRouter = require('./routes/authorizationRouter.js');
@@ -88,6 +93,7 @@ app.use('/movimentacao_patrimonio',  authorize, movementationRouter);
 // Rotas de Patrimônio
 app.use("/patrimonios",  authorize, patrimonyRouter);
 app.use("/acessorio_patrimonio", authorize, patrimonyAccessoryRouter);
+app.use("/anexos-patrimonio", authorize, patrimonyAttachmentRouter);
 
 // Rotas de Produtos
 app.use('/produtos',  authorize, productsRouter);
@@ -114,6 +120,8 @@ app.use("/projetos",  authorize, projectRouter);
 // Rotas de Cotações
 app.use("/cotacoes",  authorize, quoteRouter);
 
+// Rotas de Notificações
+app.use("/notifications",  authorize, notificationRouter);
 
 app.use("/authorization", authorizationRouter);
 

@@ -5,10 +5,15 @@ class ProductsController {
     async getMany(req, res) {
        try {
          const params = req.query;
-         const {searchTerm } = params;
+         const { searchTerm, tipoFaturamento } = params;
+         
+         const queryParams = { inativo: 0 };
+         if (tipoFaturamento) {
+           queryParams.tipoFaturamento = tipoFaturamento;
+         }
 
-          const products = await ProductService.getMany({ inativo: 0 }, searchTerm);
-          res.json(products);
+         const products = await ProductService.getMany(queryParams, searchTerm);
+         res.json(products);
        } catch (err) {
          res.status(500).json({ error: err.message });
        }

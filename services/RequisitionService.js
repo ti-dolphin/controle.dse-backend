@@ -11,27 +11,67 @@ const UserService = require("./UserService");
 const RequisitionAttachmentService = require("./RequisitionAttachmentService");
 const QuoteItemService = require("./QuoteItemService");
 const RequisitionTrigger = require("../triggers/RequisitionTrigger");
+const NotificationService = require("./NotificationService");
+
 class RequisitionService {
-  async getAllFaturamentosTypes() {
-    return RequisitionRepository.getAllFaturamentosTypes();
+  async updateRequisitionType(
+    id_requisicao,
+    id_tipo_faturamento,
+    id_status_requisicao
+  ) {
+
+    const requisition = await RequisitionRepository.findById(id_requisicao);
+    const tipoFaturamento = await RequisitionRepository.findFaturamentoById(
+      id_tipo_faturamento
+    );
+
+    if (!tipoFaturamento) {
+      throw new Error(
+        `Tipo de faturamento não encontrado: ${id_tipo_faturamento}`
+      );
+    }
+
+    let newTipoFaturamento = tipoFaturamento.id;
+
+    let newIdStatusRequisition = await this.getNewStatusRequisition(
+      requisition.id_status_requisicao,
+      newTipoFaturamento
+    );
+
+    const updatedRequisition = await RequisitionRepository.update(
+      id_requisicao,
+      {
+        id_status_requisicao: newIdStatusRequisition.id_status_requisicao,
+        tipo_faturamento: newIdStatusRequisition.tipo_faturamento,
+        id_escopo_requisicao: newIdStatusRequisition.id_escopo_requisicao,
+      }
+    );
+
+    return updatedRequisition;
   }
 
-  async getMany(user, params) {
-    const userComplete = await UserService.getById(user.CODPESSOA);
-    const { id_kanban_requisicao, searchTerm, filters, doneReqFilter, cancelledReqFilter, removeAdmView } = params;
+  async updateRequisitionTypeWithSplit(
+    id_requisicao,
+    id_tipo_faturamento,
+    id_status_requisicao,
+    validItemIds
+  ) {
+    return await prisma.$transaction(
+      async (tx) => {
+        // 1. Buscar requisição original
+        const originalReq = await tx.wEB_REQUISICAO.findUnique({
+          where: { ID_REQUISICAO: id_requisicao },
+          include: RequisitionRepository.buildInclude(),
+        }).then(result => RequisitionRepository.formatRequisition(result));
 
-    // Se não for o kanban "5", aplica regras de acesso e status
-    if (Number(id_kanban_requisicao) !== 5) {
-      let reqs
-      // Busca os status do kanban selecionado
-      const kanbanStatusList = await KanbanStatusRequisitionRepository.getMany({
-        id_kanban_requisicao: Number(id_kanban_requisicao),
-      });
-      // Filtra as requisições permitidas para o usuário
-      reqs = await this.getReqsBykanban(userComplete, kanbanStatusList);
+        if (!originalReq) {
+          throw new Error(`Requisição não encontrada: ${id_requisicao}`);
+        }
 
-      const coordinatorProjects = await ProjectRepository.isUserProjectCoordinator(user.CODPESSOA);
-      const isCoordinator = coordinatorProjects.length > 0;
+        // 2. Buscar tipo de faturamento
+        const tipoFaturamento = await RequisitionRepository.findFaturamentoById(
+          id_tipo_faturamento
+        );
 
       // Regras adicionais para usuários que não são diretores
       if (
@@ -47,28 +87,207 @@ class RequisitionService {
           reqs = await this.initialFilterForMyReqs(userComplete, reqs);
         }
 
-        // Caso o status seja fazendo, filtra somente pelas que EU (usuario) estou fazendo
-        if (Number(id_kanban_requisicao) === 2) {
-          reqs = await this.filterByOnlyMyReqs(userComplete, reqs);
+        // 6. Criar nova requisição com novo tipo de faturamento
+        const newReq = await tx.wEB_REQUISICAO.create({
+          data: {
+            ID_RESPONSAVEL: originalReq.ID_RESPONSAVEL,
+            id_status_requisicao: newStatusInfo.id_status_requisicao,
+            DESCRIPTION: `${originalReq.DESCRIPTION} - ${tipoFaturamento.nome_faturamento}`,
+            TIPO: originalReq.TIPO,
+            ID_PROJETO: originalReq.ID_PROJETO,
+            id_escopo_requisicao: newStatusInfo.id_escopo_requisicao,
+            tipo_faturamento: newStatusInfo.tipo_faturamento,
+            data_criacao: getNowISODate(),
+            data_alteracao: getNowISODate(),
+            criado_por: originalReq.criado_por,
+            alterado_por: originalReq.alterado_por,
+            id_req_original: originalReq.ID_REQUISICAO,
+          },
+        });
+
+        // 7. Mover itens válidos para nova requisição
+        const movedItems = [];
+        for (const item of itemsToMove) {
+          const { id_item_requisicao, id_requisicao: oldReqId, ...itemData } = item;
+          
+          const newItem = await tx.wEB_REQUISICAO_ITEMS.create({
+            data: {
+              ...itemData,
+              id_requisicao: newReq.ID_REQUISICAO,
+            },
+          });
+          movedItems.push(newItem);
+
+          // Clonar anexos do item
+          const attachments = await tx.web_anexos_item_requisicao.findMany({
+            where: { id_item_requisicao: item.id_item_requisicao },
+          });
+
+          for (const attachment of attachments) {
+            const { id_anexo_item_requisicao, id_item_requisicao: oldItemId, ...attachData } = attachment;
+            await tx.web_anexos_item_requisicao.create({
+              data: {
+                ...attachData,
+                id_item_requisicao: newItem.id_item_requisicao,
+              },
+            });
+          }
+
+          // Desativar item original
+          await tx.wEB_REQUISICAO_ITEMS.update({
+            where: { id_item_requisicao: item.id_item_requisicao },
+            data: { ativo: 0 },
+          });
         }
-      }
 
-      // Busca as requisições filtradas por ID, termo de busca geral e filtros adicionais
-      return await RequisitionRepository.findMany(
-        { ID_REQUISICAO: { in: reqs } },
+        // 8. Clonar comentários
+        await RequisitionCommentService.cloneComments(
+          originalReq,
+          newReq.ID_REQUISICAO,
+          tx
+        );
 
-        searchTerm,
-        filters
-      );
-    }
-    // Se for o kanban "5", retorna todas as requisições com filtros aplicados
-    return await RequisitionRepository.findMany({}, searchTerm, filters, doneReqFilter, cancelledReqFilter);
+        // 9. Clonar anexos da requisição
+        await RequisitionAttachmentService.cloneAttachments(
+          originalReq.ID_REQUISICAO,
+          newReq.ID_REQUISICAO,
+          tx
+        );
+
+        // 10. Clonar histórico de status
+        await RequisitionStatusService.cloneStatusChanges(
+          originalReq.ID_REQUISICAO,
+          newReq.ID_REQUISICAO,
+          tx
+        );
+
+        // 11. Recalcular totais da requisição original
+        await RequisitionItemService.updateRequisitionWithNewTotals(
+          originalReq.ID_REQUISICAO,
+          itemsToKeep,
+          tx
+        );
+
+        // 12. Calcular totais da nova requisição
+        await RequisitionItemService.updateRequisitionWithNewTotals(
+          newReq.ID_REQUISICAO,
+          movedItems,
+          tx
+        );
+
+        // 13. Buscar requisições atualizadas para retorno
+        const updatedOriginal = await tx.wEB_REQUISICAO.findUnique({
+          where: { ID_REQUISICAO: originalReq.ID_REQUISICAO },
+          include: RequisitionRepository.buildInclude(),
+        }).then(result => RequisitionRepository.formatRequisition(result));
+
+        const updatedNew = await tx.wEB_REQUISICAO.findUnique({
+          where: { ID_REQUISICAO: newReq.ID_REQUISICAO },
+          include: RequisitionRepository.buildInclude(),
+        }).then(result => RequisitionRepository.formatRequisition(result));
+
+        return {
+          originalRequisition: updatedOriginal,
+          newRequisition: updatedNew,
+          movedItemsCount: itemsToMove.length,
+          keptItemsCount: itemsToKeep.length,
+        };
+      },
+      { timeout: 120000 }
+    );
   }
 
-  async initialFilterForMyReqs(user, reqIds) {
+  async getNewStatusRequisition(id_status_requisicao, newTipoFaturamento) {
+    const actualStep = await RequisitionRepository.findAuxByRequisitionStatus(id_status_requisicao);
+
+    const newStep =
+      await RequisitionRepository.findAuxByTipoFaturamentoAndStatusAux(
+        newTipoFaturamento,
+        actualStep.aux_status
+      );
+
+      if (!newStep) {
+        throw new Error(
+          `Novo status de requisição não encontrado para: ${id_status_requisicao}, ${newTipoFaturamento}`
+        );
+      }
+
+    return newStep
+  }
+
+  async getAllFaturamentosTypes(visible) {
+    return RequisitionRepository.getAllFaturamentosTypes(visible);
+  }
+
+  async getMany(user, params) {
+    const userComplete = await UserService.getById(user.CODPESSOA);
+    const {
+      id_kanban_requisicao,
+      searchTerm,
+      filters,
+      doneReqFilter,
+      cancelledReqFilter,
+      removeAdmView,
+    } = params;
+    if (removeAdmView) {
+      userComplete.PERM_ADMINISTRADOR = '0'
+    }
+
+    // Se não for o kanban "5", aplica regras de acesso e status
+    if (Number(id_kanban_requisicao) === 5) {
+      return await RequisitionRepository.findMany(
+        {},
+        searchTerm,
+        filters,
+        doneReqFilter,
+        cancelledReqFilter
+      );
+    }
+
+    let reqs;
+    // Busca os status do kanban selecionado
+    const kanbanStatusList = await KanbanStatusRequisitionRepository.getMany({
+      id_kanban_requisicao: Number(id_kanban_requisicao),
+    });
+
+    // Filtra as requisições permitidas para o usuário
+    reqs = await this.getReqsBykanban(userComplete, kanbanStatusList);
+
+    const coordinatorProjects =  await ProjectRepository.isUserProjectCoordinator(user.CODPESSOA);
+    const isCoordinator = coordinatorProjects.length > 0;
+    // Regras adicionais para usuários que não são diretores
+    if (
+      +userComplete.PERM_DIRETOR === 0 &&
+      !userComplete.CODGERENTE &&
+      !isCoordinator
+    ) {
+      //Caso o status seja a fazer, verificar se não é uma requisição que eu já iniciei
+      if (
+        Number(id_kanban_requisicao) === 1 ||
+        Number(id_kanban_requisicao) === 3
+      ) {
+        reqs = await this.initialFilterForMyReqs(userComplete, reqs);
+      }
+
+      // Caso o status seja fazendo, filtra somente pelas que EU (usuario) estou fazendo
+      if (Number(id_kanban_requisicao) === 2) {
+        reqs = await this.filterByOnlyMyReqs(userComplete, reqs);
+      }
+    }
+
+    // Busca as requisições filtradas por ID, termo de busca geral e filtros adicionais
+    return await RequisitionRepository.findMany(
+      { ID_REQUISICAO: { in: reqs } },
+
+      searchTerm,
+      filters
+    );
+  }
+
+  async   initialFilterForMyReqs(user, reqIds) {
     // Busca todos os status de todas as requisições em paralelo
     const statusesList = await Promise.all(
-      reqIds.map(reqId => RequisitionStatusService.getAllLastStatuses(reqId))
+      reqIds.map((reqId) => RequisitionStatusService.getAllLastStatuses(reqId))
     );
     const arrReturn = [];
     await Promise.all(
@@ -94,16 +313,19 @@ class RequisitionService {
 
   async filterByOnlyMyReqs(user, reqIds) {
     const validations = await Promise.all(
-      reqIds.map(reqId => RequisitionStatusService.getPreviousStatus(reqId))
-    )
+      reqIds.map((reqId) => RequisitionStatusService.getPreviousStatus(reqId))
+    );
 
-    return reqIds.filter((reqIds, i) => +validations[i]?.alterado_por === +user.CODPESSOA)
+    return reqIds.filter(
+      (reqIds, i) => +validations[i]?.alterado_por === +user.CODPESSOA
+    );
   }
 
   async getReqsBykanban(user, kanbanStatusList) {
     const allStatusIds = kanbanStatusList.map(
       (item) => item.id_status_requisicao
     );
+
     const requisitions = await RequisitionRepository.findMany({
       id_status_requisicao: { in: allStatusIds },
     });
@@ -125,13 +347,16 @@ class RequisitionService {
   }
 
   getStatusListByProfile(kanbanStatusList) {
-    return kanbanStatusList.reduce((statusByProfile, { perfil, id_status_requisicao }) => {
-      if (!statusByProfile[perfil]) {
-        statusByProfile[perfil] = [];
-      }
-      statusByProfile[perfil].push(id_status_requisicao);
-      return statusByProfile;
-    }, {});
+    return kanbanStatusList.reduce(
+      (statusByProfile, { perfil, id_status_requisicao }) => {
+        if (!statusByProfile[perfil]) {
+          statusByProfile[perfil] = [];
+        }
+        statusByProfile[perfil].push(id_status_requisicao);
+        return statusByProfile;
+      },
+      {}
+    );
   }
 
   async getById(id_requisicao) {
@@ -316,11 +541,10 @@ class RequisitionService {
 
   async attend(id, items) {
     return await prisma.$transaction(async (tx) => {
-
       const req = await tx.wEB_REQUISICAO.findFirst({
         where: { ID_REQUISICAO: Number(id) },
       });
-      
+
       if (!req) {
         console.error("Requisition not found");
         throw new Error("Requisition not found");
@@ -343,7 +567,6 @@ class RequisitionService {
         productIdToProduct.set(product.ID, product);
       });
       if (await this.oneAttendedItem(items)) {
-
         if (this.allItemsAttended(items)) {
           const separacaoStatus = await tx.web_status_requisicao.findFirst({
             where: { nome: "Em Separação" },
@@ -362,22 +585,21 @@ class RequisitionService {
             .then((result) => {
               return RequisitionRepository.formatRequisition(result);
             });
-        
+
           for (let item of items) {
             const product = productIdToProduct.get(item.id_produto);
             const updatedProduct = await tx.produtos.update({
               where: { ID: item.id_produto },
               data: {
                 quantidade_estoque: {
-                  decrement: item.quantidade_atendida
+                  decrement: item.quantidade_atendida,
                 },
                 quantidade_reservada: {
-                  decrement: product.quantidade_reservada
+                  decrement: product.quantidade_reservada,
                 },
               },
             });
           }
-        
 
           return {
             estoque: updatedReq,
@@ -404,7 +626,7 @@ class RequisitionService {
           req,
           newComprasReq.ID_REQUISICAO,
           tx
-        )
+        );
         await RequisitionAttachmentService.cloneAttachments(
           req.ID_REQUISICAO,
           newComprasReq.ID_REQUISICAO,
@@ -417,20 +639,20 @@ class RequisitionService {
         );
         for (let item of items) {
           if (item.quantidade_atendida === item.quantidade) {
-          const product = productIdToProduct.get(item.id_produto);
-          const updatedProduct = await tx.produtos.update({
-            where: {
-              ID: item.id_produto,
-            },
-            data: {
-              quantidade_estoque: {
-                decrement: item.quantidade_atendida || 0,
+            const product = productIdToProduct.get(item.id_produto);
+            const updatedProduct = await tx.produtos.update({
+              where: {
+                ID: item.id_produto,
               },
-              quantidade_reservada: {
-                decrement: product.quantidade_reservada || 0,
+              data: {
+                quantidade_estoque: {
+                  decrement: item.quantidade_atendida || 0,
+                },
+                quantidade_reservada: {
+                  decrement: product.quantidade_reservada || 0,
+                },
               },
-            },
-          });
+            });
             stockItems.push(item);
             continue;
           }
@@ -570,18 +792,27 @@ class RequisitionService {
     return newItem;
   }
 
-  async changeStatus(id_requisicao, newStatusId, alterado_por) {
+  async changeStatus(id_requisicao, newStatusId, alterado_por, isReverting = false) {
     return await prisma.$transaction(async (tx) => {
-      const req = await tx.wEB_REQUISICAO.findFirst({
-        where: { ID_REQUISICAO: id_requisicao },
-        include: RequisitionRepository.buildInclude(),
-      }).then((result) => RequisitionRepository.formatRequisition(result));
-      let updatedReq = await RequisitionTrigger.beforeUpdateStatus(
-        req,
-        newStatusId,
-        alterado_por,
-        tx
-      );
+      const req = await tx.wEB_REQUISICAO
+        .findFirst({
+          where: { ID_REQUISICAO: id_requisicao },
+          include: RequisitionRepository.buildInclude(),
+        })
+        .then((result) => RequisitionRepository.formatRequisition(result));
+
+        const requisitante = req.responsavel.CODPESSOA
+
+      // Pula validações do trigger se for retrocesso
+      let updatedReq = null;
+      if (!isReverting) {
+        updatedReq = await RequisitionTrigger.beforeUpdateStatus(
+          req,
+          newStatusId,
+          alterado_por,
+          tx
+        );
+      }
       if (updatedReq) {
         await tx.web_alteracao_req_status.create({
           data: {
@@ -595,8 +826,34 @@ class RequisitionService {
 
         return updatedReq;
       }
+      
+      // Verifica se o valor aumentou mais de R$10 após aprovação da diretoria (apenas se NÃO for retrocesso)
+      if (!isReverting) {
+        const requisitionAfterUpdate = {
+          ...req,
+          id_status_requisicao: newStatusId
+        };
+        
+        const valueCheckResult = await RequisitionTrigger.checkValueChangeAfterApproval(
+          req,
+          requisitionAfterUpdate,
+          tx
+        );
+        
+        if (valueCheckResult && valueCheckResult.shouldRevert) {
+          const error = new Error('Valor da requisição excedeu o limite aprovado');
+          error.code = 'VALUE_INCREASE_REQUIRES_APPROVAL';
+          error.details = {
+            difference: valueCheckResult.difference,
+            approvalStatusId: valueCheckResult.approvalStatusId
+          };
+          throw error;
+        }
+      }
+      
       //não é status de verificação de estoque
-      updatedReq = await tx.wEB_REQUISICAO.update({
+      updatedReq = await tx.wEB_REQUISICAO
+        .update({
           where: { ID_REQUISICAO: id_requisicao },
           data: {
             id_status_requisicao: newStatusId,
@@ -614,15 +871,24 @@ class RequisitionService {
           data_alteracao: getNowISODate(),
         },
       });
-      // cria histórico
-      // throw new Error("not implemented");
+
+      // Criar notificação para o requisitante
+      await NotificationService.createNotification(
+        requisitante,
+        alterado_por,
+        id_requisicao,
+        req.id_status_requisicao,
+        newStatusId,
+        tx
+      );
+
       return updatedReq;
     });
   }
 
   async delete(id_requisicao) {
     await RequisitionTrigger.beforeDelete(id_requisicao);
-    return await RequisitionRepository.delete(id_requisicao);
+      return await RequisitionRepository.delete(id_requisicao);
   }
 
   async getAccessRulesByKanban(user, kanbanStatusList) {
@@ -649,6 +915,19 @@ class RequisitionService {
         match: (req, user, statusList) =>
           statusList && statusList.includes(Number(req.id_status_requisicao)),
         profileId: 6,
+      },
+      {
+        // Comprador Operacional
+        check: () => Number(user.PERM_COMPRADOR_OPERACIONAL) === 1,
+        statusList: () => {
+          const profileId = profiles.find(
+            (p) => p.nome === "Comprador Operacional"
+          ).id_perfil_usuario;
+          return statusByProfile[profileId];
+        },
+        match: (req, user, statusList) =>
+          statusList && statusList.includes(Number(req.id_status_requisicao)),
+        profileId: 8,
       },
       {
         // Diretor

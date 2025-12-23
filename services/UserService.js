@@ -56,6 +56,33 @@ class UserService {
     return updatedUser;
   }
 
+  async changePassword(CODPESSOA, { currentPassword, newPassword }) {
+    const user = await UserRepository.getById(CODPESSOA);
+    if (!user) {
+      throw new Error("Usuário não encontrado");
+    }
+
+    // Verify current password
+    const hashedCurrentPassword = crypto.createHash("md5")
+      .update(currentPassword)
+      .digest("hex")
+      .toUpperCase();
+    
+    if (user.SENHA !== hashedCurrentPassword) {
+      throw new Error("Senha atual incorreta");
+    }
+
+    // Hash new password
+    const hashedNewPassword = crypto.createHash("md5")
+      .update(newPassword)
+      .digest("hex")
+      .toUpperCase();
+
+    // Update password
+    const updatedUser = await UserRepository.update(CODPESSOA, { SENHA: hashedNewPassword });
+    return updatedUser;
+  }
+
   async delete(CODPESSOA) {
     const deletedUser = await UserRepository.delete(CODPESSOA);
     return deletedUser;

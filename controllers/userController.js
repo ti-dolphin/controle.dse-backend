@@ -71,6 +71,17 @@ class UserController {
         }
     }
 
+    async changePassword(req, res) {
+        try {
+            const { CODPESSOA } = req.params;
+            const { currentPassword, newPassword } = req.body;
+            await UserService.changePassword(Number(CODPESSOA), { currentPassword, newPassword });
+            res.status(200).json({ message: "Senha alterada com sucesso" });
+        } catch (err) {
+            res.status(400).json({ error: err.message });
+        }
+    }
+
 
 }
 

@@ -27,7 +27,7 @@ class RequisitionTrigger {
             id_req_original: ID_REQUISICAO,
           },
         });
-        console.log("After create trigger executed", updatedReq);
+
         return updatedReq;
       });
     } catch (error) {
@@ -85,7 +85,13 @@ class RequisitionTrigger {
       console.log("requisitionStatusisAdvancing", requisitionStatusisAdvancing);
     
       //mandando requisição para requisitado, vem a etapa de verificação do estoque s ehouver pelo menos um item no estoque
-    if (updatingToRequisitado && requisitionStatusisAdvancing) {
+      if (updatingToRequisitado && requisitionStatusisAdvancing) {
+        // Se tipo_faturamento for 2, pula toda a lógica de estoque e vai direto para compras
+        if (req.tipo_faturamento === 2) {
+          console.log("tipo_faturamento === 2: enviando requisição direto para compras, ignorando estoque");
+          return; // Não faz nenhuma alteração, deixa seguir o fluxo normal de compras
+        }
+
         const atLeastOneItemAvailable = products.some(
           (product) => (
             product.quantidade_estoque && product.quantidade_estoque > 0 && product.quantidade_disponivel > 0
@@ -108,7 +114,9 @@ class RequisitionTrigger {
           await tx.produtos.update({
             where: { ID: product.ID },
             data: {
-              quantidade_reservada: product.quantidade_disponivel,
+              quantidade_reservada: {
+                increment: product.quantidade_disponivel,
+              },
             },
           });
           continue;
@@ -124,7 +132,9 @@ class RequisitionTrigger {
           await tx.produtos.update({
             where: { ID: product.ID },
             data: {
-              quantidade_reservada: item.quantidade,
+              quantidade_reservada: {
+                increment: item.quantidade,
+              },
             },
           });
         }
@@ -144,11 +154,37 @@ class RequisitionTrigger {
           return updatedReq;
         }
       }
-      console.log("finalStockstatus", finalStockstatus);
       
-    
+      const currentStatus = await tx.web_status_requisicao.findFirst({
+        where: { id_status_requisicao: req.id_status_requisicao }
+      });
+      
+      const newStatusData = await tx.web_status_requisicao.findFirst({
+        where: { id_status_requisicao: newStatusId }
+      });
+      
+      const approvalStatusByScope = {
+        2: 7,
+        3: 110,
+        5: 120
+      };
+      
+      const approvalStatusId = approvalStatusByScope[req.id_escopo_requisicao];
+      
+      if (currentStatus && newStatusData && 
+          Number(currentStatus.id_status_requisicao) === approvalStatusId &&
+          newStatusData.etapa > currentStatus.etapa) {
+        
+        console.log(`[Trigger] Saindo de Aprovação Diretoria (status ${approvalStatusId}). Armazenando valor aprovado: R$ ${req.custo_total}`);
+        
+        await tx.wEB_REQUISICAO.update({
+          where: { ID_REQUISICAO: req.ID_REQUISICAO },
+          data: {
+            valor_aprovado_diretoria: req.custo_total
+          }
+        });
+      }
 
-      // Logic to execute before updating a requisition
     } catch (error) {
       console.error("Error in beforeUpdate trigger", error);
       throw error;
@@ -284,6 +320,104 @@ class RequisitionTrigger {
       console.error("Error in afterDelete trigger", error);
       throw error;
     }
+  }
+
+  static async checkValueChangeAfterApproval(reqBefore, reqAfter, tx) {
+    const scopeConfig = this._getScopeApprovalConfig(reqBefore.id_escopo_requisicao);
+    
+    if (!scopeConfig) {
+      console.log(`[RequisitionTrigger] Escopo ${reqBefore.id_escopo_requisicao} não possui configuração de aprovação`);
+      return false;
+    }
+
+
+    if (this._isMovingToApprovalStatus(reqAfter.id_status_requisicao, scopeConfig.approval)) {
+      console.log(`[RequisitionTrigger] Requisição ${reqBefore.ID_REQUISICAO} está indo para aprovação. Não verifica excesso de valor.`);
+      return false;
+    }
+
+    if (this._isAfterVerificationWindow(reqBefore.id_status_requisicao, scopeConfig.lastCheck)) {
+      console.log(`[RequisitionTrigger] Requisição ${reqBefore.ID_REQUISICAO} já passou da fase de verificação (status ${reqBefore.id_status_requisicao}). Não retorna para aprovação.`);
+      return false;
+    }
+
+    const hasPassedThroughApproval = await this._hasPassedThroughApproval(
+      reqBefore.ID_REQUISICAO, 
+      scopeConfig.approval, 
+      tx
+    );
+
+    if (!hasPassedThroughApproval) {
+      return false;
+    }
+
+    const isWithinVerificationWindow = Number(reqBefore.id_status_requisicao) === scopeConfig.lastCheck;
+
+    if (!isWithinVerificationWindow) {
+      return false;
+    }
+
+    return this._checkValueExceedsApprovedAmount(reqBefore, reqAfter, scopeConfig.approval);
+  }
+
+  static _getScopeApprovalConfig(scopeId) {
+    const SCOPE_STATUS_CONFIG = {
+      2: { approval: 7, lastCheck: 8 },      // Compras: Aprovação Diretoria (7), verifica até Comprar (9)
+      3: { approval: 110, lastCheck: 111 },  // Faturamento
+      5: { approval: 120, lastCheck: 121 }   // Contratos
+    };
+    
+    return SCOPE_STATUS_CONFIG[scopeId];
+  }
+
+  static _isMovingToApprovalStatus(currentStatusId, approvalStatusId) {
+    return Number(currentStatusId) === approvalStatusId;
+  }
+
+  static _isAfterVerificationWindow(currentStatusId, lastCheckStatusId) {
+    return Number(currentStatusId) > lastCheckStatusId;
+  }
+
+  static async _hasPassedThroughApproval(requisitionId, approvalStatusId, tx) {
+    const statusHistory = await tx.web_alteracao_req_status.findMany({
+      where: {
+        id_requisicao: requisitionId,
+        id_status_requisicao: approvalStatusId
+      }
+    });
+
+    console.log(`[RequisitionTrigger] Histórico de aprovação da requisição ${requisitionId}:`, statusHistory.length > 0);
+    return statusHistory.length > 0;
+  }
+
+  static _checkValueExceedsApprovedAmount(reqBefore, reqAfter, approvalStatusId) {
+    const TOLERANCE_THRESHOLD = 10;
+    
+    const approvedValue = Number(reqBefore.valor_aprovado_diretoria) || 0;
+    const currentValue = Number(reqAfter.custo_total) || 0;
+    const valueDifference = currentValue - approvedValue;
+
+    console.log(
+      `[RequisitionTrigger] Requisição ${reqBefore.ID_REQUISICAO}: ` +
+      `Valor aprovado R$ ${approvedValue.toFixed(2)}, ` +
+      `valor atual R$ ${currentValue.toFixed(2)}`
+    );
+
+    if (valueDifference > TOLERANCE_THRESHOLD) {
+      console.log(
+        `[RequisitionTrigger] Requisição ${reqBefore.ID_REQUISICAO}: ` +
+        `Valor aumentou R$ ${valueDifference.toFixed(2)}. ` +
+        `Deve retornar para Aprovação Diretoria (status ${approvalStatusId}).`
+      );
+      
+      return { 
+        shouldRevert: true, 
+        approvalStatusId, 
+        difference: valueDifference 
+      };
+    }
+
+    return false;
   }
 }
 

@@ -25,7 +25,7 @@ class PatrimonyRepository {
         responsavel_tipo: Number(codpessoa),
       },
     });
-    if(idOnly){ 
+    if (idOnly) { 
       return typesUserIsResponsableFor.map((type) => type.id_tipo_patrimonio);
     }
     return typesUserIsResponsableFor;
