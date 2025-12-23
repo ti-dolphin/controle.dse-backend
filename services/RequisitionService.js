@@ -73,19 +73,37 @@ class RequisitionService {
           id_tipo_faturamento
         );
 
-      // Regras adicionais para usuários que não são diretores
-      if (
-        +userComplete.PERM_DIRETOR === 0 &&
-        !userComplete.CODGERENTE &&
-        !isCoordinator
-      ) {
-        //Caso o status seja a fazer, verificar se não é uma requisição que eu já iniciei
-        if (
-          Number(id_kanban_requisicao) === 1 ||
-          Number(id_kanban_requisicao) === 3
-        ) {
-          reqs = await this.initialFilterForMyReqs(userComplete, reqs);
+        if (!tipoFaturamento) {
+          throw new Error(
+            `Tipo de faturamento não encontrado: ${id_tipo_faturamento}`
+          );
         }
+
+        // 3. Buscar itens da requisição
+        const allItems = await tx.wEB_REQUISICAO_ITEMS.findMany({
+          where: { 
+            id_requisicao: id_requisicao,
+            ativo: 1
+          },
+        });
+
+        // 4. Separar itens que serão movidos e que ficarão
+        const itemsToMove = allItems.filter(item => 
+          validItemIds.includes(item.id_item_requisicao)
+        );
+        const itemsToKeep = allItems.filter(item => 
+          !validItemIds.includes(item.id_item_requisicao)
+        );
+
+        if (itemsToMove.length === 0) {
+          throw new Error('Nenhum item válido para mover');
+        }
+
+        // 5. Calcular novo status baseado no tipo de faturamento
+        const newStatusInfo = await this.getNewStatusRequisition(
+          originalReq.id_status_requisicao,
+          tipoFaturamento.id
+        );
 
         // 6. Criar nova requisição com novo tipo de faturamento
         const newReq = await tx.wEB_REQUISICAO.create({
