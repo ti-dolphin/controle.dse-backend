@@ -73,33 +73,18 @@ class RequisitionService {
           id_tipo_faturamento
         );
 
-        if (!tipoFaturamento) {
-          throw new Error(
-            `Tipo de faturamento não encontrado: ${id_tipo_faturamento}`
-          );
-        }
-
-        // 3. Calcular novo status baseado no novo tipo
-        const newStatusInfo = await this.getNewStatusRequisition(
-          originalReq.id_status_requisicao,
-          tipoFaturamento.id
-        );
-
-        // 4. Buscar todos os itens da requisição
-        const allItems = await tx.wEB_REQUISICAO_ITEMS.findMany({
-          where: { id_requisicao: Number(id_requisicao), ativo: 1 },
-        });
-
-        // 5. Separar itens válidos e inválidos
-        const itemsToKeep = allItems.filter(item => 
-          !validItemIds.includes(item.id_item_requisicao)
-        );
-        const itemsToMove = allItems.filter(item => 
-          validItemIds.includes(item.id_item_requisicao)
-        );
-
-        if (itemsToMove.length === 0) {
-          throw new Error('Nenhum item válido para mover');
+      // Regras adicionais para usuários que não são diretores
+      if (
+        +userComplete.PERM_DIRETOR === 0 &&
+        !userComplete.CODGERENTE &&
+        !isCoordinator
+      ) {
+        //Caso o status seja a fazer, verificar se não é uma requisição que eu já iniciei
+        if (
+          Number(id_kanban_requisicao) === 1 ||
+          Number(id_kanban_requisicao) === 3
+        ) {
+          reqs = await this.initialFilterForMyReqs(userComplete, reqs);
         }
 
         // 6. Criar nova requisição com novo tipo de faturamento
@@ -682,20 +667,24 @@ class RequisitionService {
               data: { ativo: 0 },
             });
             const product = productIdToProduct.get(item.id_produto);
-            const quantityToDecrement =
-              item.quantidade_disponivel > product.quantidade_reservada
-                ? product.quantidade_reservada
-                : item.quantidade_disponivel;
-            const updatedProduct = await tx.produtos.update({
-              where: {
-                ID: item.id_produto,
-              },
-              data: {
-                quantidade_reservada: {
-                  decrement: quantityToDecrement,
+            const quantidadeDisponivel = Number(item.quantidade_disponivel) || 0;
+            const quantidadeReservada = Number(product?.quantidade_reservada) || 0;
+            const quantityToDecrement = quantidadeDisponivel > quantidadeReservada 
+              ? quantidadeReservada 
+              : quantidadeDisponivel;
+            
+            if (quantityToDecrement > 0) {
+              await tx.produtos.update({
+                where: {
+                  ID: item.id_produto,
                 },
-              },
-            });
+                data: {
+                  quantidade_reservada: {
+                    decrement: quantityToDecrement
+                  },
+                },
+              });
+            }
             comprasItems.push(newComprasReqItem);
             continue;
           }

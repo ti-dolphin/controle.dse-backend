@@ -2,11 +2,11 @@ const {prisma} = require("../database");
 
 
 class ClientRepository {
-   async getMany() {
+  async getMany() {
     return prisma.cLIENTE.findMany();
   }
 
-   async getById(CODCLIENTE) {
+  async getById(CODCLIENTE) {
     return prisma.cLIENTE.findUnique({
       where: {
         CODCLIENTE
@@ -14,13 +14,13 @@ class ClientRepository {
     });
   }
 
-   async create(data) {
+  async create(data) {
     return prisma.cLIENTE.create({
       data,
     });
   }
 
-   async update(CODCLIENTE, data) {
+  async update(CODCLIENTE, data) {
     return prisma.cLIENTE.update({
       where: {
         CODCLIENTE,
