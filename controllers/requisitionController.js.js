@@ -230,6 +230,22 @@ class RequisitionController {
     }
   }
 
+  async getStatusPermission(req, res) {
+    try {
+      const { id_requisicao } = req.params;
+      const user = req.query.user;
+      
+      const permissions = await RequisitionService.getStatusPermission(
+        user,
+        Number(id_requisicao)
+      );
+      
+      res.status(200).json(permissions);
+    } catch (error) {
+      console.error('Erro ao obter permissões de status:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
 
 }
 

@@ -5,6 +5,7 @@ var router = express.Router();
 
 router.get("/", RequisitionController.getMany);
 router.get("/:id_requisicao", RequisitionController.getById);
+router.get("/:id_requisicao/permissions", RequisitionController.getStatusPermission);
 router.post("/", RequisitionController.create);
 router.post('/parcial/create', RequisitionController.createFromOther);
 router.put("/:id_requisicao", RequisitionController.update);
