@@ -394,6 +394,7 @@ class RequisitionService {
     normalizedData.PROJETOS = {
       connect: { ID: normalizedData.ID_PROJETO },
     }
+    delete normalizedData.ID_PROJETO;
     const newReq = await RequisitionRepository.create(normalizedData);
     await prisma.web_alteracao_req_status.create({
       data: {
