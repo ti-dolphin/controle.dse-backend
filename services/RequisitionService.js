@@ -394,7 +394,7 @@ class RequisitionService {
       custo_total_frete: data.custo_total_frete,
       custo_total: data.custo_total,
       valor_aprovado_diretoria: data.valor_aprovado_diretoria,
-      // tipo_faturamento: data.tipo_faturamento,
+      tipo_faturamento: data.tipo_faturamento,
     };
 
     // Converter todas as Foreign Keys para formato connect
