@@ -106,6 +106,7 @@ class RequisitionRepository {
   };
 
   create = (data) => {
+    console.log('data no create repository', data);
     return prisma.wEB_REQUISICAO
       .create({
         data: data,
