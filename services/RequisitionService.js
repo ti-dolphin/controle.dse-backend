@@ -382,20 +382,67 @@ class RequisitionService {
   }
 
   async create(data) {
-    let normalizedData = { ...data };
+    // Preparar dados escalares
+    const createData = {
+      DESCRIPTION: data.DESCRIPTION,
+      OBSERVACAO: data.OBSERVACAO,
+      data_criacao: getNowISODate(),
+      data_alteracao: getNowISODate(),
+      id_escopo_requisicao: data.id_escopo_requisicao ?? 2,
+      id_req_original: data.id_req_original,
+      custo_total_itens: data.custo_total_itens,
+      custo_total_frete: data.custo_total_frete,
+      custo_total: data.custo_total,
+      valor_aprovado_diretoria: data.valor_aprovado_diretoria,
+      tipo_faturamento: data.tipo_faturamento,
+    };
 
-    normalizedData.data_criacao = getNowISODate();
-    normalizedData.data_alteracao = getNowISODate();
-    normalizedData.criado_por = data.ID_RESPONSAVEL;
-    normalizedData.alterado_por = data.ID_RESPONSAVEL;
-    // Se vier do frontend, use o valor, senão default 2
-    normalizedData.id_escopo_requisicao = data.id_escopo_requisicao ?? 2;
-    console.log('normalizedData', normalizedData);
-    normalizedData.PROJETOS = {
-      connect: { ID: normalizedData.ID_PROJETO },
+    // Converter todas as Foreign Keys para formato connect
+    
+    // FK: ID_PROJETO → PROJETOS
+    if (data.ID_PROJETO) {
+      createData.PROJETOS = {
+        connect: { ID: data.ID_PROJETO }
+      };
     }
-    delete normalizedData.ID_PROJETO;
-    const newReq = await RequisitionRepository.create(normalizedData);
+
+    // FK: ID_RESPONSAVEL → PESSOA_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA
+    if (data.ID_RESPONSAVEL) {
+      createData.PESSOA_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA = {
+        connect: { CODPESSOA: data.ID_RESPONSAVEL }
+      };
+    }
+
+    // FK: criado_por → PESSOA_WEB_REQUISICAO_criado_porToPESSOA
+    if (data.ID_RESPONSAVEL) {
+      createData.PESSOA_WEB_REQUISICAO_criado_porToPESSOA = {
+        connect: { CODPESSOA: data.ID_RESPONSAVEL }
+      };
+    }
+
+    // FK: alterado_por → PESSOA_WEB_REQUISICAO_alterado_porToPESSOA
+    if (data.ID_RESPONSAVEL) {
+      createData.PESSOA_WEB_REQUISICAO_alterado_porToPESSOA = {
+        connect: { CODPESSOA: data.ID_RESPONSAVEL }
+      };
+    }
+
+    // FK: id_status_requisicao → web_status_requisicao
+    if (data.id_status_requisicao) {
+      createData.web_status_requisicao = {
+        connect: { id_status_requisicao: data.id_status_requisicao }
+      };
+    }
+
+    // FK: TIPO → web_tipo_requisicao
+    if (data.TIPO) {
+      createData.web_tipo_requisicao = {
+        connect: { id_tipo_requisicao: data.TIPO }
+      };
+    }
+
+    const newReq = await RequisitionRepository.create(createData);
+    
     await prisma.web_alteracao_req_status.create({
       data: {
         id_requisicao: newReq.ID_REQUISICAO,
