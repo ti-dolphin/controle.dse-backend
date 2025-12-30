@@ -391,6 +391,9 @@ class RequisitionService {
     // Se vier do frontend, use o valor, senão default 2
     normalizedData.id_escopo_requisicao = data.id_escopo_requisicao ?? 2;
     console.log('normalizedData', normalizedData);
+    normalizedData.PROJETOS = {
+      connect: { ID: normalizedData.ID_PROJETO },
+    }
     const newReq = await RequisitionRepository.create(normalizedData);
     await prisma.web_alteracao_req_status.create({
       data: {
