@@ -390,6 +390,7 @@ class RequisitionService {
     normalizedData.alterado_por = data.ID_RESPONSAVEL;
     // Se vier do frontend, use o valor, senão default 2
     normalizedData.id_escopo_requisicao = data.id_escopo_requisicao ?? 2;
+    console.log('normalizedData', normalizedData);
     const newReq = await RequisitionRepository.create(normalizedData);
     await prisma.web_alteracao_req_status.create({
       data: {
