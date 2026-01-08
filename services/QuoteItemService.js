@@ -68,7 +68,7 @@ class QuoteItemService {
     const IPI = Number(data.IPI) / 100;
     const ST = Number(data.ST) / 100;
     const subtotal = precoUnitario * quantidadeCotada * (1 + IPI + ST);
-    return subtotal.toFixed(2);
+    return Number(subtotal.toFixed(2));
   }
   //calcula o novo total da cotação e da requisição de acordo com o item atualizado
   async calculateItemsTotal(id_item_cotacao, item) {
