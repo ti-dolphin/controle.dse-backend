@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("PROD_DATABASE_URL")
+  url      = env("HOMOLOG_DATABASE_URL")
 }
 
 model motivo_perdido {
@@ -90,8 +90,8 @@ model web_cotacao {
   cnpj_fornecedor          String?                   @db.VarChar(255)
   criado_por               Int?
   id_condicao_pagamento    Int?
-  valor_total_itens        Decimal?                  @db.Decimal(10, 0)
-  valor_total              Decimal?                  @db.Decimal(10, 0)
+  valor_total_itens        Decimal?                  @db.Decimal(10, 2)
+  valor_total              Decimal?                  @db.Decimal(10, 2)
   web_anexo_cotacao        web_anexo_cotacao[]
   web_classificacao_fiscal web_classificacao_fiscal? @relation(fields: [id_classificacao_fiscal], references: [id_classificao_fiscal], onDelete: NoAction, onUpdate: NoAction, map: "classificacao_fiscal")
   pessoa                   PESSOA?                   @relation(fields: [criado_por], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "criado_por")
