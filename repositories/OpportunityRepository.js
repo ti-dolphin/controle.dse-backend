@@ -123,9 +123,12 @@ class OpportunityRepository {
       })
       .then((opps) =>
         opps.map((opportunity) => {
-          total += Number(opportunity.VALOR_TOTAL);
-          totalFatDolphin += Number(opportunity.VALORFATDOLPHIN);
-          totalFatDireto += Number(opportunity.VALORFATDIRETO);
+          // Só soma no total se não for vinculada (CODOS_ORIGINAL nulo)
+          if (opportunity.CODOS_ORIGINAL === null) {
+            total += Number(opportunity.VALOR_TOTAL);
+            totalFatDolphin += Number(opportunity.VALORFATDOLPHIN);
+            totalFatDireto += Number(opportunity.VALORFATDIRETO);
+          }
           return this.format(opportunity);
         })
       );
@@ -437,6 +440,78 @@ class OpportunityRepository {
       {}
     );
     return array;
+  }
+
+  /**
+   * Busca propostas semelhantes dentro do mesmo projeto nos últimos 6 meses
+   * @param {number} projectId - ID do projeto
+   * @param {string} searchTerm - Termo de busca (nome/descrição)
+   * @param {number|null} excludeCodos - CODOS a excluir da busca (ex: a proposta sendo editada)
+   * @returns {Promise<Array>} Lista de propostas semelhantes (máximo 10)
+   */
+  static async findSimilarByProject(projectId, searchTerm, excludeCodos = null) {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const whereClause = {
+      CODTIPOOS: 21,
+      ID_PROJETO: Number(projectId),
+      DATASOLICITACAO: {
+        gte: sixMonthsAgo,
+      },
+      PROJETOS: {
+        ATIVO: 1,
+      },
+      OR: [
+        { NOME: { contains: searchTerm } },
+        { DESCRICAO: { contains: searchTerm } },
+      ],
+    };
+
+    // Excluir a própria proposta se estiver editando
+    if (excludeCodos) {
+      whereClause.CODOS = { not: Number(excludeCodos) };
+    }
+
+    const opps = await prisma.oRDEMSERVICO.findMany({
+      where: whereClause,
+      select: {
+        CODOS: true,
+        NOME: true,
+        DATASOLICITACAO: true,
+        CODOS_ORIGINAL: true,
+        ADICIONAIS: {
+          select: {
+            NUMERO: true,
+          },
+        },
+        STATUS: {
+          select: {
+            NOME: true,
+          },
+        },
+        CLIENTE: {
+          select: {
+            NOMEFANTASIA: true,
+          },
+        },
+      },
+      take: 10,
+      orderBy: {
+        DATASOLICITACAO: 'desc',
+      },
+    });
+
+    return opps.map((opp) => ({
+      CODOS: opp.CODOS,
+      NOME: opp.NOME,
+      DATASOLICITACAO: opp.DATASOLICITACAO,
+      CODOS_ORIGINAL: opp.CODOS_ORIGINAL,
+      numeroAdicional: opp.ADICIONAIS?.NUMERO ?? 0,
+      status: opp.STATUS?.NOME ?? 'N/A',
+      cliente: opp.CLIENTE?.NOMEFANTASIA ?? 'N/A',
+      isVinculada: opp.CODOS_ORIGINAL !== null,
+    }));
   }
 }
 

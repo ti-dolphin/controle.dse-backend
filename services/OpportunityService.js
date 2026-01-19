@@ -33,6 +33,24 @@ class OpportunityService {
     return await OpportunityRepository.getStatuses();
   }
 
+  /**
+   * Busca propostas semelhantes dentro do mesmo projeto nos últimos 6 meses
+   * @param {number} projectId - ID do projeto
+   * @param {string} searchTerm - Termo de busca (nome/descrição)
+   * @param {number|null} excludeCodos - CODOS a excluir da busca
+   * @returns {Promise<Array>} Lista de propostas semelhantes (máximo 10)
+   */
+  async findSimilarByProject(projectId, searchTerm, excludeCodos = null) {
+    if (!projectId || !searchTerm || searchTerm.trim().length < 3) {
+      return [];
+    }
+    return await OpportunityRepository.findSimilarByProject(
+      projectId,
+      searchTerm.trim(),
+      excludeCodos
+    );
+  }
+
   async create(data, isAdicional) {
     data.FK_CODCLIENTE = String(data.FK_CODCLIENTE);
     return await prisma.$transaction(async (tx) => {

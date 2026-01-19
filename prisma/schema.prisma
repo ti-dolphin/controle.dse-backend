@@ -779,6 +779,7 @@ model ORDEMSERVICO {
   EMAIL_VENDA_ENVIADO     Boolean?          @default(false)
   VALOR_TOTAL             Decimal?          @db.Decimal(16, 2)
   VALORTOTAL              Decimal?          @db.Decimal(10, 0)
+  CODOS_ORIGINAL          Int?
   ALTERACOESOS            ALTERACOESOS[]
   HISTORICOSTATUS         HISTORICOSTATUS[]
   CIDADE                  CIDADE?           @relation(fields: [CODCIDADE], references: [ID], onDelete: Restrict, onUpdate: Restrict, map: "FK_CIDADE_ORDEMSERVICO")
