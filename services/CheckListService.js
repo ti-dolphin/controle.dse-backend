@@ -1,5 +1,5 @@
 const { prisma } = require("../database");
-var CheckListRepository = require("../repositories/CheckListRepository");
+const CheckListRepository = require("../repositories/CheckListRepository.js");
 const { getNowISODate } = require("../utils");
 const EmailService = require("./EmailService");
 const Handlebars = require("handlebars");
