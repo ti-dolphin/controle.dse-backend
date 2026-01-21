@@ -442,16 +442,15 @@ class OpportunityRepository {
     return array;
   }
 
-  /**
-   * Busca propostas semelhantes dentro do mesmo projeto nos últimos 6 meses
-   * @param {number} projectId - ID do projeto
-   * @param {string} searchTerm - Termo de busca (nome/descrição)
-   * @param {number|null} excludeCodos - CODOS a excluir da busca (ex: a proposta sendo editada)
-   * @returns {Promise<Array>} Lista de propostas semelhantes (máximo 10)
-   */
   static async findSimilarByProject(projectId, searchTerm, excludeCodos = null) {
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const words = searchTerm.trim().split(/\s+/).filter(word => word.length > 0);
+    const wordConditions = words.flatMap(word => [
+      { NOME: { contains: word } },
+      { DESCRICAO: { contains: word } },
+    ]);
 
     const whereClause = {
       CODTIPOOS: 21,
@@ -462,10 +461,7 @@ class OpportunityRepository {
       PROJETOS: {
         ATIVO: 1,
       },
-      OR: [
-        { NOME: { contains: searchTerm } },
-        { DESCRICAO: { contains: searchTerm } },
-      ],
+      OR: wordConditions,
     };
 
     // Excluir a própria proposta se estiver editando
