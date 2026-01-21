@@ -51,6 +51,33 @@ class OpportunityController {
         }
       }
 
+      /**
+       * Busca propostas semelhantes dentro do mesmo projeto
+       * GET /oportunidades/similar?projectId=X&searchTerm=Y&excludeCodos=Z
+       */
+      async findSimilar(req, res) {
+        try {
+          const { projectId, searchTerm, excludeCodos } = req.query;
+          
+          if (!projectId || !searchTerm) {
+            return res.status(400).json({ 
+              message: 'Parâmetros projectId e searchTerm são obrigatórios' 
+            });
+          }
+
+          const similarOpps = await OpportunityService.findSimilarByProject(
+            Number(projectId),
+            searchTerm,
+            excludeCodos ? Number(excludeCodos) : null
+          );
+
+          res.json(similarOpps);
+        } catch (error) {
+          console.error('Erro ao buscar propostas semelhantes:', error);
+          res.status(500).json({ message: error.message });
+        }
+      }
+
        async create(req, res) {
         try {
           const {isAdicional} = req.query;
