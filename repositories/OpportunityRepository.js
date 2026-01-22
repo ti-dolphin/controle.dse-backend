@@ -47,6 +47,7 @@ class OpportunityRepository {
     delete formattedOpp.PESSOA;
     return formattedOpp;
   };
+  
   static async getById(CODOS) {
     return await prisma.oRDEMSERVICO
       .findUnique({

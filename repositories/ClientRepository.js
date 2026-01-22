@@ -29,7 +29,7 @@ class ClientRepository {
     });
   }
 
-   async delete(CODCLIENTE) {
+  async delete(CODCLIENTE) {
     await prisma.cLIENTE.delete({
       where: {
         CODCLIENTE,
