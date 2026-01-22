@@ -261,8 +261,6 @@ class OpportunityService {
       clientName
     );
     try {
-      let emailSent = false;
-      
       if (opportunity.isAdicional) {
         //cliente   //projeto.adicional
         await EmailService.sendEmail(
@@ -281,12 +279,10 @@ class OpportunityService {
         );
       }
 
-      if (emailSent) {
-        await prisma.oRDEMSERVICO.update({
-          where: { CODOS },
-          data: { EMAIL_VENDA_ENVIADO: true }
-        });
-      }
+      await prisma.oRDEMSERVICO.update({
+        where: { CODOS },
+        data: { EMAIL_VENDA_ENVIADO: true }
+      });
     } catch (e) {
       console.error('Erro ao enviar e-mail de venda:', e);
       throw new Error(e);
