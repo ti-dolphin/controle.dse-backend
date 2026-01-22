@@ -44,6 +44,40 @@ class RequisitionItemService {
 
   async update(id_item_requisicao, data) {
     data.oc = Number(data.oc);
+    
+    // If quantity is being updated, sync all related quote items
+    if (data.quantidade !== undefined) {
+      return await prisma.$transaction(async (tx) => {
+        // Update the requisition item
+        const updatedItem = await RequisitionItemRepository.update(
+          id_item_requisicao,
+          data,
+          tx
+        );
+        
+        // Fetch all quote items linked to this requisition item
+        const quoteItems = await tx.web_items_cotacao.findMany({
+          where: { id_item_requisicao },
+        });
+        
+        // If there are related quote items, sync their quantities
+        if (quoteItems.length > 0) {
+          const reqItem = await tx.wEB_REQUISICAO_ITEMS.findUnique({
+            where: { id_item_requisicao },
+          });
+          
+          await QuoteItemService.updateQuoteItemQuantities(
+            quoteItems,
+            [reqItem],
+            tx
+          );
+        }
+        
+        return updatedItem;
+      }, { timeout: 120000 });
+    }
+    
+    // If no quantity change, perform simple update 
     return await RequisitionItemRepository.update(id_item_requisicao, data);
   }
 
