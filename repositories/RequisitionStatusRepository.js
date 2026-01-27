@@ -24,6 +24,26 @@ class RequisitionStatusRepository {
   }
 
   async getStatusAlteration(id_requisicao){
+    // Busca a requisição com os relacionamentos necessários para determinar responsáveis
+    const requisition = await prisma.wEB_REQUISICAO.findUnique({
+      where: { ID_REQUISICAO: id_requisicao },
+      include: {
+        PESSOA_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA: {
+          select: { CODPESSOA: true, NOME: true }
+        },
+        PROJETOS: {
+          include: {
+            PESSOA_PROJETOS_ID_RESPONSAVELToPESSOA: {
+              select: { CODPESSOA: true, NOME: true }
+            },
+            PESSOA_PROJETOS_CODGERENTEToPESSOA: {
+              select: { CODPESSOA: true, NOME: true }
+            }
+          }
+        }
+      }
+    });
+
     const alterations = await prisma.web_alteracao_req_status
       .findMany({
         where: { id_requisicao },
@@ -61,6 +81,15 @@ class RequisitionStatusRepository {
         ],
       },
     });
+    
+    // Busca os perfis responsáveis por cada status
+    const kanbanStatusList = await prisma.web_kanban_status_requisicao.findMany({
+      where: {
+        id_status_requisicao: { in: id_status_requisicao_list },
+        id_kanban_requisicao: 1 // "A Fazer" - indica quem deve agir no status
+      }
+    });
+
     const alterationsWithTransition = alterations.map((alteration) => {
       const transition = transitions.find(
         (transition) =>
@@ -68,9 +97,45 @@ class RequisitionStatusRepository {
           transition.id_status_requisicao === alteration.id_status_requisicao
       );
       alteration.transicao = transition;
+      
+      // Determina a pessoa responsável pelo novo status
+      const kanbanStatus = kanbanStatusList.find(
+        k => k.id_status_requisicao === alteration.id_status_requisicao
+      );
+      
+      if (kanbanStatus && requisition) {
+        const responsavel = this._getResponsavelByPerfil(kanbanStatus.perfil, requisition);
+        alteration.pessoa_destino = responsavel;
+        alteration.perfil_destino = kanbanStatus.nome_perfil;
+      }
+      
       return alteration;
     });
-    return alterations;
+    return alterationsWithTransition;
+  }
+
+  /**
+   * Mapeia o perfil para a pessoa responsável na requisição
+   * @param {string} perfil - ID do perfil (1=Admin, 2=Requisitante, 3=Coordenador, 4=Gerente, 5=Diretor, 6=Comprador, 7=Estoquista)
+   * @param {object} requisition - Requisição com relacionamentos carregados
+   */
+  _getResponsavelByPerfil(perfil, requisition) {
+    const perfilId = Number(perfil);
+    
+    switch (perfilId) {
+      case 2: // Requisitante
+        return requisition.PESSOA_WEB_REQUISICAO_ID_RESPONSAVELToPESSOA || null;
+      case 3: // Coordenador
+        return requisition.PROJETOS?.PESSOA_PROJETOS_ID_RESPONSAVELToPESSOA || null;
+      case 4: // Gerente
+        return requisition.PROJETOS?.PESSOA_PROJETOS_CODGERENTEToPESSOA || null;
+      case 5: // Diretor - permissão global, não há pessoa específica
+      case 6: // Comprador - permissão global, não há pessoa específica
+      case 7: // Estoquista - permissão global, não há pessoa específica
+      case 1: // Administrador - permissão global
+      default:
+        return null;
+    }
   }
 
   async getById(id_status_requisicao) {
