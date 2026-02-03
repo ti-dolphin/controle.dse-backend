@@ -480,35 +480,38 @@ model ALTERACOESOS {
 }
 
 model APONTAMENTOS {
-  CODAPONT                Int       @id @default(autoincrement())
-  CHAPA                   String    @db.VarChar(10)
-  DATA                    DateTime  @db.Date
-  CODSTATUSAPONT          String?   @default("-") @db.VarChar(2)
-  CODCCUSTO               String?   @default("-") @db.VarChar(25)
+  CODAPONT                Int          @id @default(autoincrement())
+  CHAPA                   String       @db.VarChar(10)
+  DATA                    DateTime     @db.Date
+  CODSTATUSAPONT          String?      @default("-") @db.VarChar(2)
+  CODCCUSTO               String?      @default("-") @db.VarChar(25)
   CODOS                   Int?
-  CODLIDER                Int?      @default(1)
-  ATIVIDADE               String?   @db.VarChar(255)
-  CODSITUACAO             String    @db.Char(1)
-  COMENTADO               Boolean   @default(false)
-  INTEGRA                 Boolean   @default(false)
-  MODIFICADOPOR           String?   @db.VarChar(255)
-  CUSTOMO                 Decimal?  @db.Decimal(18, 2)
-  VERIFICADO              Boolean   @default(false)
-  PROBLEMA                Boolean   @default(false)
-  MOTIVO_PROBLEMA         String?   @db.VarChar(255)
-  STATUS_PONTO            Boolean   @default(false)
-  JUSTIFICATIVA           String?   @db.VarChar(255)
+  CODLIDER                Int?         @default(1)
+  ATIVIDADE               String?      @db.VarChar(255)
+  CODSITUACAO             String       @db.Char(1)
+  COMENTADO               Boolean      @default(false)
+  INTEGRA                 Boolean      @default(false)
+  MODIFICADOPOR           String?      @db.VarChar(255)
+  CUSTOMO                 Decimal?     @db.Decimal(18, 2)
+  VERIFICADO              Boolean      @default(false)
+  PROBLEMA                Boolean      @default(false)
+  MOTIVO_PROBLEMA         String?      @db.VarChar(255)
+  STATUS_PONTO            Boolean      @default(false)
+  JUSTIFICATIVA           String?      @db.VarChar(255)
   COMPETENCIA             Int
-  ASSIDUIDADE             Boolean   @default(true)
-  BANCO_HORAS_DECIMAL     Decimal?  @default(0.0000) @db.Decimal(15, 4)
-  BANCO_HORAS_TEXTO       String?   @db.VarChar(10)
-  PONTO                   Boolean?  @default(true)
-  DATA_HORA_MOTIVO        DateTime? @db.DateTime(0)
-  DATA_HORA_JUSTIFICATIVA DateTime? @db.DateTime(0)
-  AJUSTADO                Boolean?  @default(false)
-  JUSTIFICADO_POR         String?   @db.VarChar(50)
-  TRANSPORTE_EXTRA        String    @default("Sem Transporte") @db.VarChar(50)
-  TRANSPORTE_EXTRA_ID     Int       @default(1)
+  ASSIDUIDADE             Boolean      @default(true)
+  BANCO_HORAS_DECIMAL     Decimal?     @default(0.0000) @db.Decimal(15, 4)
+  BANCO_HORAS_TEXTO       String?      @db.VarChar(10)
+  PONTO                   Boolean?     @default(true)
+  DATA_HORA_MOTIVO        DateTime?    @db.DateTime(0)
+  DATA_HORA_JUSTIFICATIVA DateTime?    @db.DateTime(0)
+  AJUSTADO                Boolean?     @default(false)
+  JUSTIFICADO_POR         String?      @db.VarChar(50)
+  TRANSPORTE_EXTRA        String       @default("Sem Transporte") @db.VarChar(50)
+  TRANSPORTE_EXTRA_ID     Int          @default(1)
+  GCCUSTO                 GCCUSTO?     @relation(fields: [CODCCUSTO], references: [CODCUSTO], onDelete: NoAction, onUpdate: NoAction, map: "FK_APONTAMENTOS_GCCUSTO")
+  PESSOA                  PESSOA?      @relation(fields: [CODLIDER], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "FK_APONTAMENTOS_PESSOA")
+  STATUSAPONT             STATUSAPONT? @relation(fields: [CODSTATUSAPONT], references: [CODSTATUSAPONT], onDelete: NoAction, onUpdate: NoAction, map: "FK_APONTAMENTOS_STATUSAPONT")
 
   @@index([CODCCUSTO], map: "FK_CODCCUSTO_APONT")
   @@index([CODOS], map: "FK_CODOS_APONT")
@@ -654,12 +657,16 @@ model FICHAEPI {
 }
 
 model GCCUSTO {
-  CODCUSTO    String   @id @db.VarChar(25)
-  NOME        String?  @db.VarChar(60)
-  CAMPOLIVRE  String?  @db.VarChar(100)
-  ATIVO       Boolean?
-  RESPONSAVEL Int?
-  CODREDUZIDO String?  @db.VarChar(25)
+  CODCUSTO     String          @id @db.VarChar(25)
+  NOME         String?         @db.VarChar(60)
+  CAMPOLIVRE   String?         @db.VarChar(100)
+  ATIVO        Boolean?
+  RESPONSAVEL  Int?
+  CODREDUZIDO  String?         @db.VarChar(25)
+  APONTAMENTOS APONTAMENTOS[]
+  PESSOA       PESSOA?         @relation(fields: [RESPONSAVEL], references: [CODPESSOA], onDelete: NoAction, onUpdate: NoAction, map: "FK_GCCUSTO_PESSOA_RESPONSAVEL")
+
+  @@index([RESPONSAVEL], map: "FK_GCCUSTO_PESSOA_RESPONSAVEL")
 }
 
 model GRUPOS {
@@ -870,7 +877,9 @@ model PESSOA {
   PERM_COMPRADOR_OPERACIONAL                                      Int?                          @db.TinyInt
   PERM_MOVIMENTAR                                                 Int?                          @db.TinyInt
   PERM_TI                                                         Int?                          @db.TinyInt
+  APONTAMENTOS                                                    APONTAMENTOS[]
   CLIENTE                                                         CLIENTE[]
+  GCCUSTO                                                         GCCUSTO[]
   HISTORICOSTATUS                                                 HISTORICOSTATUS[]
   ORDEMSERVICO                                                    ORDEMSERVICO[]
   PESSOA_GRUPOS                                                   PESSOA_GRUPOS[]
@@ -1019,8 +1028,9 @@ model STATUS {
 }
 
 model STATUSAPONT {
-  CODSTATUSAPONT String @id @default("-") @db.VarChar(2)
-  DESCRICAO      String @default("-") @db.VarChar(25)
+  CODSTATUSAPONT String         @id @default("-") @db.VarChar(2)
+  DESCRICAO      String         @default("-") @db.VarChar(25)
+  APONTAMENTOS   APONTAMENTOS[]
 }
 
 model TIPOOS {
