@@ -174,6 +174,42 @@ class NotesRepository {
     const results = await prisma.$queryRawUnsafe(query, ...values)
     return results.map(this.formatApontamento)
   }
+
+  async update(CODAPONT, data) {
+    const { CODSTATUSAPONT, CODCCUSTO, CODOS, CODLIDER, ATIVIDADE, MODIFICADOPOR } = data
+
+    const hasCODOS = CODOS !== undefined && CODOS !== null
+    let query
+
+    if (hasCODOS) {
+      query = `UPDATE APONTAMENTOS SET 
+        CODSTATUSAPONT = ?, 
+        CODCCUSTO = ?, 
+        CODOS = ?, 
+        CODLIDER = ?, 
+        ATIVIDADE = ?, 
+        INTEGRA = 0, 
+        MODIFICADOPOR = ?
+        WHERE CODAPONT = ?`
+    } else {
+      query = `UPDATE APONTAMENTOS SET 
+        CODSTATUSAPONT = ?, 
+        CODCCUSTO = ?, 
+        CODLIDER = ?, 
+        ATIVIDADE = ?, 
+        INTEGRA = 0, 
+        MODIFICADOPOR = ?
+        WHERE CODAPONT = ?`
+    }
+
+    const values = hasCODOS
+      ? [CODSTATUSAPONT, CODCCUSTO, CODOS === 0 ? null : CODOS, CODLIDER, ATIVIDADE, MODIFICADOPOR, CODAPONT]
+      : [CODSTATUSAPONT, CODCCUSTO, CODLIDER, ATIVIDADE, MODIFICADOPOR, CODAPONT]
+
+    await prisma.$executeRawUnsafe(query, ...values)
+
+    return { CODAPONT, ...data, INTEGRA: 0 }
+  }
 }
 
 module.exports = new NotesRepository()
