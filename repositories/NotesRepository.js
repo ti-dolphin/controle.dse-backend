@@ -97,6 +97,26 @@ class NotesRepository {
       conditions.push('PG.NOME LIKE ?')
       values.push(`%${params.NOME_GERENTE}%`)
     }
+
+    if (params.DATA_DE) {
+      conditions.push('A.DATA >= ?')
+      values.push(params.DATA_DE)
+    }
+    if (params.DATA_ATE) {
+      conditions.push('A.DATA <= ?')
+      values.push(params.DATA_ATE)
+    }
+
+    // Filtros booleanos (checkboxes)
+    if (params.ATIVOS === 'true') {
+      conditions.push("F.CODSITUACAO <> 'D'")
+    }
+    if (params.COMENTADOS === 'true') {
+      conditions.push('A.COMENTADO = TRUE')
+    }
+    if (params.SEM_ASSIDUIDADE === 'true') {
+      conditions.push('A.ASSIDUIDADE = FALSE')
+    }
     
     // Busca geral (searchTerm)
     if (params.searchTerm) {
@@ -123,7 +143,6 @@ class NotesRepository {
       whereClause += ' AND ' + conditions.join(' AND ')
     }
     
-    // Paginação
     const page = params.page ? Number(params.page) : 0
     const pageSize = params.pageSize ? Number(params.pageSize) : 100
     const offset = page * pageSize
@@ -175,14 +194,35 @@ class NotesRepository {
     return results.map(this.formatApontamento)
   }
 
+  /**
+   * Atualiza apontamento (sem alterar CODOS)
+   */
   async update(CODAPONT, data) {
+    const { CODSTATUSAPONT, CODCCUSTO, CODLIDER, ATIVIDADE, MODIFICADOPOR } = data
+
+    const query = `
+      UPDATE APONTAMENTOS SET 
+        CODSTATUSAPONT = ?, 
+        CODCCUSTO = ?, 
+        CODLIDER = ?, 
+        ATIVIDADE = ?, 
+        INTEGRA = 0, 
+        MODIFICADOPOR = ?
+      WHERE CODAPONT = ?`
+
+    await prisma.$executeRawUnsafe(query, CODSTATUSAPONT, CODCCUSTO, CODLIDER, ATIVIDADE, MODIFICADOPOR, CODAPONT)
+
+    return { CODAPONT, ...data, INTEGRA: 0 }
+  }
+
+  /**
+   * Altera apontamento (inclui CODOS)
+   */
+  async updateWithOS(CODAPONT, data) {
     const { CODSTATUSAPONT, CODCCUSTO, CODOS, CODLIDER, ATIVIDADE, MODIFICADOPOR } = data
 
-    const hasCODOS = CODOS !== undefined && CODOS !== null
-    let query
-
-    if (hasCODOS) {
-      query = `UPDATE APONTAMENTOS SET 
+    const query = `
+      UPDATE APONTAMENTOS SET 
         CODSTATUSAPONT = ?, 
         CODCCUSTO = ?, 
         CODOS = ?, 
@@ -190,25 +230,170 @@ class NotesRepository {
         ATIVIDADE = ?, 
         INTEGRA = 0, 
         MODIFICADOPOR = ?
-        WHERE CODAPONT = ?`
-    } else {
-      query = `UPDATE APONTAMENTOS SET 
-        CODSTATUSAPONT = ?, 
-        CODCCUSTO = ?, 
-        CODLIDER = ?, 
-        ATIVIDADE = ?, 
-        INTEGRA = 0, 
-        MODIFICADOPOR = ?
-        WHERE CODAPONT = ?`
-    }
+      WHERE CODAPONT = ?`
 
-    const values = hasCODOS
-      ? [CODSTATUSAPONT, CODCCUSTO, CODOS === 0 ? null : CODOS, CODLIDER, ATIVIDADE, MODIFICADOPOR, CODAPONT]
-      : [CODSTATUSAPONT, CODCCUSTO, CODLIDER, ATIVIDADE, MODIFICADOPOR, CODAPONT]
+    const codosValue = CODOS === 0 ? null : CODOS
 
-    await prisma.$executeRawUnsafe(query, ...values)
+    await prisma.$executeRawUnsafe(query, CODSTATUSAPONT, CODCCUSTO, codosValue, CODLIDER, ATIVIDADE, MODIFICADOPOR, CODAPONT)
 
     return { CODAPONT, ...data, INTEGRA: 0 }
+  }
+
+  // ==================== PONTO ====================
+
+  formatPonto = (row) => {
+    if (!row) return null
+    
+    return {
+      CODAPONT: row.CODAPONT,
+      CHAPA: row.CHAPA,
+      NOME_FUNCIONARIO: row.NOME_FUNCIONARIO,
+      BANCO_HORAS: row.BANCO_HORAS,
+      DATA: row.DATA,
+      VERIFICADO: row.VERIFICADO,
+      PROBLEMA: row.PROBLEMA,
+      MOTIVO_PROBLEMA: row.MOTIVO_PROBLEMA,
+      JUSTIFICATIVA: row.JUSTIFICATIVA,
+      COMPETENCIA: row.COMPETENCIA,
+      CODSTATUSAPONT: row.CODSTATUSAPONT,
+      DESCRICAO_STATUS: row.DESCRICAO_STATUS,
+      CODCCUSTO: row.CODCCUSTO,
+      NOME_CENTRO_CUSTO: row.NOME_CENTRO_CUSTO,
+      CODLIDER: row.CODLIDER,
+      NOME_LIDER: row.NOME_LIDER,
+      DATA_HORA_MOTIVO: row.DATA_HORA_MOTIVO,
+      DATA_HORA_JUSTIFICATIVA: row.DATA_HORA_JUSTIFICATIVA,
+      AJUSTADO: row.AJUSTADO,
+      JUSTIFICADO_POR: row.JUSTIFICADO_POR
+    }
+  }
+
+  buildWhereClausePonto = (params) => {
+    const conditions = []
+    const values = []
+    
+    if (params.CODAPONT) {
+      conditions.push('A.CODAPONT = ?')
+      values.push(Number(params.CODAPONT))
+    }
+    if (params.CHAPA) {
+      conditions.push('A.CHAPA LIKE ?')
+      values.push(`%${params.CHAPA}%`)
+    }
+    if (params.NOME_FUNCIONARIO) {
+      conditions.push('F.NOME LIKE ?')
+      values.push(`%${params.NOME_FUNCIONARIO}%`)
+    }
+    if (params.CODSTATUSAPONT) {
+      conditions.push('A.CODSTATUSAPONT = ?')
+      values.push(params.CODSTATUSAPONT)
+    }
+    if (params.DESCRICAO_STATUS) {
+      conditions.push('SA.DESCRICAO LIKE ?')
+      values.push(`%${params.DESCRICAO_STATUS}%`)
+    }
+    if (params.CODCCUSTO) {
+      conditions.push('A.CODCCUSTO = ?')
+      values.push(params.CODCCUSTO)
+    }
+    if (params.CODLIDER) {
+      conditions.push('A.CODLIDER = ?')
+      values.push(Number(params.CODLIDER))
+    }
+    if (params.COMPETENCIA) {
+      conditions.push('A.COMPETENCIA = ?')
+      values.push(Number(params.COMPETENCIA))
+    }
+    if (params.DATA_DE) {
+      conditions.push('A.DATA >= ?')
+      values.push(params.DATA_DE)
+    }
+    if (params.DATA_ATE) {
+      conditions.push('A.DATA <= ?')
+      values.push(params.DATA_ATE)
+    }
+    if (params.VERIFICADO === 'true') {
+      conditions.push('A.VERIFICADO = TRUE')
+    }
+    if (params.VERIFICADO === 'false') {
+      conditions.push('(A.VERIFICADO = FALSE OR A.VERIFICADO IS NULL)')
+    }
+    if (params.PROBLEMA === 'true') {
+      conditions.push('A.PROBLEMA = TRUE')
+    }
+    if (params.AJUSTADO === 'true') {
+      conditions.push('A.AJUSTADO = TRUE')
+    }
+    if (params.ATIVOS === 'true') {
+      conditions.push("F.CODSITUACAO <> 'D'")
+    }
+    if (params.MOTIVO_PROBLEMA) {
+      conditions.push('A.MOTIVO_PROBLEMA LIKE ?')
+      values.push(`%${params.MOTIVO_PROBLEMA}%`)
+    }
+    
+    if (params.searchTerm) {
+      const searchValue = `%${params.searchTerm}%`
+      conditions.push(`(
+        F.NOME LIKE ? OR 
+        A.CHAPA LIKE ? OR
+        C.NOME LIKE ? OR
+        A.MOTIVO_PROBLEMA LIKE ?
+      )`)
+      values.push(searchValue, searchValue, searchValue, searchValue)
+    }
+    
+    return { conditions, values }
+  }
+
+  async getManyPonto(params = {}) {
+    const { conditions, values } = this.buildWhereClausePonto(params)
+    
+    let whereClause = 'A.CODAPONT > 0'
+    if (conditions.length > 0) {
+      whereClause += ' AND ' + conditions.join(' AND ')
+    }
+    
+    const page = params.page ? Number(params.page) : 0
+    const pageSize = params.pageSize ? Number(params.pageSize) : 100
+    const offset = page * pageSize
+    
+    const query = `
+      SELECT 
+        A.CODAPONT, 
+        F.CHAPA, 
+        F.NOME AS NOME_FUNCIONARIO, 
+        F.BANCO_HORAS, 
+        A.DATA,
+        A.VERIFICADO, 
+        A.PROBLEMA, 
+        A.MOTIVO_PROBLEMA,
+        A.JUSTIFICATIVA, 
+        A.COMPETENCIA, 
+        A.CODSTATUSAPONT, 
+        SA.DESCRICAO AS DESCRICAO_STATUS,
+        A.CODCCUSTO, 
+        C.NOME AS NOME_CENTRO_CUSTO, 
+        A.CODLIDER, 
+        P.NOME AS NOME_LIDER, 
+        A.DATA_HORA_MOTIVO,
+        A.DATA_HORA_JUSTIFICATIVA, 
+        A.AJUSTADO, 
+        A.JUSTIFICADO_POR
+      FROM APONTAMENTOS A
+        INNER JOIN PFUNC F ON A.CHAPA = F.CHAPA AND F.CODCOLIGADA = 1
+        INNER JOIN GCCUSTO C ON A.CODCCUSTO = C.CODCUSTO
+        INNER JOIN PESSOA P ON A.CODLIDER = P.CODPESSOA
+        INNER JOIN STATUSAPONT SA ON A.CODSTATUSAPONT = SA.CODSTATUSAPONT
+      WHERE 
+        ${whereClause}
+      ORDER BY 
+        A.DATA DESC, F.NOME
+      LIMIT ${pageSize} OFFSET ${offset}
+    `
+    
+    const results = await prisma.$queryRawUnsafe(query, ...values)
+    return results.map(this.formatPonto)
   }
 }
 
