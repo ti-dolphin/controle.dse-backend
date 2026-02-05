@@ -71,8 +71,11 @@ class OpportunityService {
       // Verifica se não houve erro antes de enviar o email de ganho
       if (updatedOpportunity && !updatedOpportunity.error) {
         if (updatedOpportunity.status.CODSTATUS === 11) {
-          //VALIDAR SE JÁ NÃO FOI ENVIADO O E-MAIL ANTERIORMENTE
-          await this.sendSoldOpportunityEmail(CODOS, data, user);
+          // Só envia o e-mail se ainda não foi enviado anteriormente
+          // (quando chamado via botão, o e-mail será enviado diretamente sem passar pelo update)
+          if (!updatedOpportunity.EMAIL_VENDA_ENVIADO) {
+            await this.sendSoldOpportunityEmail(CODOS, data, user);
+          }
         } 
       }
       return updatedOpportunity;
@@ -222,15 +225,9 @@ class OpportunityService {
         VALORFATDIRETO: true,
         VALORFATDOLPHIN: true,
         FK_CODCLIENTE: true,
-        EMAIL_VENDA_ENVIADO: true,
         DESCRICAO_VENDA: true,
       },
     });
-    console.log(os.EMAIL_VENDA_ENVIADO, 'EMAIL_VENDA_ENVIADO')
-    
-    if (os.EMAIL_VENDA_ENVIADO) {
-      return;
-    }
 
     const adicional = await prisma.aDICIONAIS.findFirst({
       where: { ID: os.ID_ADICIONAL },
