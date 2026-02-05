@@ -395,6 +395,290 @@ class NotesRepository {
     const results = await prisma.$queryRawUnsafe(query, ...values)
     return results.map(this.formatPonto)
   }
+
+  // ==================== PROBLEMA ====================
+
+  formatProblema = (row) => {
+    if (!row) return null
+    
+    return {
+      CODAPONT: row.CODAPONT,
+      CHAPA: row.CHAPA,
+      NOME_FUNCIONARIO: row.NOME_FUNCIONARIO,
+      CODSITUACAO: row.CODSITUACAO,
+      DATA: row.DATA,
+      COMPETENCIA: row.COMPETENCIA,
+      COMENTADO: row.COMENTADO,
+      PROBLEMA: row.PROBLEMA,
+      CODSTATUSAPONT: row.CODSTATUSAPONT,
+      DESCRICAO_STATUS: row.DESCRICAO_STATUS,
+      CODCCUSTO: row.CODCCUSTO,
+      NOME_CENTRO_CUSTO: row.NOME_CENTRO_CUSTO,
+      CODPESSOA_GERENTE: row.CODPESSOA_GERENTE,
+      NOME_GERENTE: row.NOME_GERENTE,
+      EMAIL_GERENTE: row.EMAIL_GERENTE,
+      NOME_LIDER: row.NOME_LIDER,
+      MOTIVO_PROBLEMA: row.MOTIVO_PROBLEMA,
+      JUSTIFICATIVA: row.JUSTIFICATIVA
+    }
+  }
+
+  buildWhereClauseProblema = (params) => {
+    const conditions = []
+    const values = []
+    
+    if (params.CODAPONT) {
+      conditions.push('A.CODAPONT = ?')
+      values.push(Number(params.CODAPONT))
+    }
+    if (params.CHAPA) {
+      conditions.push('A.CHAPA LIKE ?')
+      values.push(`%${params.CHAPA}%`)
+    }
+    if (params.NOME_FUNCIONARIO) {
+      conditions.push('F.NOME LIKE ?')
+      values.push(`%${params.NOME_FUNCIONARIO}%`)
+    }
+    if (params.CODSTATUSAPONT) {
+      conditions.push('A.CODSTATUSAPONT = ?')
+      values.push(params.CODSTATUSAPONT)
+    }
+    if (params.DESCRICAO_STATUS) {
+      conditions.push('SA.DESCRICAO LIKE ?')
+      values.push(`%${params.DESCRICAO_STATUS}%`)
+    }
+    if (params.CODCCUSTO) {
+      conditions.push('A.CODCCUSTO = ?')
+      values.push(params.CODCCUSTO)
+    }
+    if (params.NOME_CENTRO_CUSTO) {
+      conditions.push('C.NOME LIKE ?')
+      values.push(`%${params.NOME_CENTRO_CUSTO}%`)
+    }
+    if (params.NOME_GERENTE) {
+      conditions.push('GERENTE.NOME LIKE ?')
+      values.push(`%${params.NOME_GERENTE}%`)
+    }
+    if (params.NOME_LIDER) {
+      conditions.push('LIDER.NOME LIKE ?')
+      values.push(`%${params.NOME_LIDER}%`)
+    }
+    if (params.COMPETENCIA) {
+      conditions.push('A.COMPETENCIA = ?')
+      values.push(Number(params.COMPETENCIA))
+    }
+    if (params.DATA_DE) {
+      conditions.push('A.DATA >= ?')
+      values.push(params.DATA_DE)
+    }
+    if (params.DATA_ATE) {
+      conditions.push('A.DATA <= ?')
+      values.push(params.DATA_ATE)
+    }
+    if (params.ATIVOS === 'true') {
+      conditions.push("F.CODSITUACAO <> 'D'")
+    }
+    if (params.COMENTADO === 'true') {
+      conditions.push('A.COMENTADO = TRUE')
+    }
+    if (params.MOTIVO_PROBLEMA) {
+      conditions.push('A.MOTIVO_PROBLEMA LIKE ?')
+      values.push(`%${params.MOTIVO_PROBLEMA}%`)
+    }
+    if (params.JUSTIFICATIVA) {
+      conditions.push('A.JUSTIFICATIVA LIKE ?')
+      values.push(`%${params.JUSTIFICATIVA}%`)
+    }
+    
+    if (params.searchTerm) {
+      const searchValue = `%${params.searchTerm}%`
+      conditions.push(`(
+        F.NOME LIKE ? OR 
+        A.CHAPA LIKE ? OR
+        C.NOME LIKE ? OR
+        LIDER.NOME LIKE ? OR
+        A.MOTIVO_PROBLEMA LIKE ? OR
+        A.JUSTIFICATIVA LIKE ?
+      )`)
+      values.push(searchValue, searchValue, searchValue, searchValue, searchValue, searchValue)
+    }
+    
+    return { conditions, values }
+  }
+
+  async getManyProblema(params = {}) {
+    const { conditions, values } = this.buildWhereClauseProblema(params)
+    
+    let whereClause = 'A.PROBLEMA = TRUE'
+    if (conditions.length > 0) {
+      whereClause += ' AND ' + conditions.join(' AND ')
+    }
+    
+    const page = params.page ? Number(params.page) : 0
+    const pageSize = params.pageSize ? Number(params.pageSize) : 100
+    const offset = page * pageSize
+    
+    const query = `
+      SELECT 
+        A.CODAPONT, 
+        A.COMENTADO, 
+        A.DATA,
+        A.PROBLEMA, 
+        A.COMPETENCIA,
+        F.CHAPA, 
+        F.NOME AS NOME_FUNCIONARIO, 
+        F.CODSITUACAO,
+        C.CODCUSTO AS CODCCUSTO,
+        C.NOME AS NOME_CENTRO_CUSTO, 
+        GERENTE.CODPESSOA AS CODPESSOA_GERENTE, 
+        GERENTE.NOME AS NOME_GERENTE, 
+        GERENTE.EMAIL AS EMAIL_GERENTE,
+        A.CODSTATUSAPONT, 
+        SA.DESCRICAO AS DESCRICAO_STATUS, 
+        LIDER.NOME AS NOME_LIDER,
+        A.MOTIVO_PROBLEMA, 
+        A.JUSTIFICATIVA
+      FROM APONTAMENTOS A
+        INNER JOIN PFUNC F ON A.CHAPA = F.CHAPA AND F.CODCOLIGADA = 1
+        INNER JOIN GCCUSTO C ON A.CODCCUSTO = C.CODCUSTO
+        INNER JOIN STATUSAPONT SA ON A.CODSTATUSAPONT = SA.CODSTATUSAPONT
+        LEFT JOIN PESSOA GERENTE ON GERENTE.CODGERENTE = C.RESPONSAVEL
+        INNER JOIN PESSOA LIDER ON LIDER.CODPESSOA = A.CODLIDER
+      WHERE 
+        ${whereClause}
+      ORDER BY 
+        A.DATA DESC, F.NOME
+      LIMIT ${pageSize} OFFSET ${offset}
+    `
+    
+    const results = await prisma.$queryRawUnsafe(query, ...values)
+    return results.map(this.formatProblema)
+  }
+
+  // ==================== OPÇÕES PARA APONTAR ====================
+
+  async getCentroCustos(ativos = true) {
+    let whereClause = ''
+    if (ativos) {
+      whereClause = 'WHERE ATIVO = TRUE'
+    }
+    
+    const query = `
+      SELECT 
+        CODCUSTO,
+        NOME,
+        CODREDUZIDO,
+        ATIVO
+      FROM GCCUSTO
+      ${whereClause}
+      ORDER BY NOME
+    `
+    
+    const results = await prisma.$queryRawUnsafe(query)
+    return results.map(row => ({
+      CODCUSTO: row.CODCUSTO,
+      NOME: row.NOME,
+      CODREDUZIDO: row.CODREDUZIDO,
+      ATIVO: row.ATIVO
+    }))
+  }
+
+  async getStatusApontamento() {
+    const query = `
+      SELECT 
+        CODSTATUSAPONT,
+        DESCRICAO
+      FROM STATUSAPONT
+      ORDER BY DESCRICAO
+    `
+    
+    const results = await prisma.$queryRawUnsafe(query)
+    return results.map(row => ({
+      CODSTATUSAPONT: row.CODSTATUSAPONT,
+      DESCRICAO: row.DESCRICAO
+    }))
+  }
+
+  async getLideres() {
+    const query = `
+      SELECT 
+        CODPESSOA,
+        NOME
+      FROM PESSOA
+      WHERE ATIVO = TRUE
+      ORDER BY NOME
+    `
+    
+    const results = await prisma.$queryRawUnsafe(query)
+    return results.map(row => ({
+      CODPESSOA: row.CODPESSOA,
+      NOME: row.NOME
+    }))
+  }
+
+  // ==================== APONTAR EM BATCH ====================
+
+  async updateBatch(codaponts, data) {
+    const { 
+      CODSTATUSAPONT, 
+      CODCCUSTO, 
+      CODLIDER, 
+      MODIFICADOPOR,
+      updateOnlyEmptyCentroCusto,
+      updateOnlyEmptyLider,
+      updateOnlyEmptyStatus
+    } = data
+
+    let updates = []
+    let values = []
+
+    if (CODCCUSTO) {
+      if (updateOnlyEmptyCentroCusto) {
+        updates.push('CODCCUSTO = CASE WHEN CODCCUSTO IS NULL OR CODCCUSTO = "" THEN ? ELSE CODCCUSTO END')
+      } else {
+        updates.push('CODCCUSTO = ?')
+      }
+      values.push(CODCCUSTO)
+    }
+
+    if (CODLIDER) {
+      if (updateOnlyEmptyLider) {
+        updates.push('CODLIDER = CASE WHEN CODLIDER IS NULL OR CODLIDER = 0 THEN ? ELSE CODLIDER END')
+      } else {
+        updates.push('CODLIDER = ?')
+      }
+      values.push(CODLIDER)
+    }
+
+    if (CODSTATUSAPONT) {
+      if (updateOnlyEmptyStatus) {
+        updates.push('CODSTATUSAPONT = CASE WHEN CODSTATUSAPONT IS NULL OR CODSTATUSAPONT = "-" THEN ? ELSE CODSTATUSAPONT END')
+      } else {
+        updates.push('CODSTATUSAPONT = ?')
+      }
+      values.push(CODSTATUSAPONT)
+    }
+
+    if (updates.length === 0) {
+      return { updated: 0 }
+    }
+
+    updates.push('INTEGRA = 0')
+    updates.push('MODIFICADOPOR = ?')
+    values.push(MODIFICADOPOR)
+
+    const placeholders = codaponts.map(() => '?').join(', ')
+    values.push(...codaponts)
+
+    const query = `
+      UPDATE APONTAMENTOS SET 
+        ${updates.join(', ')}
+      WHERE CODAPONT IN (${placeholders})
+    `
+
+    const result = await prisma.$executeRawUnsafe(query, ...values)
+    return { updated: result }
+  }
 }
 
 module.exports = new NotesRepository()
